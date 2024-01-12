@@ -1,6 +1,25 @@
-#include "database.hpp"
-using namespace gpki;
-int db::profiles::populate_entry(std::string entry, Profile *profile) {
+#include <cstring>
+#include <filesystem>
+#include <fstream>
+#include <iostream>
+#include <string>
+#ifdef __WIN32
+#define EOL std::string("\r\n")
+#else
+#define EOL std::string("\n")
+#endif
+
+#define dbpath std::string("profiles.db")
+#define dbheaders std::string("id,name,source,ca" + EOL)
+
+struct Profile {
+  int id;
+  std::string name;
+  std::string source;
+  int ca;
+};
+namespace gpki::db {
+static int populate_entry(std::string entry, Profile *profile) {
   // entry e.g 1,wiski,/home/gurgui/test,0
   std::ifstream file(dbpath);
   if (!file.is_open()) {
@@ -10,15 +29,17 @@ int db::profiles::populate_entry(std::string entry, Profile *profile) {
   std::string commas;
   while (getline(file, line)) {
     std::stringstream ss(line);
+    ss >> profile->id;
+    ss >> commas;
     ss >> profile->name;
     ss >> commas;
     ss >> profile->source;
     ss >> commas;
+    ss >> profile->ca;
   }
   return 0;
 }
-int db::profiles::initialize() {
-  std::cout << "profile db path -> " << dbpath << "\n";
+static int initialize() {
   if (!std::filesystem::exists(dbpath)) {
     // Create
     std::ofstream db(dbpath);
@@ -34,15 +55,21 @@ int db::profiles::initialize() {
   }
   std::string headers(dbheaders.size(), '\x00');
   std::ifstream(dbpath).read(&headers[0], headers.size());
+  std::cout << "headers -> " << headers << "\ndbheaders -> " << dbheaders
+            << "\n";
+  std::cout << headers.size() << " " << dbheaders.size() << "\n";
   if (headers != dbheaders) {
-    std::cout << "profile headers do not match\n";
+    std::cout << "headers do not match\n";
     return -1;
   }
-  std::cout << "[!] profiles' csv created\n";
+  std::cout << "database exists, all ok\n";
   return 0;
-}
+} // namespace gpki::db
+} // namespace gpki::db
 
-int db::profiles::exists(Profile *profile) {
+namespace gpki::db::profiles {
+
+static int exists(Profile *profile) {
   std::ifstream file(dbpath);
   if (!file.is_open()) {
     std::cout << "couldn't open database\n";
@@ -54,7 +81,7 @@ int db::profiles::exists(Profile *profile) {
     populate_entry(line, &entry);
     std::cout << "entry name: " << entry.name
               << " profile name: " << profile->name << "\n";
-    if (entry.name == profile->name) {
+    if (entry.name == profile->name || entry.id == profile->id) {
       file.close();
       return 1;
     }
@@ -62,34 +89,19 @@ int db::profiles::exists(Profile *profile) {
   file.close();
   return 0;
 }
-int db::profiles::exists(std::string_view profile_name) {
-  std::ifstream file(dbpath);
-  if (!file.is_open()) {
-    return -1;
-  }
-  std::string line;
-  Profile entry;
-  while (getline(file, line)) {
-    populate_entry(line, &entry);
-    if (entry.name == profile_name) {
-      file.close();
-      return 1;
-    }
-  }
-  return 0;
-}
-int db::profiles::add(Profile *profile) {
+static int add(Profile *profile) {
   if (exists(profile)) {
     return -1;
   }
   int s = std::filesystem::file_size(dbpath);
-  std::string entry = profile->name + " , " + profile->source + EOL;
+  std::string entry = std::to_string(profile->id) + " , " + profile->name +
+                      " , " + profile->source + " , " +
+                      std::to_string(profile->ca) + EOL;
   std::ofstream db(dbpath, std::ios::app);
   db << entry;
   return (std::filesystem::file_size(dbpath) > s ? 0 : -1);
 }
-
-int db::profiles::del(Profile *profile) {
+static int del(Profile *profile) {
   int s = std::filesystem::file_size(dbpath);
   std::ifstream file(dbpath);
   std::string line;
@@ -97,5 +109,16 @@ int db::profiles::del(Profile *profile) {
   while (getline(file, line)) {
     populate_entry(line, &entry);
   }
+  return 0;
+}
+} // namespace gpki::db::profiles
+using namespace gpki;
+int main() {
+  if (gpki::db::initialize()) {
+    std::cout << "couldn't initialize database\n";
+    return -1;
+  };
+  Profile t{.id = 1, .name = "test", .source = "/home/test", .ca = 1};
+  db::profiles::add(&t);
   return 0;
 }

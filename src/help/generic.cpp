@@ -1,8 +1,8 @@
 #include "help.hpp"
 
-using namespace gpki::help::generic;
+using namespace gpki;
 
-void usage() {
+void help::generic::usage() {
   std::cout << R"(== Gurgui public key insfraestructure helper ==
 [ Generic syntax ]
   ./gpki <profile> <mode> <action> [subopts]

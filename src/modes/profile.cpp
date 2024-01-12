@@ -2,4 +2,4 @@
 
 using namespace gpki;
 
-int actions::profile::create() { return 0; }
+int modes::profile::create() { return 0; }

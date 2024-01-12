@@ -27,4 +27,6 @@ static inline Profile __current_profile{};
 
 static inline Entity __current_entity{};
 #define ENTITY &gpki::globals::__current_entity
+
+static inline int prompt = 1;
 } // namespace gpki::globals

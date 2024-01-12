@@ -3,6 +3,13 @@
 #include <sstream>
 #include <string_view>
 #include <unordered_map>
+#ifndef EOL
+#ifdef __WIN32
+#define EOL "\r\n"
+#else
+#define EOL "\n"
+#endif
+#endif
 int sed(std::string_view src, std::string_view dst,
         std::unordered_map<std::string_view, std::string_view> vals) {
   std::ifstream srcfile(src.data());

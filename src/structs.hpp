@@ -3,11 +3,18 @@
 
 namespace gpki {
 
+struct ProfileStatus {
+  int ca_count = 0x00;
+  int sv_count = 0x00;
+  int cl_coint = 0x00;
+};
+
 struct Profile {
-  int id;
   std::string name;
   std::string source;
+  ProfileStatus status;
 };
+
 struct Subject {
   std::string country;
   std::string state;
@@ -15,16 +22,14 @@ struct Subject {
   std::string organisation;
   std::string cn;
   std::string email;
-  std::string serial;
 };
 // #define SUBJECT_TEMPLATE "/C=%s/ST=%s/L=%s/O=%s/CN=%s/emailAddress=%s"
 struct Entity {
   Subject subject;
-  std::string serial;
-  std::string cert_path;
   std::string key_path;
-  std::string csr_path;
-  int profile_id;
+  std::string req_path;
+  std::string cert_path;
+  std::string profile_name;
   std::string subj_oneliner() {
     return "'/C=" + subject.country + "/ST=" + subject.state +
            "/L=" + subject.location + "/O=" + subject.organisation +
