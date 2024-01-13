@@ -1,6 +1,7 @@
 #pragma once
 #include "../gpki.hpp"
-
-namespace gpki::modes::profile {
+#include <iostream>
+#include "../db/database.hpp"
+namespace gpki::modes::profile{
 int create();
 }

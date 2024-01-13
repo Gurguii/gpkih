@@ -2,14 +2,6 @@
 #include "structs.hpp"
 #include <filesystem>
 
-template <typename T> int IS_ABSOLUT_PATH(T path) {
-#ifdef _WIN32
-  return std::isalpha(path[0]);
-#else
-  return (path[0] == '/');
-#endif
-};
-
 #ifdef _WIN32
 
 #else
@@ -20,7 +12,7 @@ template <typename T> int IS_ABSOLUT_PATH(T path) {
 
 namespace gpki::globals {
 static inline std::string srcdir = CURRENT_PATH;
-static inline std::string configdir = CURRENT_PATH + SLASH + "config";
+static inline std::string configdir = CURRENT_PATH + SLASH + ".." + SLASH + "config";
 static inline std::string dbpath = CURRENT_PATH + SLASH + "gpki.db";
 static inline Profile __current_profile{};
 #define PROFILE &gpki::globals::__current_profile

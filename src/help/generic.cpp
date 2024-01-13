@@ -5,18 +5,22 @@ using namespace gpki;
 void help::generic::usage() {
   std::cout << R"(== Gurgui public key insfraestructure helper ==
 [ Generic syntax ]
-  ./gpki <profile> <mode> <action> [subopts]
-  e.g ./gpki testprofile build ca --keysize 4096
+  ./gpki <context> <action> [subopts]
 
-[ Create a new profile]
-  ./gpki init
+[ Profile ]
+  ./gpki profile add --name 'profilename1'
 
-[ Building entities ] 
+[ Build ] 
   - Build CA -
-    ./gpki <profile> build ca
+    ./gpki build profile1 -ca
   - Build Server -
-    ./gpki <profile> build server
+    ./gpki build profile1 -server
   - Build Client -
-    ./gpki <profile> build client
+    ./gpki build profile1 -client
+
+[ Entity ]
+  - List entities from profile -
+    ./gpki entity profile1 -list 
   )";
+
 }

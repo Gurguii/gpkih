@@ -10,6 +10,9 @@
 #define EOL "\n"
 #endif
 #endif
+/* sed("/home/gurgui/base", "/home/gurgui/aftersed.txt",
+          {{"GPKI_BASEDIR", "WISKONSIN"}})
+*/
 int sed(std::string_view src, std::string_view dst,
         std::unordered_map<std::string_view, std::string_view> vals) {
   std::ifstream srcfile(src.data());
@@ -32,24 +35,10 @@ int sed(std::string_view src, std::string_view dst,
       }
       dstfile << " ";
     }
-#ifdef __WIN32
-    dstfile << "\n";
+    dstfile << std::endl;
   }
-#else
-    dstfile << "\r\n";
-  }
-#endif
+  dstfile << EOL;
   srcfile.close();
   dstfile.close();
   return 0;
-}
-int main() {
-  if (sed("/home/gurgui/base", "/home/gurgui/aftersed.txt",
-          {{"GPKI_BASEDIR", "WISKONSIN"}})) {
-    std::cout << "error\n";
-    return 0;
-  } else {
-    std::cout << "success\n";
-    return 1;
-  }
 }

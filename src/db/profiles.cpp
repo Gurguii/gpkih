@@ -38,7 +38,6 @@ int db::profiles::initialize() {
     std::cout << "profile headers do not match\n";
     return -1;
   }
-  std::cout << "[!] profiles' csv created\n";
   return 0;
 }
 
@@ -52,8 +51,6 @@ int db::profiles::exists(Profile *profile) {
   Profile entry;
   while (getline(file, line)) {
     populate_entry(line, &entry);
-    std::cout << "entry name: " << entry.name
-              << " profile name: " << profile->name << "\n";
     if (entry.name == profile->name) {
       file.close();
       return 1;

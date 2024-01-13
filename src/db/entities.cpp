@@ -23,17 +23,13 @@ int db::entities::initialize() {
   return 0;
 }
 int db::entities::populate_entry(std::string entry, Entity *entity) {
-  std::ifstream file(dbpath);
-  if (!file.is_open()) {
-    return -1;
-  }
-  std::string line;
   std::string commas;
-  while (getline(file, line)) {
-    std::stringstream ss(line);
+    std::stringstream ss(entry);
     ss >> entity->profile_name;
     ss >> commas;
     ss >> entity->subject.cn;
+    ss >> commas;
+    ss >> entity->type;
     ss >> commas;
     ss >> entity->subject.country;
     ss >> commas;
@@ -50,9 +46,23 @@ int db::entities::populate_entry(std::string entry, Entity *entity) {
     ss >> entity->req_path;
     ss >> commas;
     ss >> entity->cert_path;
+  return 0;
+}
+int db::entities::exists(Entity *entity) { 
+  std::ifstream file(dbpath);
+  if(!file.is_open()){
+    return -1;
+  }
+  std::string line;
+  Entity entry;
+  while(getline(file,line)){
+    populate_entry(line,&entry);
+    if(entry.subject.cn == entity->subject.cn && entry.profile_name == entity->profile_name){
+      // entity exists
+      return 1;
+    }
   }
   return 0;
 }
-int db::entities::exists(Entity *entity) { return 0; }
 int db::entities::add(Entity *entity) { return 0; }
 int db::entities::del(Entity *entity) { return 0; }

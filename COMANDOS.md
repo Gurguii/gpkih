@@ -1,4 +1,15 @@
-## [NEW]
+## [Self signed CA]
+*Create key+cert*
+```bash
+openssl req \
+-config gopenssl.cnf \
+-new \
+-x509 \
+-out pki/ca/ca-crt.pem \
+-keyout pki/ca/ca-key.pem \
+-subj '/CN=gurguiCA' \
+-noenc
+```
 
 #### [CLIENT/SERVER] Key + request + CA signed certificate
 
@@ -13,7 +24,7 @@ openssl req \
 -noenc
 ```
 
-*Create signed certificate*
+*Sign request with CA and create signed certificate*
 
 ```bash
 openssl ca \

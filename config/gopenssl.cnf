@@ -7,11 +7,11 @@ certs           = $dir/certs            # Where the issued certs are kept
 crl_dir         = $dir/crl              # Where the issued crl are kept
 database        = $dir/database/index.txt        # database index file.
 new_certs_dir   = $dir/certs            # default place for new certs.
-certificate     = $dir/ca/ca-crt.pem         # The CA certificate
+certificate     = $dir/pki/ca/crt        # The CA certificate
 serial          = $dir/serial/serial           # The current serial number
 crlnumber       = $dir/crl/crlnumber        # the current crl number
 crl             = $dir/crl/current.pem          # The current CRL
-private_key     = $dir/ca/ca-key.pem # The private key
+private_key     = $dir/pki/ca/key # The private key
 x509_extensions = v3_ca                 # The extensions to add to the cert
 name_opt        = ca_default            # Subject Name options
 cert_opt        = ca_default            # Certificate field options
@@ -23,16 +23,6 @@ default_days    = 30                    # how long to certify for
 default_crl_days= 30                    # how long before next CRL
 default_md      = sha256                # use SHA-256 by default
 preserve        = no                    # keep passed DN ordering
-
-policy          = policy_match
-
-[ policy_match ]
-countryName             = optional
-stateOrProvinceName     = optional
-organizationName        = optional
-organizationalUnitName  = optional
-commonName              = supplied
-emailAddress            = optional
 
 [ req ]
 default_bits            = 2048
