@@ -27,7 +27,7 @@ bool hasWritePermissions(const std::filesystem::path &directoryPath) {
   }
 }
 int create_dhparam(std::string_view outpath) {
-  std::string command = "openssl dhparam -out " + std::string(outpath) + "1024";
+  std::string command = "openssl dhparam -out " + std::string(outpath) + " 1024";
   if (system(command.c_str())) {
     return -1;
   }

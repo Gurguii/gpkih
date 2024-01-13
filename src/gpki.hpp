@@ -3,7 +3,8 @@
 #include <filesystem>
 
 #ifdef _WIN32
-
+#define CURRENT_PATH std::filesystem::current_path().string()
+#define SLASH std::string("\\")
 #else
 /* LINUX STUFF */
 #define CURRENT_PATH std::string(std::filesystem::current_path())

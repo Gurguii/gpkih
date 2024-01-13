@@ -1,4 +1,5 @@
 #pragma once
+#include <iostream>
 
 namespace gpki::modes::build {
 int ca();

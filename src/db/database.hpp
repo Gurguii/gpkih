@@ -14,7 +14,7 @@
 namespace gpki::db {} // namespace gpki::db
 
 namespace gpki::db::profiles {
-static inline std::string dbheaders = "id,name,source" + EOL;
+static inline std::string dbheaders = "name,source";
 static inline std::string dbpath = CURRENT_PATH + SLASH + "profiles.csv";
 static int initialize();
 static int populate_entry(std::string entry, Profile *profile);

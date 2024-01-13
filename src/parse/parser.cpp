@@ -19,7 +19,11 @@ int parse(int argc, const char **args) {
     help::generic::usage();
     return -1;
   }
-  db::profiles::initialize();
+  if (db::profiles::initialize()){
+    std::cerr << "[error] couldn't initialize database\n";
+    return -1;
+  }
+
   if (argc == 1) {
     std::cout << "action required\n";
     return -1;

@@ -1,5 +1,6 @@
 #include "database.hpp"
 using namespace gpki;
+
 int db::profiles::populate_entry(std::string entry, Profile *profile) {
   // entry e.g 1,wiski,/home/gurgui/test,0
   std::ifstream file(dbpath);
@@ -17,6 +18,7 @@ int db::profiles::populate_entry(std::string entry, Profile *profile) {
   }
   return 0;
 }
+
 int db::profiles::initialize() {
   std::cout << "profile db path -> " << dbpath << "\n";
   if (!std::filesystem::exists(dbpath)) {
@@ -26,8 +28,7 @@ int db::profiles::initialize() {
       std::cout << "couldn't create file '" << dbpath << "'\n";
       return -1;
     }
-    // db << dbheaders << EOL;
-    db << dbheaders;
+    db << dbheaders << std::endl;
     db.close();
     std::cout << "database created\n";
     return 0;
@@ -59,6 +60,7 @@ int db::profiles::exists(Profile *profile) {
   file.close();
   return 0;
 }
+
 int db::profiles::exists(std::string_view profile_name) {
   std::ifstream file(dbpath);
   if (!file.is_open()) {
@@ -75,14 +77,15 @@ int db::profiles::exists(std::string_view profile_name) {
   }
   return 0;
 }
+
 int db::profiles::add(Profile *profile) {
   if (exists(profile)) {
     return -1;
   }
   int s = std::filesystem::file_size(dbpath);
-  std::string entry = profile->name + " , " + profile->source + EOL;
+  std::string entry = profile->name + " , " + profile->source;
   std::ofstream db(dbpath, std::ios::app);
-  db << entry;
+  db << entry << std::endl;
   return (std::filesystem::file_size(dbpath) > s ? 0 : -1);
 }
 
