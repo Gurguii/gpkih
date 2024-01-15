@@ -115,3 +115,21 @@ std::optional<Profile> db::profiles::get(std::string_view profile_name){
   }
   return {};
 }
+
+int db::profiles::load(std::string_view profile_name, Profile &pinfo){
+  std::ifstream file(dbpath);
+  if(!file.is_open()){
+    return -1;
+  }
+  std::string line;
+  std::string word;
+  Profile buff;
+  while(getline(file,line)){
+    populate_entry(line,&buff);
+    if(buff.name == profile_name){
+      pinfo = std::move(buff);
+      return 0;
+    }
+  }
+  return -1;
+}

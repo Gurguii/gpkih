@@ -24,9 +24,9 @@ struct Subject {
   std::string cn;
   std::string email = "none@example.com";
   std::string oneliner() {
-    return "'/C=" + country + "/ST=" + state +
+    return "/C=" + country + "/ST=" + state +
            "/L=" + location + "/O=" + organisation +
-           "/CN=" + cn + "/emailAddress=" + email + "'";
+           "/CN=" + cn + "/emailAddress=" + email;
   }
 };
 

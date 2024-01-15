@@ -29,7 +29,7 @@
             "name": "C/C++: g++.exe build and debug active file",
             "type": "cppdbg",
             "request": "launch",
-            "program": "${fileDirname}\\${fileBasenameNoExtension}.exe",
+            "program": "c:/users/airan/github/gpkih/src/gpki.exe",
             "args": [],
             "stopAtEntry": false,
             "cwd": "c:/program files/mingw64/bin",

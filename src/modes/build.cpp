@@ -2,17 +2,16 @@
 
 using namespace gpki;
 
-
 int modes::build::ca(Profile *profile, Entity *entity, build_params *params) { 
   auto commands = get_openssl_command(profile,entity,params);
   if(commands.has_value()){
     for(auto command : commands.value()){
       if(system(command.c_str())){
-        std::cout << "command '" << command << "' failed\n";
-        return -1;
-      }
+        std::cout << "[FAILED] " << command << "\n"; 
+      };
     }
-    return 0;
+    // add entity to csv
+    return db::entities::add(entity);
   }
   return -1;
 }
@@ -70,24 +69,15 @@ int modes::build::get_entity(Profile *profile, Entity *entity, build_params *par
     entity->cert_path = profile->source + SLASH + "pki" + SLASH + "certs" +
                        SLASH + entity->subject.cn + "-crt." + params->out_format;
 
-    // insert entity to database
-    if(db::entities::add(ENTITY)){
-      std::cout << "couldn't insert entity into database\n";
-      return -1;
-    };
     return 0;
 }
 std::optional<std::vector<std::string>> modes::build::get_openssl_command(Profile *profile, Entity *entity, build_params *params){
   std::string gopenssl = profile->source + SLASH + "gopenssl.cnf";
   if(entity->type == "ca"){
     return std::vector<std::string>{"openssl req -config " + gopenssl + " -new -x509 -out " + entity->cert_path + " -keyout " + entity->key_path + " -subj '" + entity->subject.oneliner() + "' -noenc"};
-  }else(){
-    return std::vector<std::string>{"openssl req -newkey " + params->key_size + ":" + params->algorithm + " -out " + entity->req_path + " -keyout " + entity->key_path + " -subj '" + entity->subject.oneliner() + "' -noenc",
-    "openssl ca -config " + gopenssl + " -in " + entity->req_path + " -out " + entity->cert_path};
-  }else if(entity->type == "cl"){
-    return std::vector<std::string>{"openssl req -newkey " + params->key_size + ":" + params->algorithm + " -out " + }
-
   }else{
-    return {};
+    // Both client|server certiticates are created with the same command, the only thing that changes are the x509 extensions
+    return std::vector<std::string>{"openssl req -newkey " + params->key_size + ":" + params->algorithm + " -out " + entity->req_path + " -keyout " + entity->key_path + " -subj " + entity->subject.oneliner() + " -noenc",
+    "openssl ca -config " + gopenssl + " -in " + entity->req_path + " -out " + entity->cert_path + " -subj '" + entity->subject.oneliner() + "' extfile " + globals::configdir + SLASH + entity->type};
   }
 }

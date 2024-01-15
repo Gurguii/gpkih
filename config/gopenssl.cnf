@@ -2,7 +2,7 @@
 default_ca      = CA_default            # The default ca section
 
 [ CA_default ]
-dir             = GPKI_BASEDIR        # Where everything is kept
+dir             = C:/Users/airan/AppData/Local/Temp/test        # Where everything is kept
 certs           = $dir/certs            # Where the issued certs are kept
 crl_dir         = $dir/crl              # Where the issued crl are kept
 database        = $dir/database/index.txt        # database index file.
@@ -24,6 +24,28 @@ default_md      = sha256                # use SHA-256 by default
 preserve        = no                    # keep passed DN ordering
 
 default_md              = sha256
+policy = policy_match
+
+[req]
+x509_extensions = v3_ca
+policy = policy_match
+
+[ policy_match ]
+countryName             = optional
+stateOrProvinceName     = optional
+localityName            = optional
+organizationName        = optional
+organizationalUnitName  = optional
+commonName              = supplied
+emailAddress            = optional
+
+[ v3_ca ]
+# Extensions for a typical CA
+# PKIX recommendation.
+subjectKeyIdentifier=hash
+authorityKeyIdentifier=keyid:always,issuer
+basicConstraints = critical,CA:true
+keyUsage = cRLSign, keyCertSign
 
 [ crl_ext ]
 # CRL extensions.

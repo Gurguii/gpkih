@@ -7,9 +7,9 @@
             "args": [
                 "-fdiagnostics-color=always",
                 "-g",
-                "${file}",
+                "c:/users/airan/github/gpkih/src/gpki.cpp",
                 "-o",
-                "${fileDirname}\\${fileBasenameNoExtension}.exe"
+                "c:/users/airan/github/gpkih/src/gpki.exe"
             ],
             "options": {
                 "cwd": "c:/program files/mingw64/bin"

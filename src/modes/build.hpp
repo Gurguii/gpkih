@@ -3,6 +3,7 @@
 #include <optional>
 #include <vector>
 #include "../parse/subparser.hpp"
+#include "../gpki.hpp"
 namespace gpki::modes::build {
 struct build_params
 {

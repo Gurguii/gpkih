@@ -30,10 +30,10 @@ int subparsers::build(std::vector<std::string> opts) {
       entity.type = "ca";
       build_action = modes::build::ca;
     }else if(opt == "-sv" || opt == "-server"){
-      entity.type = "sv";
+      entity.type = "server";
       build_action = modes::build::server;
     }else if(opt == "-cl" || opt == "-client"){
-      entity.type = "cl";
+      entity.type = "client";
       build_action = modes::build::client;
     }else if(opt == "-keysize" || opt == "--keysize"){
       params.key_size = opts[++i];
@@ -47,6 +47,11 @@ int subparsers::build(std::vector<std::string> opts) {
   }
   // Populate entity with the subject info
   modes::build::get_entity(&profile.value(),&entity,&params);
+  
+  entity.profile_name = profile.value().name;
+
+  // Initialize entity csv 
+  db::entities::initialize();
   if(build_action == nullptr){
     return -1;
   }

@@ -28,7 +28,7 @@ static int exists(Profile *profile);
 static int exists(std::string_view profile_name);
 static int add(Profile *profile);
 static int del(Profile *profile);
-
+static int load(std::string_view profile_name, Profile &pinfo);
 } // namespace gpki::db::profiles
 namespace gpki::db::entities {
 static inline std::string dbheaders =
@@ -36,7 +36,7 @@ static inline std::string dbheaders =
     "path,req_path,"
     "cert_path";
 static inline std::string dbpath = CURRENT_PATH + SLASH + "entities.csv";
-static int populate_entry(std::string entry, Entity *entity);
+static int populate_entry(std::string &entry, Entity *entity);
 static int initialize();
 static int exists(Entity *entity);
 static int add(Entity *entity);
