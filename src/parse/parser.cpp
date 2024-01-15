@@ -13,7 +13,7 @@ std::unordered_map<std::string, int (*)(std::vector<std::string>)> contexts{
   {"entity", gpki::subparsers::entity}};
 
 namespace gpki {
-// [!] does not receive program name in args
+// [!] parse() does not expect to receive program name in args
 int parse(int argc, const char **args) {
   if (argc == 0) {
     help::generic::usage();
@@ -28,7 +28,7 @@ int parse(int argc, const char **args) {
     std::cout << "action required\n";
     return -1;
   }
-  // e.g build
+  // valid contexts: build|profile|entity
   std::string context = args[0];
   //  check if contexts exists and call appropiate subparser
   if (contexts.find(context) == contexts.end()) {

@@ -4,12 +4,17 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <optional>
 
 #ifdef __WIN32
 #define EOL std::string("\r\n")
 #else
 #define EOL std::string("\n")
 #endif
+
+
+#define CSV_DELIMITER_s ","
+#define CSV_DELIMITER_c CSV_DELIMITER_s[0]
 
 namespace gpki::db {} // namespace gpki::db
 
@@ -18,6 +23,7 @@ static inline std::string dbheaders = "name,source";
 static inline std::string dbpath = CURRENT_PATH + SLASH + "profiles.csv";
 static int initialize();
 static int populate_entry(std::string entry, Profile *profile);
+static std::optional<Profile> get(std::string_view profile_name);
 static int exists(Profile *profile);
 static int exists(std::string_view profile_name);
 static int add(Profile *profile);

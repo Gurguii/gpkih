@@ -17,12 +17,12 @@ struct Profile {
 
 // #define SUBJECT_TEMPLATE "/C=%s/ST=%s/L=%s/O=%s/CN=%s/emailAddress=%s"
 struct Subject {
-  std::string country;
-  std::string state;
-  std::string location;
-  std::string organisation;
+  std::string country = "ES";
+  std::string state = "GRAN CANARIAS";
+  std::string location = "LAS PALMAS";
+  std::string organisation = "MARIWANOS";
   std::string cn;
-  std::string email;
+  std::string email = "none@example.com";
   std::string oneliner() {
     return "'/C=" + country + "/ST=" + state +
            "/L=" + location + "/O=" + organisation +
@@ -38,17 +38,17 @@ struct Entity {
   std::string profile_name;
   std::string type; // ca-sv-cl
   std::string csv_entry(){
-    return "profile_name , " + profile_name 
-    + " common_name , " + subject.cn 
-    + " type , " + type 
-    + " country , " + subject.country
-    + " state , " + subject.state
-    + " location , " + subject.location
-    + " organisation , " + subject.organisation
-    + " email , " + subject.email
-    + " key_path , " + key_path
-    + " req_path , " + req_path
-    + " cert_path , " + cert_path; 
+    return "profile_name," + profile_name 
+    + "common_name," + subject.cn 
+    + "type," + type 
+    + "country," + subject.country
+    + "state," + subject.state
+    + "location," + subject.location
+    + "organisation," + subject.organisation
+    + "email," + subject.email
+    + "key_path," + key_path
+    + "req_path," + req_path
+    + "cert_path," + cert_path; 
   }
 };
 } // namespace gpki

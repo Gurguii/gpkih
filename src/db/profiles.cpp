@@ -11,10 +11,8 @@ int db::profiles::populate_entry(std::string entry, Profile *profile) {
   std::string commas;
   while (getline(file, line)) {
     std::stringstream ss(line);
-    ss >> profile->name;
-    ss >> commas;
-    ss >> profile->source;
-    ss >> commas;
+    std::getline(ss,profile->name,CSV_DELIMITER_c);
+    std::getline(ss,profile->source,CSV_DELIMITER_c);
   }
   return 0;
 }
@@ -83,7 +81,7 @@ int db::profiles::add(Profile *profile) {
     return -1;
   }
   int s = std::filesystem::file_size(dbpath);
-  std::string entry = profile->name + " , " + profile->source;
+  std::string entry = profile->name + "," + profile->source;
   std::ofstream db(dbpath, std::ios::app);
   db << entry << std::endl;
   return (std::filesystem::file_size(dbpath) > s ? 0 : -1);
@@ -98,4 +96,22 @@ int db::profiles::del(Profile *profile) {
     populate_entry(line, &entry);
   }
   return 0;
+}
+std::optional<Profile> db::profiles::get(std::string_view profile_name){
+  std::ifstream file(dbpath);
+  std::string line;
+  Profile profile;
+  while(getline(file,line)){
+    
+    populate_entry(line,&profile);
+    std::cout << "profile name: " << profile.name << "\n";
+    std::cout << "profile source: " << profile.source << "\n";
+    if(profile.name == profile_name){
+      std::cout << "profile exists, returning...\n";
+      return profile;
+    }else{
+      std::cout << "profile not equal: " << profile.name << ":" << profile.name.size() << " - " << profile_name << ":" << profile_name.size() << "\n";
+    }
+  }
+  return {};
 }
