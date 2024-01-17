@@ -18,8 +18,8 @@ int db::entities::initialize() {
   std::ifstream(dbpath).read(&headers[0], headers.size());
   if (headers != dbheaders) {
     std::cout << "entity headers do not match\n";
+    return -1;
   }
-  std::cout << "[!] entities' csv OK\n";
   return 0;
 }
 int db::entities::populate_entry(std::string &entry, Entity *entity) {
@@ -62,9 +62,8 @@ int db::entities::add(Entity *entity) {
     return -1;
   }
   uint64_t bsize = std::filesystem::file_size(dbpath);
-  file << e.profile_name << "," << e.subject.cn << "," << e.type << "," << e.subject.country << "," << e.subject.state << "," << e.subject.location << "," << e.subject.organisation << "," << e.subject.email << "," << e.key_path << "," << e.req_path << "," << e.cert_path << std::endl;
-  uint64_t asize = std::filesystem::file_size(dbpath);
-  return !(asize > bsize);
+  file << e.csv_entry() << std::endl;
+  return !(std::filesystem::file_size(dbpath) > bsize);
 }
 
 int db::entities::del(Entity *entity) { 

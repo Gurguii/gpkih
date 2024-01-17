@@ -6,7 +6,7 @@
 #include "../modes/build.hpp"
 #include "../modes/entity.hpp"
 #include "../gpki.hpp"
-
+#include "../help/help.hpp"
 
 struct profile_params
 {

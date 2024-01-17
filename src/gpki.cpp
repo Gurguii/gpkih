@@ -1,10 +1,11 @@
 #include "db/entities.cpp"
 #include "db/profiles.cpp"
-#include "help/generic.cpp"
 #include "parse/parser.cpp"
 #include "modes/build.cpp"
 #include "modes/entity.cpp"
 #include "modes/profile.cpp"
+#include "help/build.cpp"
+#include "help/generic.cpp"
 int main(int argc, const char **args) {
   // Add checks for openssl - openvpn existence
   // in the system, set a cache unordered_map<Profile> with all available profiles in profiles.csv

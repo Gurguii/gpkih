@@ -14,6 +14,7 @@ int subparsers::build(std::vector<std::string> opts) {
 
   if(!profile.has_value()){
     std::cout << "Profile '" << profile_name << "' doesn't exist\n";
+    help::build::usage();
     return -1;
   }
   
@@ -37,14 +38,20 @@ int subparsers::build(std::vector<std::string> opts) {
       build_action = modes::build::client;
     }else if(opt == "-keysize" || opt == "--keysize"){
       params.key_size = opts[++i];
-    }else if(opt == "-informat"){
-      params.in_format = opts[++i];
+    }else if(opt == "-keyformat"){
+      params.key_format = opts[++i];
     }else if(opt == "-outformat"){
-      params.out_format = opts[++i];
+      params.csr_crt_format = opts[++i];
     }else{
       std::cout << "[!] unknown option '" << opt << "'\n";
     }
   }
+
+  if(build_action == nullptr){
+    help::build::usage();
+    return -1;
+  }
+
   // Populate entity with the subject info
   modes::build::get_entity(&profile.value(),&entity,&params);
   
@@ -52,8 +59,6 @@ int subparsers::build(std::vector<std::string> opts) {
 
   // Initialize entity csv 
   db::entities::initialize();
-  if(build_action == nullptr){
-    return -1;
-  }
+  
   return build_action(&profile.value(),&entity,&params);
 }

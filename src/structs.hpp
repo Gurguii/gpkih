@@ -6,13 +6,23 @@ namespace gpki {
 struct ProfileStatus {
   int ca_count = 0x00;
   int sv_count = 0x00;
-  int cl_coint = 0x00;
+  int cl_count = 0x00;
 };
 
 struct Profile {
   std::string name;
   std::string source;
   ProfileStatus status;
+  std::string csv_entry(){
+    return name + "," + source;
+  }
+  void empty(){
+    name.assign("");
+    source.assign("");
+    status.ca_count = 0;
+    status.sv_count = 0;
+    status.cl_count = 0;
+  }
 };
 
 // #define SUBJECT_TEMPLATE "/C=%s/ST=%s/L=%s/O=%s/CN=%s/emailAddress=%s"
@@ -22,7 +32,7 @@ struct Subject {
   std::string location = "LAS PALMAS";
   std::string organisation = "MARIWANOS";
   std::string cn;
-  std::string email = "none@example.com";
+  std::string email = "NONE";
   std::string oneliner() {
     return "/C=" + country + "/ST=" + state +
            "/L=" + location + "/O=" + organisation +
@@ -38,17 +48,17 @@ struct Entity {
   std::string profile_name;
   std::string type; // ca-sv-cl
   std::string csv_entry(){
-    return "profile_name," + profile_name 
-    + "common_name," + subject.cn 
-    + "type," + type 
-    + "country," + subject.country
-    + "state," + subject.state
-    + "location," + subject.location
-    + "organisation," + subject.organisation
-    + "email," + subject.email
-    + "key_path," + key_path
-    + "req_path," + req_path
-    + "cert_path," + cert_path; 
+    return profile_name + "," + 
+    subject.cn + "," + 
+    type + "," +
+    subject.country + "," + 
+    subject.state + "," + 
+    subject.location + "," + 
+    subject.organisation + "," +
+    subject.email + "," +
+    key_path + "," + 
+    req_path + "," +
+    cert_path;  
   }
 };
 } // namespace gpki
