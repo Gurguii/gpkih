@@ -1,4 +1,4 @@
-#include "profile.hpp"
+#include "init.hpp"
 #include "build.hpp"
 #include <ostream>
 
@@ -64,7 +64,7 @@ template <typename T> int IS_VALID_PATH(T path){
 }
 
 using namespace gpki;
-int modes::profile::create() {
+int modes::init::create_new_profile() {
   Profile profile;
   do {
     std::cout << "[+] Please introduce desired profile name: ";

@@ -2,26 +2,15 @@
 #include <string>
 #include <vector>
 #include <iostream>
-#include "../modes/profile.hpp"
+#include "../modes/init.hpp"
 #include "../modes/build.hpp"
-#include "../modes/entity.hpp"
+#include "../modes/revoke.hpp"
 #include "../gpki.hpp"
 #include "../help/help.hpp"
 
-struct profile_params
-{
-
-};
-
-struct entity_params
-{
-
-};
-
 namespace gpki::subparsers
 {
-  int get_entity();
+  int init(std::vector<std::string> opts);
   int build(std::vector<std::string> opts);
-  int profile(std::vector<std::string> opts);
-  int entity(std::vector<std::string> opts);
+  int revoke(std::vector<std::string> opts);
 }

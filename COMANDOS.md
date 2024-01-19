@@ -33,7 +33,8 @@ openssl ca \
 -out crt.pem \
 -subj '/CN=gurguito' \
 -extfile x509/<client|server> \
-
+-batch \
+-notext
 ```
 
 ### Revoking certificates  
@@ -45,7 +46,9 @@ openssl ca \
 -crl_reason "bad client" \
 -crldays <days> \
 -crlhours <hours> \
--crlsec <secs>
+-crlsec <secs> \
+-batch \
+-notext
 ```  
 *Generate a new crl (certificate revocation list)*
 ```bash

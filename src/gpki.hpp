@@ -2,6 +2,7 @@
 #include "structs.hpp"
 #include <filesystem>
 
+
 #ifdef _WIN32
 #define CURRENT_PATH std::filesystem::current_path().string()
 #define SLASH std::string("\\")

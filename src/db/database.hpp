@@ -16,7 +16,6 @@
 #define CSV_DELIMITER_s ","
 #define CSV_DELIMITER_c CSV_DELIMITER_s[0]
 
-namespace gpki::db {} // namespace gpki::db
 
 namespace gpki::db::profiles {
 static inline std::string dbheaders = "name,source";
@@ -42,3 +41,8 @@ static int exists(Entity *entity);
 static int add(Entity *entity);
 static int del(Entity *entity);
 } // namespace gpki::db::entities
+namespace gpki::db {
+    static inline int initialize_dbs(){
+        return (profiles::initialize() | entities::initialize());
+};
+} // namespace gpki::db

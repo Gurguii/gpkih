@@ -36,6 +36,7 @@ int modes::build::client(Profile *profile,Entity *entity, build_params *params) 
     for(auto command : commands.value()){
       if(system(command.c_str())){
        std::cout << "[FAILED] " << command << "\n"; 
+       return -1;
       };
     }
     // add entity to csv
