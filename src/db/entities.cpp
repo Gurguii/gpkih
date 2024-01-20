@@ -54,7 +54,37 @@ int db::entities::exists(Entity *entity) {
   }
   return 0;
 }
-
+int db::entities::exists(Profile *profile, std::string_view common_name){
+  std::ifstream file(dbpath);
+  if(!file.is_open()){
+    return -1;
+  }
+  std::string line;
+  Entity info;
+  while(getline(file,line)){
+    populate_entry(line,&info);
+    if(info.subject.cn == common_name){
+      return 1;
+    }
+  }
+  return 0;
+}
+int db::entities::load(Profile *profile, Entity *entity_buff, std::string_view common_name){
+  std::ifstream file(dbpath);
+  if(!file.is_open()){
+    return -1;
+  }
+  std::string line;
+  Entity info;
+  while(getline(file,line)){
+    populate_entry(line,&info);
+    if(info.subject.cn == common_name){
+      *entity_buff = std::move(info);
+      return 0;
+    }
+  }
+  return -1;
+}
 int db::entities::add(Entity *entity) {
   Entity &e = *entity; 
   std::ofstream file(dbpath,std::ios::app);

@@ -1,6 +1,4 @@
-#include "init.hpp"
-#include "build.hpp"
-#include <ostream>
+#include "actions.hpp"
 
 #define RELATIVE_DIRECTORY_PATHS                                               \
   std::vector<std::string> {                                                   \
@@ -64,18 +62,22 @@ template <typename T> int IS_VALID_PATH(T path){
 }
 
 using namespace gpki;
-int modes::init::create_new_profile() {
+int actions::init(subopts::init *params) {
   Profile profile;
-  do {
-    std::cout << "[+] Please introduce desired profile name: ";
-    std::getline(std::cin, profile.name);
-  } while (db::profiles::exists(&profile));
-
-  do {
-    std::cout << "[+] Please introduce pki base dir (absolute path): ";
-    std::getline(std::cin, profile.source);
-  } while (!IS_VALID_PATH(profile.source));
-  
+  if(params->profile_name.empty() || db::profiles::exists(params->profile_name)){
+    do {
+      std::cout << "[+] Please introduce desired profile name: ";
+      std::getline(std::cin, profile.name);
+    }while (db::profiles::exists(&profile));
+  }
+  profile.name = std::move(params->profile_name);
+  if(params->profile_source.empty() || !IS_VALID_PATH(params->profile_source)){
+    do {
+      std::cout << "[+] Please introduce pki base dir (absolute path): ";
+      std::getline(std::cin, profile.source);
+    } while (!IS_VALID_PATH(profile.source));
+  } 
+  profile.source = std::move(params->profile_source);  
   // Check that we have write permissions in such path
   if (!hasWritePermissions(profile.source)) {
     seterror("[error] Not write permissions in '" + profile.source +
@@ -141,26 +143,15 @@ int modes::init::create_new_profile() {
     std::cout << "Do you want to create the CA now? Y/N: ";
     getline(std::cin,ans);
     if(ans == "y" || ans == "Y"){
-      Entity ca;
-      ca.type = "ca";
-      ca.profile_name = profile.name;
-      build::build_params default_params;
-      build::get_entity(&profile,&ca,&default_params); 
-      auto a = build::get_openssl_command(&profile,&ca,&default_params);
-      if(!a.has_value()){
+      gpki::subopts::build default_params;
+      if(gpki::actions::build(&profile,&default_params,ENTITY_TYPE::ca)){
+        std::cout << "couldn't add entity\n";
         return -1;
-      }
-      for(auto command : a.value()){
-        if(system(command.c_str())){
-          std::cout << "command '" << command << "' failed\n";
-          return -1;
-        }
-      }
-      db::entities::initialize();
-      if(db::entities::add(&ca)){
+      }else{
+        std::cout << "CA created\n";
+        // ./gpki list <profile> -ca
         return -1;
       };
-      std::cout << "CA '" << ca.subject.cn << "' succesfully created\n";
     }
   }
   return 0;

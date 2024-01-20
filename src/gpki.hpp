@@ -12,15 +12,20 @@
 #define SLASH std::string("/")
 #endif
 
+enum class ENTITY_TYPE
+{
+  none,
+  ca,
+  sv,
+  cl
+};
+const auto entity_type_str = [](ENTITY_TYPE type){
+    return (type == ENTITY_TYPE::ca ? "ca" : (type == ENTITY_TYPE::sv ? "server" : "client"));
+};
+
 namespace gpki::globals {
 static inline std::string srcdir = CURRENT_PATH;
 static inline std::string configdir = CURRENT_PATH + SLASH + ".." + SLASH + "config";
-static inline std::string dbpath = CURRENT_PATH + SLASH + "gpki.db";
-static inline Profile __current_profile{};
-#define PROFILE &gpki::globals::__current_profile
-
-static inline Entity __current_entity{};
-#define ENTITY &gpki::globals::__current_entity
-#define SUBJECT &(gpki::globals::__current_entity.subject)
+static inline std::string user_used_command;
 static inline int prompt = 1;
 } // namespace gpki::globals

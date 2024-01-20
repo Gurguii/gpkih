@@ -14,7 +14,6 @@ int db::profiles::populate_entry(std::string entry, Profile *profile) {
 }
 
 int db::profiles::initialize() {
-  std::cout << "profile db path -> " << dbpath << "\n";
   if (!std::filesystem::exists(dbpath)) {
     // Create
     std::ofstream db(dbpath);
@@ -27,50 +26,29 @@ int db::profiles::initialize() {
     std::cout << "database created\n";
     return 0;
   }
-  std::string headers(dbheaders.size(), '\x00');
-  std::ifstream(dbpath).read(&headers[0], headers.size());
+  std::ifstream file(dbpath);
+  std::string headers;
+  getline(file,headers);
   if (headers != dbheaders) {
     std::cout << "profile headers do not match\n";
     return -1;
+  }
+  // Load profiles into existing_profiles
+  std::string line;
+  Profile pinfo;
+  while(getline(file,line)){
+    populate_entry(line,&pinfo);
+    existing_profiles.emplace(pinfo.name,pinfo);
   }
   return 0;
 }
 
 int db::profiles::exists(Profile *profile) {
-  std::ifstream file(dbpath);
-  if (!file.is_open()) {
-    std::cout << "couldn't open database\n";
-    return -1;
-  }
-  std::string line;
-  Profile entry;
-  while (getline(file, line)) {
-    populate_entry(line, &entry);
-    std::cout << profile->name << ":" << profile->name.size() << " " << entry.name << ":" << entry.name.size() << "\n";
-    if (entry.name == profile->name) {
-      file.close();
-      return 1;
-    }
-  }
-  file.close();
-  return 0;
+  return existing_profiles.find(profile->name) != existing_profiles.end();
 }
 
 int db::profiles::exists(std::string_view profile_name) {
-  std::ifstream file(dbpath);
-  if (!file.is_open()) {
-    return -1;
-  }
-  std::string line;
-  Profile entry;
-  while (getline(file, line)) {
-    populate_entry(line, &entry);
-    if (entry.name == profile_name) {
-      file.close();
-      return 1;
-    }
-  }
-  return 0;
+  return existing_profiles.find(profile_name.data()) != existing_profiles.end();
 }
 
 int db::profiles::add(Profile *profile) {
@@ -93,36 +71,11 @@ int db::profiles::del(Profile *profile) {
   }
   return 0;
 }
-std::optional<Profile> db::profiles::get(std::string_view profile_name){
-  std::ifstream file(dbpath);
-  std::string line;
-  Profile profile;
-  while(getline(file,line)){
-    populate_entry(line,&profile);
-    if(profile.name == profile_name){
-      std::cout << "profile exists, returning...\n";
-      return profile;
-    }else{
-      std::cout << "profile not equal: " << profile.name << ":" << profile.name.size() << " - " << profile_name << ":" << profile_name.size() << "\n";
-    }
-  }
-  return {};
-}
 
 int db::profiles::load(std::string_view profile_name, Profile &pinfo){
-  std::ifstream file(dbpath);
-  if(!file.is_open()){
+  if(!exists(profile_name)){
     return -1;
   }
-  std::string line;
-  std::string word;
-  Profile buff;
-  while(getline(file,line)){
-    populate_entry(line,&buff);
-    if(buff.name == profile_name){
-      pinfo = std::move(buff);
-      return 0;
-    }
-  }
-  return -1;
+  pinfo = existing_profiles[profile_name.data()];
+  return 0;
 }

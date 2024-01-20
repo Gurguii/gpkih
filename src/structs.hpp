@@ -1,5 +1,6 @@
 #pragma once
 #include <string>
+#include "gpki.hpp"
 
 namespace gpki {
 
@@ -13,6 +14,12 @@ struct Profile {
   std::string name;
   std::string source;
   ProfileStatus status;
+  std::string gopenssl(){
+    return source + SLASH + "gopenssl.cnf";
+  }
+  std::string dir_crl(){
+    return source + SLASH + "pki" + SLASH + "crl";
+  }
   std::string csv_entry(){
     return name + "," + source;
   }
@@ -62,3 +69,21 @@ struct Entity {
   }
 };
 } // namespace gpki
+namespace gpki::subopts
+{
+  struct init{
+    std::string profile_name;
+    std::string profile_source;
+  }; 
+  struct build{
+    std::string key_size = "1024";
+    std::string algorithm = "rsa";
+    std::string key_format = "pem";
+    std::string csr_crt_format = "pem";
+  };
+  
+  struct revoke{
+    std::string common_name; 
+    std::string reason = "not specified";
+  };
+}

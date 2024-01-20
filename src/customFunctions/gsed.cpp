@@ -3,13 +3,6 @@
 #include <sstream>
 #include <string_view>
 #include <unordered_map>
-#ifndef EOL
-#ifdef __WIN32
-#define EOL "\r\n"
-#else
-#define EOL "\n"
-#endif
-#endif
 /* sed("/home/gurgui/base", "/home/gurgui/aftersed.txt",
           {{"GPKI_BASEDIR", "WISKONSIN"}})
 */
@@ -37,7 +30,7 @@ int sed(std::string_view src, std::string_view dst,
     }
     dstfile << std::endl;
   }
-  dstfile << EOL;
+  dstfile << std::endl;
   srcfile.close();
   dstfile.close();
   return 0;

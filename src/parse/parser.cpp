@@ -9,8 +9,7 @@
 #include "subparser_build.cpp"
 #include "subparser_revoke.cpp"
 
-std::unordered_map<std::string, int (*)(std::vector<std::string>)> actions{
-  {"init", gpki::subparsers::init},
+std::unordered_map<std::string, int (*)(Profile*, std::vector<std::string>)> valid_actions_subparsers{
   {"build",gpki::subparsers::build},
   {"revoke",gpki::subparsers::revoke},
 };
@@ -22,25 +21,30 @@ int parse(int argc, const char **args) {
     help::generic::usage();
     return -1;
   }
-  if (db::profiles::initialize()){
-    std::cerr << "[error] couldn't initialize database\n";
-    return -1;
-  }
-  // std::string first = args[1];
-  // if (first == "init") {
-  //   return actions["init"](std::vector<std::string>(args+1,args+argc));
-  // }else if(argc == 1){
-  //   std::cout << "action required\n";
-  //   return -1;
-  // }
   std::string action = args[0];
+  if(action == "init"){
+    return subparsers::init(std::vector<std::string>(args+1,args+argc));
+  }
   //  check if actions exists and call appropiate subparser
-  if (actions.find(action) == actions.end()) {
+  if (valid_actions_subparsers.find(action) == valid_actions_subparsers.end()) {
     // not found
     std::cout << "action not found\n";
     return -1;
   }
+  if(argc == 1){
+    std::cout << "[error] profile name required\n";
+    std::cout << globals::user_used_command << "<profile>\n";
+    return -1;
+  }
+  std::string profile_name = args[1];
+  Profile current_profile;
+  if(db::profiles::load(profile_name,current_profile)){
+    // profile doesn't exist
+    std::cout << "Profile '" << profile_name << "' doesn't exist\n";
+    call_helper(action); 
+    return -1;
+  };
   // action exists, call subparser with subopts
-  return actions[action](std::vector<std::string>(args+1,args+argc));
+  return valid_actions_subparsers[action](&current_profile, std::vector<std::string>(args+2,args+argc));
 }
 } // namespace gpki
