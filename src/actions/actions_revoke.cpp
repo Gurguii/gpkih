@@ -41,7 +41,7 @@ int actions::revoke(Profile *profile, subopts::revoke *params){
   std::cout << "Generate new crl? y/n:";
   ans.assign("");
   std::getline(std::cin,ans);
-  if(ans == "y" && ans == "Y"){
+  if(ans == "y" || ans == "Y"){
     subopts::gencrl params;
     actions::gencrl(profile,&params);
     return system(command.c_str());
