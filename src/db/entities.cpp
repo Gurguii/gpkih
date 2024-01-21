@@ -2,7 +2,6 @@
 using namespace gpki;
 
 int db::entities::initialize() {
-  // entry e.g
   if (!std::filesystem::exists(dbpath)) {
     std::ofstream db(dbpath);
     if (!db.is_open()) {
@@ -11,7 +10,7 @@ int db::entities::initialize() {
     }
     db << dbheaders << std::endl;
     db.close();
-    std::cout << "entity csv created\n";
+    // std::cout << "entity csv created\n";
     return 0;
   }
   std::string headers(dbheaders.size(), '\x00');

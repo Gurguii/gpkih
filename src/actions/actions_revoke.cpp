@@ -42,11 +42,8 @@ int actions::revoke(Profile *profile, subopts::revoke *params){
   ans.assign("");
   std::getline(std::cin,ans);
   if(ans == "y" && ans == "Y"){
-    std::string outpath = profile->dir_crl() + SLASH + "current.pem";
-    std::string command = "openssl ca"
-    " -config " + profile->gopenssl() +
-    " -gencrl " +
-    " -out " + outpath;
+    subopts::gencrl params;
+    actions::gencrl(profile,&params);
     return system(command.c_str());
   }
   return 0;

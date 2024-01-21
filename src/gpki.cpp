@@ -12,6 +12,7 @@
 #include "actions/actions_init.cpp"
 #include "actions/actions_build.cpp"
 #include "actions/actions_revoke.cpp"
+#include "actions/actions_gencrl.cpp"
 
 /* Help functions */
 #include "help/build.cpp"

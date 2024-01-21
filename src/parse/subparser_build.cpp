@@ -1,5 +1,9 @@
 #include "subparser.hpp"
 
+// string -> "holasdasd"
+// vector<string> lista{"hola","soy","asdas","sdgs","asda"}
+// lista[0] -> "hola"
+// lista[1] -> "soy"
 // SYNTAX : ./gpki build <profile> [subopts]
 using namespace gpki;
 int subparsers::build(Profile *profile, std::vector<std::string> opts) { 

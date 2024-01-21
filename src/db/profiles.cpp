@@ -23,7 +23,7 @@ int db::profiles::initialize() {
     }
     db << dbheaders << std::endl;
     db.close();
-    std::cout << "database created\n";
+    // std::cout << "database created\n";
     return 0;
   }
   std::ifstream file(dbpath);

@@ -69,15 +69,19 @@ int actions::init(subopts::init *params) {
       std::cout << "[+] Please introduce desired profile name: ";
       std::getline(std::cin, profile.name);
     }while (db::profiles::exists(&profile));
+  }else{
+    profile.name = std::move(params->profile_name);
   }
-  profile.name = std::move(params->profile_name);
+
   if(params->profile_source.empty() || !IS_VALID_PATH(params->profile_source)){
     do {
       std::cout << "[+] Please introduce pki base dir (absolute path): ";
       std::getline(std::cin, profile.source);
     } while (!IS_VALID_PATH(profile.source));
-  } 
-  profile.source = std::move(params->profile_source);  
+  }else{
+    profile.source = std::move(params->profile_source); 
+  }
+
   // Check that we have write permissions in such path
   if (!hasWritePermissions(profile.source)) {
     seterror("[error] Not write permissions in '" + profile.source +
@@ -88,10 +92,12 @@ int actions::init(subopts::init *params) {
   // Create directories
   for (const std::string &relative : RELATIVE_DIRECTORY_PATHS) {
     std::string path = profile.source + SLASH + relative;
+    // std::cout << "directory: " << path << "\n";
     if (!std::filesystem::create_directories(path)) {
       seterror("couldn't create directory " + path);
       // Remove the profile source dir
       std::filesystem::remove_all(profile.source);
+      return -1;
     }
   }
   // Create files
