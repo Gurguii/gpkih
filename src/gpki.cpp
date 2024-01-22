@@ -9,15 +9,10 @@
 #include "db/profiles.cpp"
 
 /* Available actions */
-#include "actions/actions_init.cpp"
-#include "actions/actions_build.cpp"
-#include "actions/actions_revoke.cpp"
-#include "actions/actions_gencrl.cpp"
+#include "actions/actions.cpp"
 
 /* Help functions */
-#include "help/build.cpp"
-#include "help/generic.cpp"
-#include "help/revoke.cpp"
+#include "help/help.cpp"
 
 int main(int argc, const char **args) {
   // Add checks for openssl - openvpn existence

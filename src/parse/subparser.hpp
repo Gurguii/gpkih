@@ -5,6 +5,7 @@
 #include "../actions/actions.hpp"
 #include "../gpki.hpp"
 #include "../help/help.hpp"
+#include "../structs.hpp"
 
 namespace gpki::subparsers
 {
@@ -12,4 +13,5 @@ namespace gpki::subparsers
   int build(Profile *profile, std::vector<std::string> opts);
   int revoke(Profile *profile, std::vector<std::string> opts);
   int gencrl(Profile *profile, std::vector<std::string> opts);
+  int list(std::vector<std::string> opts);
 }

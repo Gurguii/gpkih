@@ -1,0 +1,47 @@
+#include "subparser.hpp"
+
+using namespace gpki;
+int subparsers::list(std::vector<std::string> opts){
+  opts.push_back("\0"); // avoid std::out_of_range when accesing like [++i]
+  //
+  subopts::list params;
+  for(int i = 0; i < opts.size() - 1; ++i){
+    std::string_view opt = opts[i];
+    if(opt == "-p" || opt == "--profile"){
+      std::string_view value = opts[i+1];
+      if(value[0] == '-' || value == "\0"){
+        std::cout << "no profile given, defaulting to ALL\n";
+      }else{
+        params.profile = opts[++i];
+      }
+    }else if(opt == "-cn" || opt == "--common-name"){
+      std::string_view value = opts[i+1]; 
+      if(value[0] == '-' || value == "\0"){
+        std::cout << "no common name given, defaulting to ALL\n";
+      }else{
+        params.common_name = opts[++i];
+      }
+    }else if(opt == "-ef" || opt == "--entity-fields"){
+      std::stringstream ss(opts[++i]);
+      std::string field;
+      auto emap = entity_fields_map();
+      while(getline(ss,field,CSV_DELIMITER_c)){
+        if(emap.find(field) != emap.end()){
+          params.efields.push_back(emap[field]);
+        }
+      }
+    }else if(opt == "-pf" || opt == "--profile-fields"){
+      std::stringstream ss(opts[++i]);
+      std::string field;
+      auto pmap = profile_fields_map();
+      while(getline(ss,field,FIELD_DELIMITER_c)){
+       if(pmap.find(field) != pmap.end()){
+          params.pfields.push_back(pmap[field]);
+        } 
+      }
+    }else{
+      UNKNOWN_OPTION_MSG(opt);
+    }
+  }
+  return 0;
+} 

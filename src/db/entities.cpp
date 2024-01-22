@@ -19,9 +19,10 @@ int db::entities::initialize() {
     std::cout << "entity headers do not match\n";
     return -1;
   }
+  initialized = 1;
   return 0;
 }
-int db::entities::populate_entry(std::string &entry, Entity *entity) {
+int db::entities::populate_from_entry(std::string &entry, Entity *entity) {
   std::string commas;
     std::stringstream ss(entry);
     getline(ss,entity->profile_name,',');
@@ -37,23 +38,16 @@ int db::entities::populate_entry(std::string &entry, Entity *entity) {
     getline(ss,entity->cert_path,',');
   return 0;
 }
-int db::entities::exists(Entity *entity) { 
-  std::ifstream file(dbpath);
-  if(!file.is_open()){
-    return -1;
-  }
-  std::string line;
-  Entity entry;
-  while(getline(file,line)){
-    populate_entry(line,&entry);
-    if(entry.subject.cn == entity->subject.cn && entry.profile_name == entity->profile_name){
-      // entity exists
-      return 1;
-    }
+int db::entities::populate_from_entry(std::string &entry, std::vector<std::string> &fields){
+  std::string field;
+  std::stringstream ss(entry);
+  while(getline(ss,field,CSV_DELIMITER_c)){
+    fields.push_back(field);
   }
   return 0;
 }
-int db::entities::exists(Profile *profile, std::string_view common_name){
+
+int db::entities::exists(std::string_view profile, std::string_view common_name){
   std::ifstream file(dbpath);
   if(!file.is_open()){
     return -1;
@@ -61,7 +55,7 @@ int db::entities::exists(Profile *profile, std::string_view common_name){
   std::string line;
   Entity info;
   while(getline(file,line)){
-    populate_entry(line,&info);
+    populate_from_entry(line,&info);
     if(info.subject.cn == common_name){
       return 1;
     }
@@ -76,7 +70,7 @@ int db::entities::load(Profile *profile, Entity *entity_buff, std::string_view c
   std::string line;
   Entity info;
   while(getline(file,line)){
-    populate_entry(line,&info);
+    populate_from_entry(line,&info);
     if(info.subject.cn == common_name){
       *entity_buff = std::move(info);
       return 0;
@@ -95,9 +89,8 @@ int db::entities::add(Entity *entity) {
   return !(std::filesystem::file_size(dbpath) > bsize);
 }
 
-int db::entities::del(Entity *entity) { 
-  Entity &e = *entity;
-  if(exists(entity)){
+int db::entities::del(std::string_view profile, std::string_view cn) { 
+  if(exists(profile,cn)){
     return -1;
   }
   std::ifstream file(dbpath);
@@ -113,8 +106,8 @@ int db::entities::del(Entity *entity) {
     return -1;
   }
   while(getline(file,line)){
-    populate_entry(line,&buff);
-    if(buff.profile_name != e.profile_name){
+    populate_from_entry(line,&buff);
+    if(buff.profile_name != profile){
       tmpfile <<  line << std::endl;
     }
   }

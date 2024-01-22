@@ -9,11 +9,12 @@
 #include "subparser_build.cpp"
 #include "subparser_revoke.cpp"
 #include "subparser_gencrl.cpp"
+#include "subparser_list.cpp"
 
 std::unordered_map<std::string, int (*)(Profile*, std::vector<std::string>)> valid_actions_subparsers{
   {"build",gpki::subparsers::build},
   {"revoke",gpki::subparsers::revoke},
-  {"gencrl",gpki::subparsers::gencrl}
+  {"gencrl",gpki::subparsers::gencrl},
 };
 
 namespace gpki {
@@ -26,8 +27,10 @@ int parse(int argc, const char **args) {
   std::string action = args[0];
   if(action == "init"){
     return subparsers::init(std::vector<std::string>(args+1,args+argc));
+  }else if(action == "list"){
+    return subparsers::list(std::vector<std::string>(args+1,args+argc));
   }
-  //  check if actions exists and call appropiate subparser
+  // check if action exists and call appropiate subparser
   if (valid_actions_subparsers.find(action) == valid_actions_subparsers.end()) {
     // not found
     std::cout << "action not found\n";

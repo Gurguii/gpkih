@@ -1,6 +1,7 @@
 #pragma once
 #include "structs.hpp"
 #include <filesystem>
+#include <iostream>
 
 
 #ifdef _WIN32
@@ -12,16 +13,12 @@
 #define SLASH std::string("/")
 #endif
 
-enum class ENTITY_TYPE
-{
-  none,
-  ca,
-  sv,
-  cl
-};
-const auto entity_type_str = [](ENTITY_TYPE type){
-    return (type == ENTITY_TYPE::ca ? "ca" : (type == ENTITY_TYPE::sv ? "server" : "client"));
-};
+#define FIELD_DELIMITER_s ":"
+#define FIELD_DELIMITER_c ':'
+
+inline void UNKNOWN_OPTION_MSG(std::string_view opt){ 
+  std::cout << "[!] unknown option '" << opt << "'" << std::endl;
+}
 
 namespace gpki::globals {
 static inline std::string srcdir = CURRENT_PATH;

@@ -2,7 +2,8 @@
 #include <cstdint>
 #include <string>
 #include "gpki.hpp"
-
+#include <unordered_map> 
+#include <vector>
 namespace gpki {
 
 struct ProfileStatus {
@@ -70,12 +71,63 @@ struct Entity {
   }
 };
 } // namespace gpki
+
+enum class ENTITY_TYPE
+{
+  none,
+  ca,
+  sv,
+  cl
+};
+const auto entity_type_str = [](ENTITY_TYPE type){
+  return (type == ENTITY_TYPE::ca ? "ca" : (type == ENTITY_TYPE::sv ? "server" : "client"));
+};
+
+enum class ENTITY_FIELDS : uint8_t{
+  profile = 0,
+  subject_cn = 1,
+  type = 2,
+  subject_country = 3,
+  subject_state = 4,
+  subject_location = 5,
+  subject_organisation = 6,
+  subject_email = 7,
+  key_path = 8,
+  req_path = 9,
+  cert_path = 10,
+};
+inline std::unordered_map<std::string,ENTITY_FIELDS>entity_fields_map(){
+  return { \
+    {"profile",ENTITY_FIELDS::profile},\
+    {"cn",ENTITY_FIELDS::subject_cn}, \
+    {"type",ENTITY_FIELDS::type}, \
+    {"country",ENTITY_FIELDS::subject_country}, \
+    {"state",ENTITY_FIELDS::subject_state},\
+    {"location",ENTITY_FIELDS::subject_location},\
+    {"org",ENTITY_FIELDS::subject_organisation},\
+    {"mail",ENTITY_FIELDS::subject_email},\
+    {"key",ENTITY_FIELDS::key_path},\
+    {"req",ENTITY_FIELDS::req_path},\
+    {"crt",ENTITY_FIELDS::cert_path} \
+  };
+}
+enum class PROFILE_FIELDS : uint8_t {
+  name = 0,
+  source = 1
+};
+inline std::unordered_map<std::string,PROFILE_FIELDS> profile_fields_map(){
+  return { \
+    {"name",PROFILE_FIELDS::name}, \
+    {"source",PROFILE_FIELDS::source}, \
+  };
+}
 namespace gpki::subopts
 {
   struct init{
     std::string profile_name;
     std::string profile_source;
   }; 
+
   struct build{
     std::string key_size = "1024";
     std::string algorithm = "rsa";
@@ -87,33 +139,7 @@ namespace gpki::subopts
     std::string common_name; 
     std::string reason = "not specified";
   };
-/*
- *std::string country = "ES";
-  std::string state = "GRAN CANARIAS";
-  std::string location = "LAS PALMAS";
-  std::string organisation = "MARIWANOS";
-  std::string cn;
-  std::string email = "NONE";
-  std::string oneliner() {
-*/
-enum class ENTITY_FIELDS : uint16_t{
-  all = 0,
-  subject = 2,
-  subject_country = 4,
-  subject_state = 8,
-  subject_location = 16,
-  subject_organisation = 32,
-  subject_cn = 64,
-  subject_email = 128,
-  key_path = 256,
-  cert_path = 512,
-  req_path = 1024,
-};
-enum class PROFILE_FIELDS : uint8_t {
-  all = 0,
-  name = 2,
-  source = 4
-};
+
   struct gencrl{
     /* No subopts */
   };
@@ -124,7 +150,16 @@ enum class PROFILE_FIELDS : uint8_t {
   struct list{
     std::string profile;
     std::string common_name;
-    ENTITY_FIELDS einfo; 
-    PROFILE_FIELDS pinfo;
+    std::vector<ENTITY_FIELDS> efields; 
+    std::vector<PROFILE_FIELDS> pfields;
   };
 }
+/*
+ *std::string country = "ES";
+  std::string state = "GRAN CANARIAS";
+  std::string location = "LAS PALMAS";
+  std::string organisation = "MARIWANOS";
+  std::string cn;
+  std::string email = "NONE";
+  std::string oneliner() {
+*/

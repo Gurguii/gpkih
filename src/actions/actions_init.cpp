@@ -68,7 +68,7 @@ int actions::init(subopts::init *params) {
     do {
       std::cout << "[+] Please introduce desired profile name: ";
       std::getline(std::cin, profile.name);
-    }while (db::profiles::exists(&profile));
+    }while (db::profiles::exists(profile.name));
   }else{
     profile.name = std::move(params->profile_name);
   }

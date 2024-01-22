@@ -1,18 +1,20 @@
 #include "database.hpp"
 using namespace gpki;
 
-int db::profiles::populate_entry(std::string entry, Profile *profile) {
-  // entry e.g 1,wiski,/home/gurgui/test,0
-  std::ifstream file(dbpath);
-  if (!file.is_open()) {
-    return -1;
-  }
+int db::profiles::populate_from_entry(std::string &entry, Profile *profile) {
   std::stringstream ss(entry);
   std::getline(ss,profile->name,CSV_DELIMITER_c);
   std::getline(ss,profile->source,CSV_DELIMITER_c);
   return 0;
 }
-
+int db::profiles::populate_from_entry(std::string &entry, std::vector<std::string> &fields){
+  std::string token;
+  std::stringstream ss(entry);
+  while(getline(ss,token,',')){
+    fields.push_back(token);
+  }
+  return 0;
+}
 int db::profiles::initialize() {
   if (!std::filesystem::exists(dbpath)) {
     // Create
@@ -37,14 +39,10 @@ int db::profiles::initialize() {
   std::string line;
   Profile pinfo;
   while(getline(file,line)){
-    populate_entry(line,&pinfo);
+    populate_from_entry(line,&pinfo);
     existing_profiles.emplace(pinfo.name,pinfo);
   }
   return 0;
-}
-
-int db::profiles::exists(Profile *profile) {
-  return existing_profiles.find(profile->name) != existing_profiles.end();
 }
 
 int db::profiles::exists(std::string_view profile_name) {
@@ -52,7 +50,7 @@ int db::profiles::exists(std::string_view profile_name) {
 }
 
 int db::profiles::add(Profile *profile) {
-  if (exists(profile)) {
+  if (exists(profile->name)) {
     return -1;
   }
   int bsize = std::filesystem::file_size(dbpath);
@@ -67,7 +65,7 @@ int db::profiles::del(Profile *profile) {
   std::string line;
   Profile entry;
   while (getline(file, line)) {
-    populate_entry(line, &entry);
+    populate_from_entry(line, &entry);
   }
   return 0;
 }

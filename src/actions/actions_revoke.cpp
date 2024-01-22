@@ -44,7 +44,6 @@ int actions::revoke(Profile *profile, subopts::revoke *params){
   if(ans == "y" || ans == "Y"){
     subopts::gencrl params;
     actions::gencrl(profile,&params);
-    return system(command.c_str());
   }
   return 0;
 };

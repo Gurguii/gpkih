@@ -29,7 +29,7 @@ int subparsers::build(Profile *profile, std::vector<std::string> opts) {
     }else if(opt == "-outformat"){
       params.csr_crt_format = opts[++i];
     }else{
-      std::cout << "[!] unknown option '" << opt << "'\n";
+      UNKNOWN_OPTION_MSG(opt);
     }
   }
   if(type == ENTITY_TYPE::none){

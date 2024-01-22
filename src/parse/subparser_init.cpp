@@ -12,6 +12,8 @@ int subparsers::init(std::vector<std::string> opts){
       params.profile_name = opts[++i];
     }else if(opt == "-s" || opt == "--source"){
       params.profile_source = opts[++i];
+    }else{
+      UNKNOWN_OPTION_MSG(opt);
     }
   }
   actions::init(&params);

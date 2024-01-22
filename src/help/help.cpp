@@ -1,0 +1,6 @@
+#include "help_build.cpp"
+#include "help_generic.cpp"
+#include "help_revoke.cpp"
+#include "help_gencrl.cpp"
+#include "help_list.cpp"
+#include "help_init.cpp"
