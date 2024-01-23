@@ -9,6 +9,7 @@ int actions::list(subopts::list &params){
       std::cout << "================================\n";
       std::cout << "Profile name: " << kv.first << "\n";
       std::cout << "Profile source: " << kv.second.source << "\n";
+      std::cout << "================================\n";
     }
   }else if(params.profile.empty() && !params.common_name.empty()){
     // target entity and all profiles

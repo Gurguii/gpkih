@@ -7,7 +7,7 @@
 
 #include "../gpki.hpp"
 #include "../db/database.hpp"
-#include "../customFunctions/gsed.cpp"
+#include "../utils/gsed.cpp"
 
 namespace gpki::actions
 {

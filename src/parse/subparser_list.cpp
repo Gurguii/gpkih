@@ -43,5 +43,5 @@ int subparsers::list(std::vector<std::string> opts){
       UNKNOWN_OPTION_MSG(opt);
     }
   }
-  return 0;
+  return actions::list(params);
 } 

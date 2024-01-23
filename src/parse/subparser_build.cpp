@@ -1,9 +1,5 @@
 #include "subparser.hpp"
 
-// string -> "holasdasd"
-// vector<string> lista{"hola","soy","asdas","sdgs","asda"}
-// lista[0] -> "hola"
-// lista[1] -> "soy"
 // SYNTAX : ./gpki build <profile> [subopts]
 using namespace gpki;
 int subparsers::build(Profile *profile, std::vector<std::string> opts) { 
@@ -33,8 +29,7 @@ int subparsers::build(Profile *profile, std::vector<std::string> opts) {
     }
   }
   if(type == ENTITY_TYPE::none){
-    std::cout << "[error] Please specify an entity type\n";
-    std::cout << globals::user_used_command << " -[ca|sv|cl]\n";
+    std::cout << "[error] Please specify an entity type -[ca|sv|cl]\n";
     return -1;
   }
   return actions::build(profile,&params,type);

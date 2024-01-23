@@ -143,10 +143,6 @@ namespace gpki::subopts
   struct gencrl{
     /* No subopts */
   };
-  // ./gpki info -p test | give info about profile test
-  // ./gpki info -p test -cn client1 | give info about 'client1' from profile 'test'
-  // ./gpki info -p | give info about all existing profiles
-  // ./gpki info -p -cn | give info about all profiles and all entities
   struct list{
     std::string profile;
     std::string common_name;

@@ -21,7 +21,7 @@ namespace gpki {
 // [!] parse() does not expect to receive program name in args
 int parse(int argc, const char **args) {
   if (argc == 0) {
-    help::generic::usage();
+    help::usage();
     return -1;
   }
   std::string action = args[0];
@@ -37,8 +37,7 @@ int parse(int argc, const char **args) {
     return -1;
   }
   if(argc == 1){
-    std::cout << "[error] profile name required\n";
-    std::cout << globals::user_used_command << "<profile>\n";
+    call_helper(action);
     return -1;
   }
   std::string profile_name = args[1];

@@ -100,7 +100,7 @@ int actions::build(Profile *profile, gpki::subopts::build *opts, ENTITY_TYPE typ
         " -in " + entity.req_path + 
         " -out " + entity.cert_path +
         " -subj '" + entity.subject.oneliner() + "'"
-        " -extfile " + globals::configdir + SLASH + "x509" + SLASH + entity.type +
+        " -extfile " + CONFDIR + SLASH + "x509" + SLASH + entity.type +
         " -notext";
         if(system(crt_command.c_str())){
             std::cout << "[FAIL] - command '" << crt_command << "'\n";

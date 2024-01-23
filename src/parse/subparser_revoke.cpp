@@ -20,8 +20,7 @@ int subparsers::revoke(Profile *profile, std::vector<std::string> opts){
     }
   }
   if(params.common_name.empty()){
-    std::cout << "[error] Please specify a common name\n";
-    std::cout << globals::user_used_command << "-cn maikol\n";
+    std::cout << "[error] Please specify a common name | -cn <name>\n";
     return -1;
   }
   return actions::revoke(profile,&params);

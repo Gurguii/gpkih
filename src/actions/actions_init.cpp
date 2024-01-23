@@ -1,4 +1,5 @@
 #include "actions.hpp"
+#include "../utils/gpkih_util_funcs.hpp"
 
 #define RELATIVE_DIRECTORY_PATHS                                               \
   std::vector<std::string> {                                                   \
@@ -14,16 +15,7 @@
       "pki" + SLASH + "database" + SLASH + "index.txt", ""                     \
     }                                                                          \
   }
-#define seterror(x) std::cout << "[error] - " << x << "\n";
-bool hasWritePermissions(const std::filesystem::path &directoryPath) {
-  /* this approach is kind of sad to see */
-  try {
-    auto s = std::filesystem::status(directoryPath);
-    return true;
-  } catch (std::exception &ex) {
-    return false;
-  }
-}
+
 int create_dhparam(std::string_view outpath) {
   std::string command = "openssl dhparam -out " + std::string(outpath) + " 1024";
   if (system(command.c_str())) {
@@ -113,7 +105,7 @@ int actions::init(subopts::init *params) {
     }
   }
   // Adapt gopenssl.cnf file to the profile
-  std::string sed_src = globals::configdir + SLASH + "gopenssl.cnf";
+  std::string sed_src = CONFDIR + SLASH + "gopenssl.cnf";
   std::string sed_dst = profile.source + SLASH + "gopenssl.cnf";
   
   #ifdef __WIN32
@@ -133,7 +125,7 @@ int actions::init(subopts::init *params) {
   }
 
   // Extra questions
-  if (globals::prompt) {
+  if (prompt) {
     // QUESTION 1
     std::cout << "Create dhparam and openvpn static key (tls-crypt)? [recommended] Y/N: ";
     std::string ans;

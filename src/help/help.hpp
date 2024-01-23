@@ -2,9 +2,8 @@
 #include <iostream>
 #include <unordered_map>
 
-
-namespace gpki::help::generic {
-void usage();
+namespace gpki::help{
+void usage();  
 }
 namespace gpki::help::build {
 void usage();
