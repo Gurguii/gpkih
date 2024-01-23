@@ -113,7 +113,7 @@ int actions::init(subopts::init *params) {
 
 #ifdef __WIN32
   std::replace_if(
-      profile.source.begin(), profile_source.end(),
+      profile.source.begin(), profile.source.end(),
       [](char c) { return c == '\\'; }, '/');
 #endif
   if (sed(sed_src, sed_dst, {{"GPKI_BASEDIR", profile.source + "/pki"}})) {
@@ -122,7 +122,7 @@ int actions::init(subopts::init *params) {
   }
 #ifdef __WIN32
   std::replace_if(
-      profile.source.begin(), profile_source.end(),
+      profile.source.begin(), profile.source.end(),
       [](char c) { return c == '/'; }, '\\');
 #endif
 
