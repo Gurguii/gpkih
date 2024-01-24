@@ -1,0 +1,12 @@
+- Instead of using a vector and match PROFILE_FIELDS | ENTITY_FIELDS values to the indexes, what about just
+
+using a switch case statement + ostream to create custom labels by checking all desired fields?
+this way we can keep both the values and switch case approach which i find more readable
+
+another approach would be using n^2 values so that we can overload & and do something like:
+FIELDS & specific_field && label << "Specific field: " << profile.specific_field << std::endl; 
+FIELDS & other_field && label << "Other field: " << profile.other_field << std::endl;
+and so on...
+
+we don't actually need the index approach since we know the csv headers, so we can just load Profiles / Entities to 
+their structures and avoid more overloads
