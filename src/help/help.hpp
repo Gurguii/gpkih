@@ -1,6 +1,7 @@
 #pragma once
 #include <iostream>
 #include <unordered_map>
+#include "../gpki.hpp"
 
 namespace gpki::help{
 void usage();  
@@ -22,16 +23,4 @@ void usage();
 }
 
 using namespace gpki;
-void call_helper(std::string &action){
-  if(action == "build"){
-    help::build::usage();
-  }else if(action == "revoke"){
-    help::revoke::usage(); 
-  }else if(action == "init"){
-    help::init::usage();
-  }else if(action == "gencrl"){
-    help::gencrl::usage();
-  }else if(action == "list"){
-    help::list::usage();
-  }
-}
+void call_helper(strview action);

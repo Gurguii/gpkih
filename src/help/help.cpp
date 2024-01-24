@@ -34,5 +34,18 @@ Revoke certicates
 Generate crl
   ./gpki gencrl [profile] [subopts]
 )";
+}
 
+void call_helper(strview action){
+  if(action == "build"){
+    help::build::usage();
+  }else if(action == "revoke"){
+    help::revoke::usage(); 
+  }else if(action == "init"){
+    help::init::usage();
+  }else if(action == "gencrl"){
+    help::gencrl::usage();
+  }else if(action == "list"){
+    help::list::usage();
+  }
 }

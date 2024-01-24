@@ -4,6 +4,7 @@
 #include <vector>
 #include <ostream>
 #include <algorithm>
+#include <cstdint>
 
 #include "../gpki.hpp"
 #include "../db/database.hpp"

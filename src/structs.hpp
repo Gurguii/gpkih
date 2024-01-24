@@ -67,27 +67,27 @@ const auto entity_type_str = [](ENTITY_TYPE type) {
 
 enum class ENTITY_FIELDS : uint8_t {
   profile = 0,
-#define E_PROFILE (uint8_t) ENTITY_FIELDS::profile
+#define E_PROFILE ENTITY_FIELDS::profile
   subject_cn = 1,
-#define E_COMMON (uint8_t) ENTITY_FIELDS::subject_cn
+#define E_COMMON ENTITY_FIELDS::subject_cn
   type = 2,
-#define E_TYPE (uint8_t) ENTITY_FIELDS::type
+#define E_TYPE ENTITY_FIELDS::type
   subject_country = 3,
-#define E_COUNTRY (uint8_t) ENTITY_FIELDS::subject_country
+#define E_COUNTRY ENTITY_FIELDS::subject_country
   subject_state = 4,
-#define E_STATE (uint8_t) ENTITY_FIELDS::subject_state
+#define E_STATE ENTITY_FIELDS::subject_state
   subject_location = 5,
-#define E_LOCATION (uint8_t) ENTITY_FIELDS::subject_location
+#define E_LOCATION ENTITY_FIELDS::subject_location
   subject_organisation = 6,
-#define E_ORG (uint8_t) ENTITY_FIELDS::subject_organisation
+#define E_ORG ENTITY_FIELDS::subject_organisation
   subject_email = 7,
-#define E_MAIL (uint8_t) ENTITY_FIELDS::subject_email
+#define E_MAIL ENTITY_FIELDS::subject_email
   key_path = 8,
-#define E_KEYPATH (uint8_t) ENTITY_FIELDS::key_path
+#define E_KEYPATH ENTITY_FIELDS::key_path
   req_path = 9,
-#define E_REQPATH (uint8_t) ENTITY_FIELDS::req_path
+#define E_REQPATH ENTITY_FIELDS::req_path
   cert_path = 10,
-#define E_CRTPATH (uint8_t) ENTITY_FIELDS::cert_path
+#define E_CRTPATH ENTITY_FIELDS::cert_path
 };
 
 inline std::unordered_map<std::string, ENTITY_FIELDS> entity_fields_map() {
@@ -104,7 +104,12 @@ inline std::unordered_map<std::string, ENTITY_FIELDS> entity_fields_map() {
           {"crt", ENTITY_FIELDS::cert_path}};
 }
 
-enum class PROFILE_FIELDS : uint8_t { name = 0, source = 1 };
+enum class PROFILE_FIELDS : uint8_t { 
+  name = 0,
+  #define P_NAME PROFILE_FIELDS::name
+  source = 1 
+  #define P_SRC PROFILE_FIELDS::source
+};
 inline std::unordered_map<std::string, PROFILE_FIELDS> profile_fields_map() {
   return {
       {"name", PROFILE_FIELDS::name},
@@ -132,20 +137,12 @@ struct revoke {
 struct gencrl {
   /* No subopts */
 };
-struct list {
-  std::vector<std::string> profile;
-  std::vector<std::string> common_name;
 
-  std::vector<std::string> efields;
-  std::vector<std::string> pfields;
+struct list {
+  std::vector<std::string> profiles;
+  std::vector<std::string> entities;
+
+  std::vector<ENTITY_FIELDS> efields {E_PROFILE, E_COMMON, E_TYPE, E_COUNTRY,E_STATE,E_LOCATION,E_ORG,E_MAIL,E_KEYPATH,E_REQPATH,E_CRTPATH};
+  std::vector<PROFILE_FIELDS> pfields {P_NAME,P_SRC};
 };
 } // namespace gpki::subopts
-/*
- *std::string country = "ES";
-  std::string state = "GRAN CANARIAS";
-  std::string location = "LAS PALMAS";
-  std::string organisation = "MARIWANOS";
-  std::string cn;
-  std::string email = "NONE";
-  std::string oneliner() {
-*/

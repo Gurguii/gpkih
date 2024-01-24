@@ -1,9 +1,1 @@
-- fully and properly implement the list action
-- change the csv locations, mkdir on gpki path ($env:userprofile\gpki | ~/.config/gpki)
-mkdir ~/.config/gpki/database
-touch ~/.config/gpki/database/profiles.csv
-
-mkdir ~/.config/gpki/database/entities
-touch ~/.config/gpki/database/entities/profile1.csv
-touch ~/.config/gpki/database/entities/profile2.csv
-
+- [IN PROGRESS IM DISGUTED WITH MYSELF] fully and properly implement the list action

@@ -20,6 +20,8 @@ static int del(Profile *profile);
 static int load(strview profile_name, Profile &pinfo);
 static int get_entities(str profile,
                         std::vector<std::vector<str>> &entities_fields_buff);
+static int get_fields(str profile,
+                      std::vector<str> &fields_buff);
 } // namespace gpki::db::profiles
 
 namespace gpki::db::entities {

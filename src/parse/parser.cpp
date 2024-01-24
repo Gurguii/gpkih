@@ -25,12 +25,22 @@ int parse(int argc, const char **args) {
     help::usage();
     return -1;
   }
+
   std::string action = args[0];
-  if (action == "init") {
+
+  if(action == "help"){
+    if(argc > 1){
+      call_helper(args[1]);
+    }else{
+      help::usage();
+    }
+    return 0;
+  } else if (action == "init") {
     return subparsers::init(std::vector<std::string>(args + 1, args + argc));
   } else if (action == "list") {
     return subparsers::list(std::vector<std::string>(args + 1, args + argc));
   }
+
   // check if action exists and call appropiate subparser
   if (valid_actions_subparsers.find(action) == valid_actions_subparsers.end()) {
     // not found

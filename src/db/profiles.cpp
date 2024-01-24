@@ -80,7 +80,7 @@ int db::profiles::load(std::string_view profile_name, Profile &pinfo) {
 }
 
 int db::profiles::get_entities(
-    str profile, std::vector<std::vector<str>> &entities_fields_buff) {
+  str profile, std::vector<std::vector<str>> &entities_fields_buff) {
   std::ifstream file(DBDIR + profile + "_entities.csv");
   if (!file.is_open()) {
     return -1;
@@ -91,5 +91,11 @@ int db::profiles::get_entities(
     populate_from_entry(entry, fields);
     entities_fields_buff.push_back(fields);
   }
+  return 0;
+}
+
+int db::profiles::get_fields(str profile, std::vector<str> &buff){
+  buff.push_back(existing_profiles[profile].name);
+  buff.push_back(existing_profiles[profile].source);
   return 0;
 }
