@@ -67,17 +67,29 @@ const auto entity_type_str = [](ENTITY_TYPE type) {
 
 enum class ENTITY_FIELDS : uint8_t {
   profile = 0,
+#define E_PROFILE (uint8_t) ENTITY_FIELDS::profile
   subject_cn = 1,
+#define E_COMMON (uint8_t) ENTITY_FIELDS::subject_cn
   type = 2,
+#define E_TYPE (uint8_t) ENTITY_FIELDS::type
   subject_country = 3,
+#define E_COUNTRY (uint8_t) ENTITY_FIELDS::subject_country
   subject_state = 4,
+#define E_STATE (uint8_t) ENTITY_FIELDS::subject_state
   subject_location = 5,
+#define E_LOCATION (uint8_t) ENTITY_FIELDS::subject_location
   subject_organisation = 6,
+#define E_ORG (uint8_t) ENTITY_FIELDS::subject_organisation
   subject_email = 7,
+#define E_MAIL (uint8_t) ENTITY_FIELDS::subject_email
   key_path = 8,
+#define E_KEYPATH (uint8_t) ENTITY_FIELDS::key_path
   req_path = 9,
+#define E_REQPATH (uint8_t) ENTITY_FIELDS::req_path
   cert_path = 10,
+#define E_CRTPATH (uint8_t) ENTITY_FIELDS::cert_path
 };
+
 inline std::unordered_map<std::string, ENTITY_FIELDS> entity_fields_map() {
   return {{"profile", ENTITY_FIELDS::profile},
           {"cn", ENTITY_FIELDS::subject_cn},
@@ -91,6 +103,7 @@ inline std::unordered_map<std::string, ENTITY_FIELDS> entity_fields_map() {
           {"req", ENTITY_FIELDS::req_path},
           {"crt", ENTITY_FIELDS::cert_path}};
 }
+
 enum class PROFILE_FIELDS : uint8_t { name = 0, source = 1 };
 inline std::unordered_map<std::string, PROFILE_FIELDS> profile_fields_map() {
   return {
@@ -122,8 +135,9 @@ struct gencrl {
 struct list {
   std::vector<std::string> profile;
   std::vector<std::string> common_name;
-  std::vector<ENTITY_FIELDS> efields;
-  std::vector<PROFILE_FIELDS> pfields;
+
+  std::vector<std::string> efields;
+  std::vector<std::string> pfields;
 };
 } // namespace gpki::subopts
 /*

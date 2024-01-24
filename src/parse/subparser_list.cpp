@@ -34,7 +34,7 @@ int subparsers::list(std::vector<std::string> opts) {
       auto emap = entity_fields_map();
       while (getline(ss, field, CSV_DELIMITER_c)) {
         if (emap.find(field) != emap.end()) {
-          params.efields.push_back(emap[field]);
+          params.efields.push_back(field);
         }
       }
     } else if (opt == "-pf" || opt == "--profile-fields") {
@@ -43,7 +43,7 @@ int subparsers::list(std::vector<std::string> opts) {
       auto pmap = profile_fields_map();
       while (getline(ss, field, FIELD_DELIMITER_c)) {
         if (pmap.find(field) != pmap.end()) {
-          params.pfields.push_back(pmap[field]);
+          params.pfields.push_back(field);
         }
       }
     } else {

@@ -3,7 +3,7 @@ using namespace gpki;
 
 int db::entities::initialize(str profile) {
   dbpath = DBDIR + profile + "_entities.csv";
-  if (!std::filesystem::exists(dbpath)) {
+  if (!fs::exists(dbpath)) {
     std::ofstream db(dbpath);
     if (!db.is_open()) {
       std::cout << "couldn't create file '" << dbpath << "'\n";
@@ -14,7 +14,7 @@ int db::entities::initialize(str profile) {
     // std::cout << "entity csv created\n";
     return 0;
   }
-  std::string headers(dbheaders.size(), '\x00');
+  str headers(dbheaders.size(), '\x00');
   std::ifstream(dbpath).read(&headers[0], headers.size());
   if (headers != dbheaders) {
     std::cout << "entity headers do not match\n";
@@ -23,25 +23,25 @@ int db::entities::initialize(str profile) {
   initialized = 1;
   return 0;
 }
-int db::entities::populate_from_entry(std::string &entry, Entity *entity) {
-  std::string commas;
+int db::entities::populate_from_entry(str &entry, Entity *entity) {
+  str commas;
   std::stringstream ss(entry);
-  getline(ss, entity->profile_name, ',');
-  getline(ss, entity->subject.cn, ',');
-  getline(ss, entity->type, ',');
-  getline(ss, entity->subject.country, ',');
-  getline(ss, entity->subject.state, ',');
-  getline(ss, entity->subject.location, ',');
-  getline(ss, entity->subject.organisation, ',');
-  getline(ss, entity->subject.email, ',');
-  getline(ss, entity->key_path, ',');
-  getline(ss, entity->req_path, ',');
-  getline(ss, entity->cert_path, ',');
+  getline(ss, entity->profile_name, CSV_DELIMITER_c);
+  getline(ss, entity->subject.cn, CSV_DELIMITER_c);
+  getline(ss, entity->type, CSV_DELIMITER_c);
+  getline(ss, entity->subject.country, CSV_DELIMITER_c);
+  getline(ss, entity->subject.state, CSV_DELIMITER_c);
+  getline(ss, entity->subject.location, CSV_DELIMITER_c);
+  getline(ss, entity->subject.organisation, CSV_DELIMITER_c);
+  getline(ss, entity->subject.email, CSV_DELIMITER_c);
+  getline(ss, entity->key_path, CSV_DELIMITER_c);
+  getline(ss, entity->req_path, CSV_DELIMITER_c);
+  getline(ss, entity->cert_path, CSV_DELIMITER_c);
   return 0;
 }
-int db::entities::populate_from_entry(std::string &entry,
+int db::entities::populate_from_entry(str &entry,
                                       std::vector<std::string> &fields) {
-  std::string field;
+  str field;
   std::stringstream ss(entry);
   while (getline(ss, field, CSV_DELIMITER_c)) {
     fields.push_back(field);
@@ -49,13 +49,12 @@ int db::entities::populate_from_entry(std::string &entry,
   return 0;
 }
 
-int db::entities::exists(std::string_view profile,
-                         std::string_view common_name) {
+int db::entities::exists(strview profile, strview common_name) {
   std::ifstream file(dbpath);
   if (!file.is_open()) {
     return -1;
   }
-  std::string line;
+  str line;
   Entity info;
   while (getline(file, line)) {
     populate_from_entry(line, &info);
@@ -66,12 +65,12 @@ int db::entities::exists(std::string_view profile,
   return 0;
 }
 int db::entities::load(Profile *profile, Entity *entity_buff,
-                       std::string_view common_name) {
+                       strview common_name) {
   std::ifstream file(dbpath);
   if (!file.is_open()) {
     return -1;
   }
-  std::string line;
+  str line;
   Entity info;
   while (getline(file, line)) {
     populate_from_entry(line, &info);
@@ -88,12 +87,13 @@ int db::entities::add(Entity *entity) {
   if (!file.is_open()) {
     return -1;
   }
-  uint64_t bsize = std::filesystem::file_size(dbpath);
+  uint64_t bsize = fs::file_size(dbpath);
   file << e.csv_entry() << std::endl;
-  return !(std::filesystem::file_size(dbpath) > bsize);
+  return !(fs::file_size(dbpath) > bsize);
 }
 
-int db::entities::del(std::string_view profile, std::string_view cn) {
+int db::entities::del(strview profile, strview cn) {
+  return 0;
   if (exists(profile, cn)) {
     return -1;
   }
@@ -101,10 +101,10 @@ int db::entities::del(std::string_view profile, std::string_view cn) {
   if (!file.is_open()) {
     return -1;
   }
-  std::string line;
+  str line;
   Entity buff;
 
-  std::filesystem::path tmpfilename = dbpath + ".tmp";
+  fs::path tmpfilename = dbpath + ".tmp";
   std::ofstream tmpfile(tmpfilename);
   if (!tmpfile.is_open()) {
     return -1;
@@ -115,7 +115,7 @@ int db::entities::del(std::string_view profile, std::string_view cn) {
       tmpfile << line << std::endl;
     }
   }
-  std::filesystem::remove(dbpath);
-  std::filesystem::rename(tmpfilename, dbpath);
-  return std::filesystem::exists(dbpath);
+  fs::remove(dbpath);
+  fs::rename(tmpfilename, dbpath);
+  return fs::exists(dbpath);
 }
