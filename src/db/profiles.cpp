@@ -1,23 +1,27 @@
 #include "database.hpp"
 using namespace gpki;
 
-int db::profiles::populate_from_entry(std::string &entry, Profile *profile) {
-  std::stringstream ss(entry);
+int db::profiles::populate_from_entry(str &entry, Profile *profile) {
+  sstream ss(entry);
   std::getline(ss, profile->name, CSV_DELIMITER_c);
   std::getline(ss, profile->source, CSV_DELIMITER_c);
   return 0;
 }
-int db::profiles::populate_from_entry(std::string &entry,
-                                      std::vector<std::string> &fields) {
-  std::string token;
-  std::stringstream ss(entry);
+
+int db::profiles::populate_from_entry(str &entry,
+                                      std::vector<str> &fields) {
+  str token;
+  sstream ss(entry);
   while (getline(ss, token, ',')) {
     fields.push_back(token);
   }
   return 0;
 }
+
+/* Requires only 1 call since the profiles
+* are all in the same csv */
 int db::profiles::initialize() {
-  if (!std::filesystem::exists(dbpath)) {
+  if (!fs::exists(dbpath)) {
     // Create
     std::ofstream db(dbpath);
     if (!db.is_open()) {
@@ -30,14 +34,14 @@ int db::profiles::initialize() {
     return 0;
   }
   std::ifstream file(dbpath);
-  std::string headers;
+  str headers;
   getline(file, headers);
   if (headers != dbheaders) {
     std::cout << "profile headers do not match\n";
     return -1;
   }
   // Load profiles into existing_profiles
-  std::string line;
+  str line;
   Profile pinfo;
   while (getline(file, line)) {
     populate_from_entry(line, &pinfo);
@@ -46,7 +50,7 @@ int db::profiles::initialize() {
   return 0;
 }
 
-int db::profiles::exists(std::string_view profile_name) {
+int db::profiles::exists(strview profile_name) {
   return existing_profiles.find(profile_name.data()) != existing_profiles.end();
 }
 
@@ -54,16 +58,16 @@ int db::profiles::add(Profile *profile) {
   if (exists(profile->name)) {
     return -1;
   }
-  int bsize = std::filesystem::file_size(dbpath);
+  int bsize = fs::file_size(dbpath);
   std::ofstream db(dbpath, std::ios::app);
   db << profile->csv_entry() << std::endl;
-  return (std::filesystem::file_size(dbpath) > bsize ? 0 : -1);
+  return (fs::file_size(dbpath) > bsize ? 0 : -1);
 }
 
-int db::profiles::del(Profile *profile) {
-  int s = std::filesystem::file_size(dbpath);
+int db::profiles::del(strview profile) {
+  int s = fs::file_size(dbpath);
   std::ifstream file(dbpath);
-  std::string line;
+  str line;
   Profile entry;
   while (getline(file, line)) {
     populate_from_entry(line, &entry);
@@ -71,7 +75,7 @@ int db::profiles::del(Profile *profile) {
   return 0;
 }
 
-int db::profiles::load(std::string_view profile_name, Profile &pinfo) {
+int db::profiles::load(strview profile_name, Profile &pinfo) {
   if (!exists(profile_name)) {
     return -1;
   }

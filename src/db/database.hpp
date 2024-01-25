@@ -1,4 +1,5 @@
 #pragma once
+#include "../structs.hpp"
 #include "../gpki.hpp"
 #include <filesystem>
 #include <fstream>
@@ -16,7 +17,7 @@ static int populate_from_entry(str &entry, Profile *profile);
 static int populate_from_entry(str &entry, std::vector<str> &fields);
 static int exists(strview profile_name);
 static int add(Profile *profile);
-static int del(Profile *profile);
+static int del(strview profile);
 static int load(strview profile_name, Profile &pinfo);
 static int get_entities(str profile,
                         std::vector<std::vector<str>> &entities_fields_buff);

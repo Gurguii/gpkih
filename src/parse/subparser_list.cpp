@@ -29,25 +29,31 @@ int subparsers::list(std::vector<std::string> opts) {
         }
       }
     } else if (opt == "-ef" || opt == "--entity-fields") {
-      params.efields.clear();
+      params.efields = E_NONE;
       std::stringstream ss(opts[++i]);
       std::string field;
       auto emap = entity_fields_map();
       while (getline(ss, field, CSV_DELIMITER_c)) {
         if (emap.find(field) != emap.end()) {
-          params.efields.push_back(emap[field]);
+          params.efields |= emap[field];
+        }else{
+          std::cout << "Field '" << field << "' doesn't exist\n";
         }
       }
     } else if (opt == "-pf" || opt == "--profile-fields") {
-      params.pfields.clear();
+      std::cout << "before: " << (int)params.pfields << "\n";
+      params.pfields = P_NONE;
       std::stringstream ss(opts[++i]);
       std::string field;
       auto pmap = profile_fields_map();
       while (getline(ss, field, CSV_DELIMITER_c)) {
         if (pmap.find(field) != pmap.end()) {
-          params.pfields.push_back(pmap[field]);
+          params.pfields |= pmap[field];
+        }else{
+          std::cout << "Field '" << field << "' doesn't exist\n";
         }
       }
+      std::cout << "after: " << (int)params.pfields << "\n";
     } else {
       UNKNOWN_OPTION_MSG(opt);
     }

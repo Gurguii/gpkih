@@ -65,28 +65,32 @@ const auto entity_type_str = [](ENTITY_TYPE type) {
               : (type == ENTITY_TYPE::sv ? "server" : "client"));
 };
 
-enum class ENTITY_FIELDS : uint8_t {
-  profile = 0,
+enum class ENTITY_FIELDS : uint16_t {
+  all = 4096,
+#define E_ALL (uint16_t)ENTITY_FIELDS::all
+  none = 0,
+#define E_NONE (uint16_t)ENTITY_FIELDS::none
+  profile = 2,
 #define E_PROFILE ENTITY_FIELDS::profile
-  subject_cn = 1,
+  subject_cn = 4,
 #define E_COMMON ENTITY_FIELDS::subject_cn
-  type = 2,
+  type = 8,
 #define E_TYPE ENTITY_FIELDS::type
-  subject_country = 3,
+  subject_country = 16,
 #define E_COUNTRY ENTITY_FIELDS::subject_country
-  subject_state = 4,
+  subject_state = 32,
 #define E_STATE ENTITY_FIELDS::subject_state
-  subject_location = 5,
+  subject_location = 64,
 #define E_LOCATION ENTITY_FIELDS::subject_location
-  subject_organisation = 6,
+  subject_organisation = 128,
 #define E_ORG ENTITY_FIELDS::subject_organisation
-  subject_email = 7,
+  subject_email = 256,
 #define E_MAIL ENTITY_FIELDS::subject_email
-  key_path = 8,
+  key_path = 512,
 #define E_KEYPATH ENTITY_FIELDS::key_path
-  req_path = 9,
+  req_path = 1024,
 #define E_REQPATH ENTITY_FIELDS::req_path
-  cert_path = 10,
+  cert_path = 2048,
 #define E_CRTPATH ENTITY_FIELDS::cert_path
 };
 
@@ -105,17 +109,44 @@ inline std::unordered_map<std::string, ENTITY_FIELDS> entity_fields_map() {
 }
 
 enum class PROFILE_FIELDS : uint8_t { 
-  name = 0,
-  #define P_NAME PROFILE_FIELDS::name
-  source = 1 
-  #define P_SRC PROFILE_FIELDS::source
+  all = 6,
+#define P_ALL (uint8_t)PROFILE_FIELDS::all
+  none = 0,
+#define P_NONE (uint8_t)PROFILE_FIELDS::none 
+  name = 2,
+#define P_NAME PROFILE_FIELDS::name
+  source = 4 
+#define P_SRC PROFILE_FIELDS::source
 };
+
 inline std::unordered_map<std::string, PROFILE_FIELDS> profile_fields_map() {
   return {
       {"name", PROFILE_FIELDS::name},
       {"source", PROFILE_FIELDS::source},
   };
 }
+
+/* OPERATOR OVERLOADS */
+static uint8_t operator|(PROFILE_FIELDS lo, PROFILE_FIELDS ro){
+  return (uint8_t)lo | (uint8_t)ro;
+};
+static uint8_t operator&(uint8_t lo, PROFILE_FIELDS ro){
+  return (uint8_t)lo & (uint8_t)ro;
+}
+static uint8_t operator|=(uint8_t lo, PROFILE_FIELDS ro){
+  lo = lo | (uint8_t)ro;
+  return 4;
+}
+static uint16_t operator|(ENTITY_FIELDS lo, ENTITY_FIELDS ro){
+  return lo | ro;
+}
+static uint16_t operator&(ENTITY_FIELDS lo, ENTITY_FIELDS ro){
+  return lo | ro;
+}
+static void operator |=(uint16_t lo, ENTITY_FIELDS ro){
+  lo |= ro;
+}
+
 namespace gpki::subopts {
 struct init {
   std::string profile_name;
@@ -141,8 +172,8 @@ struct gencrl {
 struct list {
   std::vector<std::string> profiles;
   std::vector<std::string> entities;
-
-  std::vector<ENTITY_FIELDS> efields {E_PROFILE, E_COMMON, E_TYPE, E_COUNTRY,E_STATE,E_LOCATION,E_ORG,E_MAIL,E_KEYPATH,E_REQPATH,E_CRTPATH};
-  std::vector<PROFILE_FIELDS> pfields {P_NAME,P_SRC};
+  
+  uint8_t pfields = P_ALL;
+  uint16_t efields = E_ALL;
 };
 } // namespace gpki::subopts

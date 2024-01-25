@@ -1,6 +1,7 @@
 #include "database.hpp"
 using namespace gpki;
 
+/* Requires a call whenever we change the profile context */
 int db::entities::initialize(str profile) {
   dbpath = DBDIR + profile + "_entities.csv";
   if (!fs::exists(dbpath)) {

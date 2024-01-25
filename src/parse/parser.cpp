@@ -44,7 +44,7 @@ int parse(int argc, const char **args) {
   // check if action exists and call appropiate subparser
   if (valid_actions_subparsers.find(action) == valid_actions_subparsers.end()) {
     // not found
-    std::cout << "action not found\n";
+    std::cout << "action '" << action << "'not found\n";
     return -1;
   }
   if (argc == 1) {
