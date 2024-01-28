@@ -67,9 +67,9 @@ const auto entity_type_str = [](ENTITY_TYPE type) {
 
 enum class ENTITY_FIELDS : uint16_t {
   all = 4096,
-#define E_ALL (uint16_t)ENTITY_FIELDS::all
+#define E_ALL ENTITY_FIELDS::all
   none = 0,
-#define E_NONE (uint16_t)ENTITY_FIELDS::none
+#define E_NONE ENTITY_FIELDS::none
   profile = 2,
 #define E_PROFILE ENTITY_FIELDS::profile
   subject_cn = 4,
@@ -108,14 +108,14 @@ inline std::unordered_map<std::string, ENTITY_FIELDS> entity_fields_map() {
           {"crt", ENTITY_FIELDS::cert_path}};
 }
 
-enum class PROFILE_FIELDS : uint8_t { 
+enum class PROFILE_FIELDS : uint16_t {
   all = 6,
-#define P_ALL (uint8_t)PROFILE_FIELDS::all
+#define P_ALL PROFILE_FIELDS::all
   none = 0,
-#define P_NONE (uint8_t)PROFILE_FIELDS::none 
+#define P_NONE PROFILE_FIELDS::none
   name = 2,
 #define P_NAME PROFILE_FIELDS::name
-  source = 4 
+  source = 4
 #define P_SRC PROFILE_FIELDS::source
 };
 
@@ -126,25 +126,19 @@ inline std::unordered_map<std::string, PROFILE_FIELDS> profile_fields_map() {
   };
 }
 
-/* OPERATOR OVERLOADS */
-static uint8_t operator|(PROFILE_FIELDS lo, PROFILE_FIELDS ro){
-  return (uint8_t)lo | (uint8_t)ro;
+/* PROFILE OPERATORS */
+static PROFILE_FIELDS operator|(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
+  return static_cast<PROFILE_FIELDS>((ui16)lo | (ui16)ro);
 };
-static uint8_t operator&(uint8_t lo, PROFILE_FIELDS ro){
-  return (uint8_t)lo & (uint8_t)ro;
+static bool operator&(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
+  return (ui16)lo & (ui16)ro;
 }
-static uint8_t operator|=(uint8_t lo, PROFILE_FIELDS ro){
-  lo = lo | (uint8_t)ro;
-  return 4;
+/* ENTITY OPERATORS */
+static ENTITY_FIELDS operator|(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
+  return static_cast<ENTITY_FIELDS>((ui16)lo | (ui16)ro);
 }
-static uint16_t operator|(ENTITY_FIELDS lo, ENTITY_FIELDS ro){
-  return lo | ro;
-}
-static uint16_t operator&(ENTITY_FIELDS lo, ENTITY_FIELDS ro){
-  return lo | ro;
-}
-static void operator |=(uint16_t lo, ENTITY_FIELDS ro){
-  lo |= ro;
+static bool operator&(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
+  return (ui16)lo | (ui16)ro;
 }
 
 namespace gpki::subopts {
@@ -172,8 +166,24 @@ struct gencrl {
 struct list {
   std::vector<std::string> profiles;
   std::vector<std::string> entities;
-  
-  uint8_t pfields = P_ALL;
-  uint16_t efields = E_ALL;
+
+  PROFILE_FIELDS pfields = P_ALL;
+  ENTITY_FIELDS efields = E_ALL;
 };
 } // namespace gpki::subopts
+
+enum class FOO : ui16 {
+  all = 6,
+#define FALL FOO::all
+  none = 0,
+#define FNONE FOO::none
+  name = 2,
+#define FNAME FOO::name
+  source = 4,
+#define FSRC FOO::source
+};
+
+static FOO operator|(FOO lo, FOO ro) {
+  return static_cast<FOO>((ui16)lo | (ui16)ro);
+}
+static bool operator&(FOO lo, FOO ro) { return (ui16)lo & (ui16)ro; }

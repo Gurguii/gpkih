@@ -3,19 +3,19 @@
 using namespace gpki;
 int subparsers::list(std::vector<std::string> opts) {
   subopts::list params;
-  if(opts.size() == 0){
+  if (opts.size() == 0) {
     return actions::list(params);
   }
-  if(opts[0][0] != '-'){
+  if (opts[0][0] != '-') {
     sstream _profiles(opts[0]);
     str profile;
-    while(getline(_profiles,profile,CSV_DELIMITER_c)){
+    while (getline(_profiles, profile, CSV_DELIMITER_c)) {
       params.profiles.push_back(profile);
     }
-    opts.erase(opts.begin(),opts.begin()+1);
+    opts.erase(opts.begin(), opts.begin() + 1);
   }
   opts.push_back("\0");
-  for (int i = 0; i < opts.size() - 1 ; ++i) {
+  for (int i = 0; i < opts.size() - 1; ++i) {
     std::string_view opt = opts[i];
     if (opt == "-cn" || opt == "--common-name") {
       std::string_view value = opts[i + 1];
@@ -35,8 +35,8 @@ int subparsers::list(std::vector<std::string> opts) {
       auto emap = entity_fields_map();
       while (getline(ss, field, CSV_DELIMITER_c)) {
         if (emap.find(field) != emap.end()) {
-          params.efields |= emap[field];
-        }else{
+          params.efields = params.efields | emap[field];
+        } else {
           std::cout << "Field '" << field << "' doesn't exist\n";
         }
       }
@@ -48,8 +48,9 @@ int subparsers::list(std::vector<std::string> opts) {
       auto pmap = profile_fields_map();
       while (getline(ss, field, CSV_DELIMITER_c)) {
         if (pmap.find(field) != pmap.end()) {
-          params.pfields |= pmap[field];
-        }else{
+          PROFILE_FIELDS f = pmap[field];
+          params.pfields = params.pfields | f;
+        } else {
           std::cout << "Field '" << field << "' doesn't exist\n";
         }
       }

@@ -28,10 +28,10 @@ int parse(int argc, const char **args) {
 
   std::string action = args[0];
 
-  if(action == "help"){
-    if(argc > 1){
+  if (action == "help") {
+    if (argc > 1) {
       call_helper(args[1]);
-    }else{
+    } else {
       help::usage();
     }
     return 0;

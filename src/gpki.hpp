@@ -18,8 +18,7 @@ namespace fs = std::filesystem;
 /* WINDOWS STUFF */
 static inline str CURRENT_PATH = fs::current_path().string();
 static inline str SLASH = "\\";
-static inline str BASEDIR =
-    str(std::getenv("LOCALAPPDATA")) + "\\gpkih\\";
+static inline str BASEDIR = str(std::getenv("LOCALAPPDATA")) + "\\gpkih\\";
 #else
 /* LINUX STUFF */
 static inline str CURRENT_PATH = fs::current_path();
