@@ -25,7 +25,6 @@ int db::entities::initialize(str profile) {
   return 0;
 }
 int db::entities::populate_from_entry(str &entry, Entity *entity) {
-  str commas;
   std::stringstream ss(entry);
   getline(ss, entity->profile_name, CSV_DELIMITER_c);
   getline(ss, entity->subject.cn, CSV_DELIMITER_c);

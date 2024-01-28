@@ -3,6 +3,8 @@
 #include "help_gencrl.cpp"
 #include "help_list.cpp"
 #include "help_init.cpp"
+#include "help_remove.cpp"
+
 void help::usage() {
   std::cout << R"(
 == Public key infraestructure helper ==
@@ -47,5 +49,7 @@ void call_helper(strview action){
     help::gencrl::usage();
   }else if(action == "list"){
     help::list::usage();
+  }else if(action == "remove"){
+    help::remove::usage();
   }
 }

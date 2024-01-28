@@ -171,19 +171,3 @@ struct list {
   ENTITY_FIELDS efields = E_ALL;
 };
 } // namespace gpki::subopts
-
-enum class FOO : ui16 {
-  all = 6,
-#define FALL FOO::all
-  none = 0,
-#define FNONE FOO::none
-  name = 2,
-#define FNAME FOO::name
-  source = 4,
-#define FSRC FOO::source
-};
-
-static FOO operator|(FOO lo, FOO ro) {
-  return static_cast<FOO>((ui16)lo | (ui16)ro);
-}
-static bool operator&(FOO lo, FOO ro) { return (ui16)lo & (ui16)ro; }

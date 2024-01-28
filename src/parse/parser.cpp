@@ -10,12 +10,14 @@
 #include "subparser_init.cpp"
 #include "subparser_list.cpp"
 #include "subparser_revoke.cpp"
+#include "subparser_remove.cpp"
 
 std::unordered_map<std::string, int (*)(Profile *, std::vector<std::string>)>
     valid_actions_subparsers{
         {"build", gpki::subparsers::build},
         {"revoke", gpki::subparsers::revoke},
         {"gencrl", gpki::subparsers::gencrl},
+        {"remove",gpki::subparsers::remove}
     };
 
 namespace gpki {

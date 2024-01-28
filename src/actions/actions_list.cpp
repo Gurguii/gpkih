@@ -9,36 +9,53 @@ enum class PRINT_MODE {
 
 using namespace gpki;
 
-void print_profile(str profile, PROFILE_FIELDS fields) {
-  std::stringstream label;
-  fields &P_NAME &&label << "Profile name: "
-                         << db::profiles::existing_profiles[profile].name
-                         << std::endl;
-  fields &P_SRC &&label << "Profile source: "
-                        << db::profiles::existing_profiles[profile].source
-                        << std::endl;
-  std::cout << label.str() << "\n";
+void print_profile(str profile, PROFILE_FIELDS fields, COLOR color = CYAN ) {
+  sstream label;
+  auto &ref = db::profiles::existing_profiles;
+  fields &P_NAME &&label << S_PLABEL("Profile name: ")
+                         << S_PLABEL_V(ref[profile].name)
+                         << "\n";
+  fields &P_SRC &&label << S_PLABEL("Profile source: ")
+                        << S_PLABEL_V(ref[profile].source)
+                        << "\n";
+  PRINT(label.str(),S_NONE);
 }
 
-void print_profile_entities(str profile, ENTITY_FIELDS &fields) {}
+void print_profile_entities(str profile, ENTITY_FIELDS &fields, COLOR color = YELLOW) {
+  std::vector<Entity> entities;
+  db::profiles::get_entities(profile, entities);
+  sstream label;
+  for(const auto &entity : entities){
+    auto &subj = entity.subject;
+    PRINT("============================\n",ALICIA);
+    // Populate label and print 
+    fields & E_COMMON   && label << S_ELABEL("Common name: ") << S_ELABEL_V(subj.cn) << "\n";
+    fields & E_TYPE            && label << S_ELABEL("Type: ") << S_ELABEL_V(entity.type) << "\n";
+    fields & E_COUNTRY   && label << S_ELABEL("Country: ") << S_ELABEL_V(subj.country) << "\n";
+    fields & E_KEYPATH     && label << S_ELABEL("Key: ") <<  S_ELABEL_V(entity.key_path) << "\n";
+    fields & E_REQPATH    && label << S_ELABEL("Request: ") <<  S_ELABEL_V(entity.req_path) << "\n";
+    fields & E_CRTPATH     && label << S_ELABEL("Certificate: ") << S_ELABEL_V(entity.cert_path) << "\n";
+    fields & E_ORG            && label << S_ELABEL("Organisation: ") << S_ELABEL_V(subj.organisation) << "\n";
+    fields & E_LOCATION  && label << S_ELABEL("Location: ") << S_ELABEL_V(subj.location) << "\n";
+    fields & E_MAIL           && label << S_ELABEL("Mail: ") << S_ELABEL_V(subj.email) << "\n";
+    PRINT(label.str(),S_NONE);
+    PRINT("============================\n",ALICIA);
+  }
+}
+
 int actions::list(subopts::list &params) {
-  // for(auto pfields : params.pfields){
-  //   std::cout << "Pfield -> " << (int)pfields << "\n";
-  // }
-  // for(auto efields : params.efields){
-  //   std::cout << "Efield -> " << (int)efields << "\n";
-  // }
   if (params.profiles.empty()) {
     if (params.entities.empty()) {
       /* OPTION 1 */
       // all profiles all entities
       for (auto p : db::profiles::existing_profiles) {
         print_profile(p.first, params.pfields);
+        print_profile_entities(p.first, params.efields);
       }
     } else {
       /* OPTION 2 */
       // all profiles certain entities
-    }
+    } 
   }
   if (params.entities.empty()) {
     for (auto p : params.profiles) {

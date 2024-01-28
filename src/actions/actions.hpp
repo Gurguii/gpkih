@@ -9,6 +9,7 @@
 #include "../gpki.hpp"
 #include "../db/database.hpp"
 #include "../utils/gsed.cpp"
+#include "../printing.hpp"
 
 namespace gpki::actions
 {
@@ -17,4 +18,5 @@ namespace gpki::actions
   int revoke(Profile *profile, subopts::revoke *params);
   int gencrl(Profile *profile, subopts::gencrl *params);
   int list(subopts::list &params);
+  // remove is usable but not added here yet
 }

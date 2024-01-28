@@ -29,6 +29,10 @@ int subparsers::list(std::vector<std::string> opts) {
         }
       }
     } else if (opt == "-ef" || opt == "--entity-fields") {
+      if(opts[i+1][0] == '-' || opts[i+1] == "\0"){
+        PWARN("entitiy fields is empty, please make sure you give a value\n");
+        return -1;
+      }
       params.efields = E_NONE;
       std::stringstream ss(opts[++i]);
       std::string field;
@@ -41,7 +45,10 @@ int subparsers::list(std::vector<std::string> opts) {
         }
       }
     } else if (opt == "-pf" || opt == "--profile-fields") {
-      std::cout << "before: " << (int)params.pfields << "\n";
+      if(opts[i+1][0] == '-' || opts[i+1] == "\0"){
+        PWARN("profile fields is empty, please make sure you give a value\n");
+        return -1;
+      }
       params.pfields = P_NONE;
       std::stringstream ss(opts[++i]);
       std::string field;
@@ -54,7 +61,6 @@ int subparsers::list(std::vector<std::string> opts) {
           std::cout << "Field '" << field << "' doesn't exist\n";
         }
       }
-      std::cout << "after: " << (int)params.pfields << "\n";
     } else {
       UNKNOWN_OPTION_MSG(opt);
     }

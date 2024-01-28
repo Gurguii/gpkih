@@ -32,9 +32,7 @@ static inline str CONFDIR = BASEDIR + "config" + SLASH;
 #define CSV_DELIMITER_s ","
 #define CSV_DELIMITER_c ','
 
-static inline void UNKNOWN_OPTION_MSG(strview opt) {
-  std::cout << "[!] unknown option '" << opt << "'" << std::endl;
-}
+
 
 static inline str last_gpki_error = "no error";
 static inline void seterror(str err) { last_gpki_error = err; }

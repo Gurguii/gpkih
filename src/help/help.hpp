@@ -21,6 +21,8 @@ void usage();
 namespace gpki::help::init{
 void usage();
 }
-
+namespace gpki::help::remove{
+    void usage();
+}
 using namespace gpki;
 void call_helper(strview action);

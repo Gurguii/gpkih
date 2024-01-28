@@ -1,6 +1,4 @@
 #pragma once
-#include "../structs.hpp"
-#include "../gpki.hpp"
 #include <filesystem>
 #include <fstream>
 #include <iostream>
@@ -8,21 +6,23 @@
 #include <unordered_map>
 #include <vector>
 
+#include "../structs.hpp"
+#include "../gpki.hpp"
+#include "../printing.hpp"
+
 namespace gpki::db::profiles {
 static inline std::unordered_map<std::string, Profile> existing_profiles{};
 static inline str dbheaders = "name,source";
 static inline str dbpath = DBDIR + "profiles.csv";
+static int sync(); // overwrites profiles.csv with the profiles in existing_profiles while checking that source dirs from existing_profiles indeed exist
 static int initialize();
 static int populate_from_entry(str &entry, Profile *profile);
 static int populate_from_entry(str &entry, std::vector<str> &fields);
 static int exists(strview profile_name);
 static int add(Profile *profile);
-static int del(strview profile);
+static int del(str &profile);
 static int load(strview profile_name, Profile &pinfo);
-static int get_entities(str profile,
-                        std::vector<std::vector<str>> &entities_fields_buff);
-static int get_fields(str profile,
-                      std::vector<str> &fields_buff);
+static int get_entities(str profile,std::vector<Entity> &buff);
 } // namespace gpki::db::profiles
 
 namespace gpki::db::entities {
