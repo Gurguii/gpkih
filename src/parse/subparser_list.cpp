@@ -30,35 +30,36 @@ int subparsers::list(std::vector<std::string> opts) {
       }
     } else if (opt == "-ef" || opt == "--entity-fields") {
       if(opts[i+1][0] == '-' || opts[i+1] == "\0"){
-        PWARN("entitiy fields is empty, please make sure you give a value\n");
-        return -1;
-      }
-      params.efields = E_NONE;
-      std::stringstream ss(opts[++i]);
-      std::string field;
-      auto emap = entity_fields_map();
-      while (getline(ss, field, CSV_DELIMITER_c)) {
-        if (emap.find(field) != emap.end()) {
-          params.efields = params.efields | emap[field];
-        } else {
-          std::cout << "Field '" << field << "' doesn't exist\n";
+        PWARN("entitiy fields is empty, could have been omitted\n");
+      }else{
+        params.efields = E_NONE;
+        std::stringstream ss(opts[++i]);
+        std::string field;
+        auto emap = entity_fields_map();
+        while (getline(ss, field, CSV_DELIMITER_c)) {
+          if (emap.find(field) != emap.end()) {
+            ENTITY_FIELDS f = emap[field];
+            params.efields = params.efields | f;
+          } else {
+            PINFO("field '{}' doesn't exist",field);
+          }
         }
       }
     } else if (opt == "-pf" || opt == "--profile-fields") {
       if(opts[i+1][0] == '-' || opts[i+1] == "\0"){
-        PWARN("profile fields is empty, please make sure you give a value\n");
-        return -1;
-      }
-      params.pfields = P_NONE;
-      std::stringstream ss(opts[++i]);
-      std::string field;
-      auto pmap = profile_fields_map();
-      while (getline(ss, field, CSV_DELIMITER_c)) {
-        if (pmap.find(field) != pmap.end()) {
-          PROFILE_FIELDS f = pmap[field];
-          params.pfields = params.pfields | f;
-        } else {
-          std::cout << "Field '" << field << "' doesn't exist\n";
+        PWARN("profile fields is empty, could have been omitted\n");
+      }else{
+        params.pfields = P_NONE;
+        std::stringstream ss(opts[++i]);
+        std::string field;
+        auto pmap = profile_fields_map();
+        while (getline(ss, field, CSV_DELIMITER_c)) {
+          if (pmap.find(field) != pmap.end()) {
+            PROFILE_FIELDS f = pmap[field];
+            params.pfields = params.pfields | f;
+          } else {
+            std::cout << "Field '" << field << "' doesn't exist\n";
+          }
         }
       }
     } else {

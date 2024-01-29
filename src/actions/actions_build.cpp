@@ -50,22 +50,12 @@ int actions::build(Profile *profile, gpki::subopts::build *opts, ENTITY_TYPE typ
     if (!input.empty()) {
       entity.subject.email = input;
     }
-   
+   std::string gopenssl = profile->source + SLASH + "gopenssl.cnf";
     if(entity.type == "ca"){
+      /* CA */
         entity.req_path = "\0";
         entity.key_path = profile->source + SLASH + "pki" + SLASH + "ca" + SLASH + "key";
         entity.cert_path = profile->source + SLASH + "pki" + SLASH + "ca" + SLASH + "crt";
-    }else{
-        entity.req_path = profile->source + SLASH + "pki" + SLASH + "reqs" +
-                          SLASH + entity.subject.cn + "-csr." + opts->csr_crt_format;
-        entity.key_path = profile->source + SLASH + "pki" + SLASH + "keys" +
-                          SLASH + entity.subject.cn + "-key." + opts->key_format;
-        entity.cert_path = profile->source + SLASH + "pki" + SLASH + "certs" +
-                           SLASH + entity.subject.cn + "-crt." + opts->csr_crt_format;
-    }
-
-    std::string gopenssl = profile->source + SLASH + "gopenssl.cnf";
-    if(entity.type == "ca"){
         std::string command = "openssl req"
         " -config " + gopenssl + 
         " -new -x509"
@@ -80,8 +70,13 @@ int actions::build(Profile *profile, gpki::subopts::build *opts, ENTITY_TYPE typ
             return -1;
         }
     }else{
-        // Both client|server certiticates are created with the same command, the only thing that changes are the x509 extensions
-        // FIRST COMMAND
+      /* CLIENT / SERVER */
+        entity.req_path = profile->source + SLASH + "pki" + SLASH + "reqs" +
+                          SLASH + entity.subject.cn + "-csr." + opts->csr_crt_format;
+        entity.key_path = profile->source + SLASH + "pki" + SLASH + "keys" +
+                          SLASH + entity.subject.cn + "-key." + opts->key_format;
+        entity.cert_path = profile->source + SLASH + "pki" + SLASH + "certs" +
+                           SLASH + entity.subject.cn + "-crt." + opts->csr_crt_format;
         std::string csr_command = "openssl req" 
         " -newkey " + opts->key_size + ":" + opts->algorithm + 
         " -out " + entity.req_path + 
@@ -106,7 +101,7 @@ int actions::build(Profile *profile, gpki::subopts::build *opts, ENTITY_TYPE typ
             std::cout << "[FAIL] - command '" << crt_command << "'\n";
             return -1;
         }
-    }   
+    }
     // Entity succesfully added to the pki, add to database
     return db::entities::add(&entity);
 }

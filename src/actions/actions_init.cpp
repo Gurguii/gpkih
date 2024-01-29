@@ -130,7 +130,9 @@ int actions::init(subopts::init *params) {
   if (db::profiles::add(&profile)) {
     return -1;
   }
-
+  // Initialize entities db
+  db::entities::initialize(profile.name);
+  
   // Extra questions
   if (prompt) {
     // QUESTION 1
@@ -148,7 +150,6 @@ int actions::init(subopts::init *params) {
     std::cout << "Do you want to create the CA now? Y/N: ";
     getline(std::cin, ans);
     if (ans == "y" || ans == "Y") {
-      db::entities::initialize(profile.name);
       subopts::build default_params;
       if (actions::build(&profile, &default_params, ENTITY_TYPE::ca)) {
         std::cout << "couldn't add entity\n";

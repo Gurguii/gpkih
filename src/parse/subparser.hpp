@@ -15,4 +15,5 @@ namespace gpki::subparsers
   int gencrl(Profile *profile, std::vector<std::string> opts);
   int list(std::vector<std::string> opts);
   int remove(Profile *profile, std::vector<std::string> opts);
+  int remove_all();
 }

@@ -3,6 +3,7 @@
 #include <fstream>
 #include <iostream>
 #include <string>
+#include <map>
 #include <unordered_map>
 #include <vector>
 
@@ -11,7 +12,7 @@
 #include "../printing.hpp"
 
 namespace gpki::db::profiles {
-static inline std::unordered_map<std::string, Profile> existing_profiles{};
+static inline std::map<std::string, Profile> existing_profiles{};
 static inline str dbheaders = "name,source";
 static inline str dbpath = DBDIR + "profiles.csv";
 static int sync(); // overwrites profiles.csv with the profiles in existing_profiles while checking that source dirs from existing_profiles indeed exist
@@ -20,7 +21,8 @@ static int populate_from_entry(str &entry, Profile *profile);
 static int populate_from_entry(str &entry, std::vector<str> &fields);
 static int exists(strview profile_name);
 static int add(Profile *profile);
-static int del(str &profile);
+static int remove(str &profile);
+static int remove_all();
 static int load(strview profile_name, Profile &pinfo);
 static int get_entities(str profile,std::vector<Entity> &buff);
 } // namespace gpki::db::profiles

@@ -4,5 +4,5 @@ using namespace gpki;
 
 int subparsers::remove(Profile *profile, std::vector<std::string> opts){
     /* Parse subopts */
-    return db::profiles::del(profile->name);
+    return db::profiles::remove(profile->name);
 }

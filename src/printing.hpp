@@ -20,24 +20,28 @@ static constexpr COLOR BLACK = COLOR::black;
 static constexpr COLOR ALICIA = COLOR::alice_blue;
 
 STYLE S_NONE = fg(BLACK); 
-STYLE  S_WARNING = fg(ORANGE) | bg(BLACK) | EMPHASIS::underline;
+STYLE  S_WARNING = fg(ORANGE) | EMPHASIS::underline;
 STYLE S_INFO = fg(COLOR::pale_golden_rod) | EMPHASIS::italic;
 STYLE S_ERROR = fg(RED) | bg(BLACK) | EMPHASIS::underline;
 
-// [ENTITIES] Utilities to print colourful fields - values when listing
-static inline std::string S_ELABEL (std::string st){
-    return fmt::format(fg(WHITE),st);
+// Styles for entity labels
+static inline std::string S_ELABEL(std::string st) {
+    return fmt::format(fg(COLOR::pale_golden_rod) | EMPHASIS::bold, st);
 }
-static inline std::string S_ELABEL_V(std::string st){
-    return fmt::format(fg(COLOR::pale_golden_rod),st);
+
+static inline std::string S_ELABEL_V(std::string st) {
+    return fmt::format(fg(WHITE) | EMPHASIS::italic | EMPHASIS::bold, st);
 }
-// [PROFILES] Utilities to print colourful fields - values when listing
-static inline std::string S_PLABEL(std::string st){
-    return fmt::format(fg(WHITE),st);
+
+// Styles for profile labels
+static inline std::string S_PLABEL(std::string st) {
+    return fmt::format(fg(COLOR::white) |  EMPHASIS::bold, st);
 }
-static inline std::string S_PLABEL_V(std::string &st){
-    return fmt::format(fg(COLOR::pale_golden_rod ),st);
+
+static inline std::string S_PLABEL_V(std::string st) {
+    return fmt::format(fg(GREEN) | EMPHASIS::italic | EMPHASIS::bold, st);
 }
+
 /* NORMAL PRINTING */
 template <typename ...T> void PRINT(std::string_view msg, STYLE style){
     fmt::print(style,msg);
@@ -45,6 +49,7 @@ template <typename ...T> void PRINT(std::string_view msg, STYLE style){
 static inline void PRINT(std::string_view msg, COLOR color){
     fmt::print(fg(color),msg);
 }
+
 /* FORMATTED OUTPUT PRINTING */
 template <typename ...T> void PRINTF(STYLE style, std::string fmt, T&&... args){
     fmt::print(style,fmt,std::forward<T>(args)...);

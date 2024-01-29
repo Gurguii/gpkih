@@ -49,6 +49,7 @@ struct Entity {
   std::string cert_path;
   std::string profile_name;
   std::string type; // ca-sv-cl
+  int serial;
   std::string csv_entry() {
     return profile_name + "," + subject.cn + "," + type + "," +
            subject.country + "," + subject.state + "," + subject.location +
@@ -66,7 +67,7 @@ const auto entity_type_str = [](ENTITY_TYPE type) {
 };
 
 enum class ENTITY_FIELDS : uint16_t {
-  all = 4096,
+  all = 4095,
 #define E_ALL ENTITY_FIELDS::all
   none = 0,
 #define E_NONE ENTITY_FIELDS::none
@@ -138,7 +139,7 @@ static ENTITY_FIELDS operator|(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
   return static_cast<ENTITY_FIELDS>((ui16)lo | (ui16)ro);
 }
 static bool operator&(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
-  return (ui16)lo | (ui16)ro;
+  return (ui16)lo & (ui16)ro;
 }
 
 namespace gpki::subopts {
@@ -169,5 +170,11 @@ struct list {
 
   PROFILE_FIELDS pfields = P_ALL;
   ENTITY_FIELDS efields = E_ALL;
+};
+struct remove{
+  /* No subopts */
+};
+struct remove_all{
+  /* No subopts */
 };
 } // namespace gpki::subopts

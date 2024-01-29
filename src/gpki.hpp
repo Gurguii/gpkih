@@ -3,7 +3,6 @@
 #include <filesystem>
 #include <iostream>
 #include <sstream>
-
 // Custom typenames
 using str = std::string;
 using strview = std::string_view;
@@ -31,8 +30,6 @@ static inline str CONFDIR = BASEDIR + "config" + SLASH;
 
 #define CSV_DELIMITER_s ","
 #define CSV_DELIMITER_c ','
-
-
 
 static inline str last_gpki_error = "no error";
 static inline void seterror(str err) { last_gpki_error = err; }

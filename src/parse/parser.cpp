@@ -11,13 +11,14 @@
 #include "subparser_list.cpp"
 #include "subparser_revoke.cpp"
 #include "subparser_remove.cpp"
+#include "subparser_remove_all.cpp"
 
 std::unordered_map<std::string, int (*)(Profile *, std::vector<std::string>)>
     valid_actions_subparsers{
         {"build", gpki::subparsers::build},
         {"revoke", gpki::subparsers::revoke},
         {"gencrl", gpki::subparsers::gencrl},
-        {"remove",gpki::subparsers::remove}
+        {"remove",gpki::subparsers::remove},
     };
 
 namespace gpki {
@@ -29,7 +30,7 @@ int parse(int argc, const char **args) {
   }
 
   std::string action = args[0];
-
+  /* ACTIONS THAT DO NOT REQUIRE A PROFILE */
   if (action == "help") {
     if (argc > 1) {
       call_helper(args[1]);
@@ -41,12 +42,14 @@ int parse(int argc, const char **args) {
     return subparsers::init(std::vector<std::string>(args + 1, args + argc));
   } else if (action == "list") {
     return subparsers::list(std::vector<std::string>(args + 1, args + argc));
+  }else if(action == "remove-all"){
+    return subparsers::remove_all();
   }
 
   // check if action exists and call appropiate subparser
   if (valid_actions_subparsers.find(action) == valid_actions_subparsers.end()) {
     // not found
-    std::cout << "action '" << action << "'not found\n";
+    PERROR("action '{}' not found\n", action);
     return -1;
   }
   if (argc == 1) {
@@ -57,7 +60,7 @@ int parse(int argc, const char **args) {
   Profile current_profile;
   if (db::profiles::load(profile_name, current_profile)) {
     // profile doesn't exist
-    std::cout << "Profile '" << profile_name << "' doesn't exist\n";
+    PINFO("profile '{}' doesn't exist\n", profile_name);
     call_helper(action);
     return -1;
   };

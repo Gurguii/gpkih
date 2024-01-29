@@ -97,7 +97,7 @@ int db::profiles::add(Profile *profile) {
   return (fs::file_size(dbpath) > bsize ? 0 : -1);
 }
 
-int db::profiles::del(str &profile) {
+int db::profiles::remove(str &profile) {
   auto iter = existing_profiles.find(profile);
   if(iter == existing_profiles.end()){
     return -1;
@@ -105,7 +105,7 @@ int db::profiles::del(str &profile) {
   Profile target = iter->second;
   if(prompt){
     str ans;
-    std::cout << "Files from profile '" << profile << "' about to get removed, continue? y/n";
+    std::cout << "Files from profile '" << profile << "' about to get removed, continue? y/n : ";
     std::getline(std::cin,ans);
     if(ans != "y" && ans != "Y"){
       std::cout << "Not removing anything ...\n";
@@ -119,10 +119,27 @@ int db::profiles::del(str &profile) {
   };
   // remove profile from existing_profiles
   existing_profiles.erase(iter);
+  // remove profile entities db
+  str db = DBDIR + target.name + "_entities.csv";
+  if(!fs::remove(db)){
+    seterror(fmt::format("couldn't remove entities' csv '{}'",db));
+    return -1;
+  }
   // call sync() to synchronize existing_profiles with profiles.csv contents
   return sync();
 }
-
+int db::profiles::remove_all(){
+  // Using the map itself would cause in segmentation fault since
+  // remove() calls existing_profiles.erase()
+  auto map_cpy = existing_profiles;
+  for(auto p : map_cpy){
+    str name = p.first;
+    if(remove(name)){
+      return -1;
+    };
+  }
+  return 0;
+}
 int db::profiles::load(strview profile_name, Profile &pinfo) {
   if (!exists(profile_name)) {
     return -1;
@@ -135,7 +152,7 @@ int db::profiles::get_entities(str profile, std::vector<Entity> &buff){
   str edb = DBDIR + SLASH + profile + "_entities.csv";
   std::ifstream file(edb);
   if(!file.is_open()){
-    PRINTF(S_ERROR,"couldn't open database {}",edb);
+    PERROR("couldn't open database {}",edb);
     return -1;
   }
   std::string entry;

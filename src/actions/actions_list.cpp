@@ -27,8 +27,8 @@ void print_profile_entities(str profile, ENTITY_FIELDS &fields, COLOR color = YE
   sstream label;
   for(const auto &entity : entities){
     auto &subj = entity.subject;
-    PRINT("============================\n",ALICIA);
     // Populate label and print 
+    label << fmt::format(  fg(WHITE),"\n------------------------------------") << "\n";
     fields & E_COMMON   && label << S_ELABEL("Common name: ") << S_ELABEL_V(subj.cn) << "\n";
     fields & E_TYPE            && label << S_ELABEL("Type: ") << S_ELABEL_V(entity.type) << "\n";
     fields & E_COUNTRY   && label << S_ELABEL("Country: ") << S_ELABEL_V(subj.country) << "\n";
@@ -38,8 +38,8 @@ void print_profile_entities(str profile, ENTITY_FIELDS &fields, COLOR color = YE
     fields & E_ORG            && label << S_ELABEL("Organisation: ") << S_ELABEL_V(subj.organisation) << "\n";
     fields & E_LOCATION  && label << S_ELABEL("Location: ") << S_ELABEL_V(subj.location) << "\n";
     fields & E_MAIL           && label << S_ELABEL("Mail: ") << S_ELABEL_V(subj.email) << "\n";
+    //label << fmt::format(  fg(WHITE),"------------------------------------") << "\n\n";
     PRINT(label.str(),S_NONE);
-    PRINT("============================\n",ALICIA);
   }
 }
 
@@ -58,15 +58,17 @@ int actions::list(subopts::list &params) {
     } 
   }
   if (params.entities.empty()) {
-    for (auto p : params.profiles) {
-      print_profile(p, params.pfields);
-    }
-    return 0;
     /* OPTION 3 */
     // certain profiles all entities
+    for (auto p : params.profiles) {
+      print_profile(p, params.pfields);
+      print_profile_entities(p, params.efields);
+    }
+    return 0;
   } else {
     /* OPTION 4 */
     // certain profiles certain entities
+
   }
   return 0;
 }
