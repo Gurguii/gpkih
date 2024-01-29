@@ -40,6 +40,7 @@ void print_profile_entities(str profile, ENTITY_FIELDS &fields, COLOR color = YE
     fields & E_MAIL           && label << S_ELABEL("Mail: ") << S_ELABEL_V(subj.email) << "\n";
     //label << fmt::format(  fg(WHITE),"------------------------------------") << "\n\n";
     PRINT(label.str(),S_NONE);
+    label.flush();
   }
 }
 
