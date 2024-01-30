@@ -12,7 +12,7 @@ using namespace gpki;
 int actions::revoke(Profile *profile, subopts::revoke *params){
   Entity entity;
 
-  if(db::entities::load(profile, &entity, params->common_name)){
+  if(db::entities::load(profile->name, params->common_name, &entity)){
     std::cout << "[error] - entity with common name '" << params->common_name << "' doesn't exist\n";
     return -1;
   }

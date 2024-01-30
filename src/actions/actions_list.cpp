@@ -1,5 +1,6 @@
 #include "actions.hpp"
 
+/* UNUSED, left to see if i ever get to develop something around this idea */
 enum class PRINT_MODE {
   table,
 #define PRINT_TABLE PRINT_MODE::table
@@ -21,16 +22,14 @@ void print_profile(str profile, PROFILE_FIELDS fields, COLOR color = CYAN ) {
   PRINT(label.str(),S_NONE);
 }
 
-void print_profile_entities(str profile, ENTITY_FIELDS &fields, COLOR color = YELLOW) {
-  std::vector<Entity> entities;
-  db::profiles::get_entities(profile, entities);
+void print_entity(Entity entity, ENTITY_FIELDS &fields) {
   sstream label;
-  for(const auto &entity : entities){
     auto &subj = entity.subject;
     // Populate label and print 
     label << fmt::format(  fg(WHITE),"\n------------------------------------") << "\n";
     fields & E_COMMON   && label << S_ELABEL("Common name: ") << S_ELABEL_V(subj.cn) << "\n";
     fields & E_TYPE            && label << S_ELABEL("Type: ") << S_ELABEL_V(entity.type) << "\n";
+    fields & E_SERIAL        && label << S_ELABEL("Serial: ") << S_ELABEL_V(entity.serial) << "\n";
     fields & E_COUNTRY   && label << S_ELABEL("Country: ") << S_ELABEL_V(subj.country) << "\n";
     fields & E_KEYPATH     && label << S_ELABEL("Key: ") <<  S_ELABEL_V(entity.key_path) << "\n";
     fields & E_REQPATH    && label << S_ELABEL("Request: ") <<  S_ELABEL_V(entity.req_path) << "\n";
@@ -40,7 +39,13 @@ void print_profile_entities(str profile, ENTITY_FIELDS &fields, COLOR color = YE
     fields & E_MAIL           && label << S_ELABEL("Mail: ") << S_ELABEL_V(subj.email) << "\n";
     //label << fmt::format(  fg(WHITE),"------------------------------------") << "\n\n";
     PRINT(label.str(),S_NONE);
-    label.flush();
+}
+
+void print_profile_entities(str profile, ENTITY_FIELDS &fields){
+  std::vector<Entity> ebuff;
+  db::profiles::get_entities(profile, ebuff);
+  for(const Entity &entity : ebuff){
+    print_entity(entity,fields);
   }
 }
 
@@ -56,6 +61,9 @@ int actions::list(subopts::list &params) {
     } else {
       /* OPTION 2 */
       // all profiles certain entities
+      for(auto p : db::profiles::existing_profiles){
+        print_profile(p.first,params.pfields);
+      }
     } 
   }
   if (params.entities.empty()) {

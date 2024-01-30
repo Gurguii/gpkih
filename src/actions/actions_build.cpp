@@ -1,4 +1,5 @@
 #include "actions.hpp"
+#include <cstddef>
 using namespace gpki;
 using subopts = gpki::subopts::build;
  
@@ -50,7 +51,8 @@ int actions::build(Profile *profile, gpki::subopts::build *opts, ENTITY_TYPE typ
     if (!input.empty()) {
       entity.subject.email = input;
     }
-   std::string gopenssl = profile->source + SLASH + "gopenssl.cnf";
+
+    std::string gopenssl = profile->source + SLASH + "gopenssl.cnf";
     if(entity.type == "ca"){
       /* CA */
         entity.req_path = "\0";
@@ -102,6 +104,8 @@ int actions::build(Profile *profile, gpki::subopts::build *opts, ENTITY_TYPE typ
             return -1;
         }
     }
+    std::ifstream file(profile->source + SLASH + "pki" + SLASH + "crl" + SLASH + "crlnumber");  
+   file >> entity.serial; 
     // Entity succesfully added to the pki, add to database
     return db::entities::add(&entity);
 }

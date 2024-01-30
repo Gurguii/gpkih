@@ -17,17 +17,16 @@ int subparsers::list(std::vector<std::string> opts) {
   opts.push_back("\0");
   for (int i = 0; i < opts.size() - 1; ++i) {
     std::string_view opt = opts[i];
-    if (opt == "-cn" || opt == "--common-name") {
+    if (opt == "-e" || opt == "--entities") {
       std::string_view value = opts[i + 1];
-      if (value[0] == '-' || value == "\0") {
-        std::cout << "no common name given, defaulting to ALL\n";
-      } else {
+      if (value[0] != '-' && value != "\0") {
+        // all entities
         str entity;
         sstream ss(str{opt[++i]});
         while (getline(ss, entity, CSV_DELIMITER_c)) {
           params.entities.push_back(entity);
         }
-      }
+      } 
     } else if (opt == "-ef" || opt == "--entity-fields") {
       if(opts[i+1][0] == '-' || opts[i+1] == "\0"){
         PWARN("entitiy fields is empty, could have been omitted\n");

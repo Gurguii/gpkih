@@ -1,5 +1,4 @@
-- Think about adding installation possibility (e.g [WINDOWS] - $env:localappdata\gpkih | [LINUX] - ~/.config/gpkih)
-- Implement revoke,gencrl,create_pack(inline|splitted)
+- Implement create_pack(inline|splitted)
 - Add some csv check for file modifications not made by 'gpki' (store timestamps in a file??) 
 - Fix openssl command not working in Windows (both system() and CreateProcessA() fail executing the openssl command but if you copy paste it it works)
 - Add dependency check on startup (openssl,openvpn) - also do not make openvpn strictly required (just for the tls keys generation)

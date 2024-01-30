@@ -49,7 +49,7 @@ struct Entity {
   std::string cert_path;
   std::string profile_name;
   std::string type; // ca-sv-cl
-  int serial;
+  std::string serial;
   std::string csv_entry() {
     return profile_name + "," + subject.cn + "," + type + "," +
            subject.country + "," + subject.state + "," + subject.location +
@@ -77,6 +77,8 @@ enum class ENTITY_FIELDS : uint16_t {
 #define E_COMMON ENTITY_FIELDS::subject_cn
   type = 8,
 #define E_TYPE ENTITY_FIELDS::type
+  serial = 16,
+#define E_SERIAL ENTITY_FIELDS::serial
   subject_country = 16,
 #define E_COUNTRY ENTITY_FIELDS::subject_country
   subject_state = 32,
@@ -95,10 +97,11 @@ enum class ENTITY_FIELDS : uint16_t {
 #define E_CRTPATH ENTITY_FIELDS::cert_path
 };
 
-inline std::unordered_map<std::string, ENTITY_FIELDS> entity_fields_map() {
+static inline std::unordered_map<std::string, ENTITY_FIELDS> entity_fields_map() {
   return {{"profile", ENTITY_FIELDS::profile},
           {"cn", ENTITY_FIELDS::subject_cn},
           {"type", ENTITY_FIELDS::type},
+          {"serial",ENTITY_FIELDS::serial},
           {"country", ENTITY_FIELDS::subject_country},
           {"state", ENTITY_FIELDS::subject_state},
           {"location", ENTITY_FIELDS::subject_location},
@@ -120,7 +123,7 @@ enum class PROFILE_FIELDS : uint16_t {
 #define P_SRC PROFILE_FIELDS::source
 };
 
-inline std::unordered_map<std::string, PROFILE_FIELDS> profile_fields_map() {
+static inline std::unordered_map<std::string, PROFILE_FIELDS> profile_fields_map() {
   return {
       {"name", PROFILE_FIELDS::name},
       {"source", PROFILE_FIELDS::source},
