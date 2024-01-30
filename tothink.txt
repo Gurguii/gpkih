@@ -1,0 +1,9 @@
+- Create a Label class for Profile / Entities with methods for displaying info in certain ways, exporting, etc. Maybe inheritance/virtual methods ???
+Imagine just doing 
+Label<Profile> p(profilename); 
+p.display(); 
+p.display(PROFILE_FIELDS::name | PROFILE_FIELDS::source); 
+p.flush();
+p.display(FORMAT::table);
+p.export(std::string outdir, EX_FORMAT::csv);
+etc.
