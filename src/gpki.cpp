@@ -10,7 +10,6 @@
 #include "actions/actions.cpp"
 /* Help functions */
 #include "help/help.cpp"
-#include "utils/checkpermissions.cpp"
 
 int main(int argc, const char **args) {
   // Add PROPER checks for openssl - openvpn existence

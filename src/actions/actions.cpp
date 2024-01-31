@@ -3,3 +3,4 @@
 #include "actions_list.cpp"
 #include "actions_revoke.cpp"
 #include "actions_init.cpp"
+#include "actions_create_pack.cpp"

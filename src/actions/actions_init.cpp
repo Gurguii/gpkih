@@ -57,26 +57,26 @@ template <typename T> int IS_VALID_PATH(T path) {
 }
 
 using namespace gpki;
-int actions::init(subopts::init *params) {
+int actions::init(subopts::init &params) {
   Profile profile;
-  if (params->profile_name.empty() ||
-      db::profiles::exists(params->profile_name)) {
+  if (params.profile_name.empty() ||
+      db::profiles::exists(params.profile_name)) {
     do {
       std::cout << "[+] Please introduce desired profile name: ";
       std::getline(std::cin, profile.name);
     } while (db::profiles::exists(profile.name));
   } else {
-    profile.name = std::move(params->profile_name);
+    profile.name = std::move(params.profile_name);
   }
 
-  if (params->profile_source.empty() ||
-      !IS_VALID_PATH(params->profile_source)) {
+  if (params.profile_source.empty() ||
+      !IS_VALID_PATH(params.profile_source)) {
     do {
       std::cout << "[+] Please introduce pki base dir (absolute path): ";
       std::getline(std::cin, profile.source);
     } while (!IS_VALID_PATH(profile.source));
   } else {
-    profile.source = std::move(params->profile_source);
+    profile.source = std::move(params.profile_source);
   }
 
   // Check that we have write permissions in such path
@@ -151,7 +151,9 @@ int actions::init(subopts::init *params) {
     getline(std::cin, ans);
     if (ans == "y" || ans == "Y") {
       subopts::build default_params;
-      if (actions::build(&profile, &default_params, ENTITY_TYPE::ca)) {
+      default_params.type = ENTITY_TYPE::ca;
+      default_params.profile = std::move(profile);
+      if (actions::build(default_params)) {
         std::cout << "couldn't add entity\n";
         return -1;
       } else {

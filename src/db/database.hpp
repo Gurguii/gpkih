@@ -12,9 +12,6 @@
 #include "../printing.hpp"
 
 
-
-
-
 static inline std::unordered_map<ui16,ui8> _vecpos_map{ {1,0},
   {2,1},
   {4,2},
@@ -57,7 +54,6 @@ static int get_entities(str profile,std::vector<Entity> &buff);
 } // namespace gpki::db::profiles
 
 namespace gpki::db::entities {
-  
 static inline str suffix = "_entities";
 static inline str ext = ".csv";
 static inline str _dbpath(str &profile){return DBDIR + profile + suffix + ext;}
@@ -76,7 +72,7 @@ static int initialize(str profile);
 static int exists(str &profile, strview common_name);
 static int add(Entity *entity);
 static int del(str &profile, strview cn);
-static int load(str &profile, strview common_name, Entity *entity_buff);
+static int load(str &profile, strview common_name, Entity &entity_buff);
 } // namespace gpki::db::entities
 
 namespace gpki::db {

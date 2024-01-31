@@ -10,5 +10,6 @@ void help::remove::usage(){
 ./gpki remove <profile> [subopts]
 
 [ subopts ]
-    )";
+
+)";
 }

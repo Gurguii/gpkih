@@ -146,38 +146,58 @@ static bool operator&(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
 }
 
 namespace gpki::subopts {
-struct init {
+
+// Generic params not related with any action
+struct params{
+  int prompt = 1;
+};
+
+struct init : params{
   std::string profile_name;
   std::string profile_source;
 };
 
-struct build {
+struct build : params{
   std::string key_size = "1024";
   std::string algorithm = "rsa";
   std::string key_format = "pem";
   std::string csr_crt_format = "pem";
+  ENTITY_TYPE type;
+  Profile profile;
 };
 
-struct revoke {
+struct revoke : params{
   std::string common_name;
   std::string reason = "not specified";
+  Profile profile;
 };
 
-struct gencrl {
+struct gencrl : params{
   /* No subopts */
+  Profile profile;
 };
 
-struct list {
+struct list : params{
   std::vector<std::string> profiles;
   std::vector<std::string> entities;
 
   PROFILE_FIELDS pfields = P_ALL;
   ENTITY_FIELDS efields = E_ALL;
 };
-struct remove{
+
+struct remove : params{
+  str profile_name;
+};
+
+struct remove_all : params{
   /* No subopts */
 };
-struct remove_all{
-  /* No subopts */
+
+struct create_pack : params{
+  /* */
+  str profile_name;
+  std::vector<Entity> entities;
+  int inline_outfile = 0;
+  strview outdir;
 };
-} // namespace gpki::subopts
+} // namespace gpki::subopts ./gpki create-pack <profile> <cn1,cn2...cnX>

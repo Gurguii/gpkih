@@ -1,9 +1,11 @@
+#include "help.hpp"
 #include "help_build.cpp"
 #include "help_revoke.cpp"
 #include "help_gencrl.cpp"
 #include "help_list.cpp"
 #include "help_init.cpp"
 #include "help_remove.cpp"
+#include "help_create_pack.cpp"
 
 void help::usage() {
   std::cout << R"(
@@ -22,7 +24,7 @@ Used to create a new profile
 
 [list]
 Used to display info about profiles and entities
-  ./gpki list [subopts]
+  ./gpki list [profile/s] [subopts]
 
 [build] 
 Create certificates
@@ -51,5 +53,9 @@ void call_helper(strview action){
     help::list::usage();
   }else if(action == "remove"){
     help::remove::usage();
+  }else if(action == "create-pack"){
+    help::create_pack::usage();
+    }else{
+    PINFO("no help defined for '{}'\n",action);
   }
 }

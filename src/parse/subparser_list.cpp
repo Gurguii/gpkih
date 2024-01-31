@@ -1,24 +1,28 @@
 #include "subparser.hpp"
 
 using namespace gpki;
-int subparsers::list(std::vector<std::string> opts) {
+int subparsers::list(std::vector<str> opts) {
   subopts::list params;
-  if (opts.size() == 0) {
+  if (opts.empty()) {
     return actions::list(params);
   }
   if (opts[0][0] != '-') {
     sstream _profiles(opts[0]);
     str profile;
     while (getline(_profiles, profile, CSV_DELIMITER_c)) {
+      if(!db::profiles::exists(profile)){
+        PERROR("profile '{}' doesn't exist, omitting...\n",profile);
+        continue;
+      }
       params.profiles.push_back(profile);
     }
     opts.erase(opts.begin(), opts.begin() + 1);
   }
   opts.push_back("\0");
   for (int i = 0; i < opts.size() - 1; ++i) {
-    std::string_view opt = opts[i];
+    strview opt = opts[i];
     if (opt == "-e" || opt == "--entities") {
-      std::string_view value = opts[i + 1];
+      strview value = opts[i + 1];
       if (value[0] != '-' && value != "\0") {
         // all entities
         str entity;
@@ -32,8 +36,8 @@ int subparsers::list(std::vector<std::string> opts) {
         PWARN("entitiy fields is empty, could have been omitted\n");
       }else{
         params.efields = E_NONE;
-        std::stringstream ss(opts[++i]);
-        std::string field;
+        sstream ss(opts[++i]);
+        str field;
         auto emap = entity_fields_map();
         while (getline(ss, field, CSV_DELIMITER_c)) {
           if (emap.find(field) != emap.end()) {
@@ -49,8 +53,8 @@ int subparsers::list(std::vector<std::string> opts) {
         PWARN("profile fields is empty, could have been omitted\n");
       }else{
         params.pfields = P_NONE;
-        std::stringstream ss(opts[++i]);
-        std::string field;
+        sstream ss(opts[++i]);
+        str field;
         auto pmap = profile_fields_map();
         while (getline(ss, field, CSV_DELIMITER_c)) {
           if (pmap.find(field) != pmap.end()) {

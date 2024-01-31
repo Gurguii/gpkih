@@ -2,16 +2,28 @@
 
 // SYNTAX : ./gpki build <profile> [subopts]
 using namespace gpki;
-int subparsers::build(Profile *profile, std::vector<std::string> opts) { 
-  Entity entity;
+int subparsers::build(std::vector<std::string> opts) {
+  if(opts.empty()){
+    PERROR("profile must be given\n");
+    PHINT("try 'gpki help build' for extra help\n");
+    return 0;
+  } 
   subopts::build params;
-  ENTITY_TYPE type = ENTITY_TYPE::none;
+  strview profilename = opts[0];
+  Profile &profile = params.profile;
+
+  if(db::profiles::load(profilename,profile)){
+    PERROR("profile '{}' doesn't exist\n",profilename);
+    return 0;
+  }
+  auto &type = params.type;
+  type = ENTITY_TYPE::none;
+  opts.erase(opts.begin());
   opts.push_back("\0");
   // override default build params with user arguments and set
   // right function to be executed
-  for(int i = 0; i < opts.size()-1; ++i){
+  for(int i = 0; i < opts.size(); ++i){
     std::string_view opt = opts[i];
-    std::cout << "opt -> " << opt << "\n";
     if(opt == "-ca" || opt == "--ca"){
       type = ENTITY_TYPE::ca;
     }else if(opt == "-cl" || opt == "--client"){
@@ -24,6 +36,8 @@ int subparsers::build(Profile *profile, std::vector<std::string> opts) {
       params.key_format = opts[++i];
     }else if(opt == "-outformat"){
       params.csr_crt_format = opts[++i];
+    }else if(opt == "\0"){
+      continue;
     }else{
       UNKNOWN_OPTION_MSG(opt);
     }
@@ -32,5 +46,5 @@ int subparsers::build(Profile *profile, std::vector<std::string> opts) {
     std::cout << "[error] Please specify an entity type -[ca|sv|cl]\n";
     return -1;
   }
-  return actions::build(profile,&params,type);
+  return actions::build(params);
 }

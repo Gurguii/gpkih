@@ -70,7 +70,7 @@ int db::profiles::initialize() {
     ++lines;
     populate_from_entry(line, &pinfo);
     if(!fs::exists(pinfo.source)){
-      std::cout << "Profile '" << pinfo.name << "' is in the database but source dir '" << pinfo.source << "' doesn't exist, removing entry from db\n";
+      PWARN("Profile '{}' is in the database but source dir '{}' doesn't exist, removing entry from db\n",pinfo.name,pinfo.source);
       continue;
     }
       // emplace() returns pair<iterator,bool> where the bool indicates if emplacement was sucessful or not
@@ -152,7 +152,7 @@ int db::profiles::get_entities(str profile, std::vector<Entity> &buff){
   str edb = DBDIR + SLASH + profile + "_entities.csv";
   std::ifstream file(edb);
   if(!file.is_open()){
-    PERROR("couldn't open database {}",edb);
+    PERROR("couldn't open database {}\n",edb);
     return -1;
   }
   std::string entry;

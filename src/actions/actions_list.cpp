@@ -50,26 +50,30 @@ void print_profile_entities(str profile, ENTITY_FIELDS &fields){
 }
 
 int actions::list(subopts::list &params) {
-  if (params.profiles.empty()) {
-    if (params.entities.empty()) {
+  auto &profiles = params.profiles;
+  auto &entities = params.entities;
+  if (profiles.empty()) {
+    if (entities.empty()) {
       /* OPTION 1 */
       // all profiles all entities
       for (auto p : db::profiles::existing_profiles) {
         print_profile(p.first, params.pfields);
         print_profile_entities(p.first, params.efields);
       }
+      return 0;
     } else {
       /* OPTION 2 */
       // all profiles certain entities
       for(auto p : db::profiles::existing_profiles){
         print_profile(p.first,params.pfields);
       }
+      return 0;
     } 
   }
-  if (params.entities.empty()) {
+  if (entities.empty()) {
     /* OPTION 3 */
     // certain profiles all entities
-    for (auto p : params.profiles) {
+    for (auto p : profiles) {
       print_profile(p, params.pfields);
       print_profile_entities(p, params.efields);
     }

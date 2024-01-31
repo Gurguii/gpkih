@@ -2,13 +2,19 @@
 
 // SYNTAX ./gpki revoke <profile> [subopts]
 using namespace gpki;
-int subparsers::revoke(Profile *profile, std::vector<std::string> opts){
+int subparsers::revoke(std::vector<std::string> opts){
   if(opts.size() == 0){
-    help::revoke::usage();
+    PERROR("profile name must be given");
+    PHINT("try gpki help revoke\n");
     return -1;
   }
   opts.push_back("\0");
   subopts::revoke params;
+  strview profilename = opts[0]; 
+  if(db::profiles::load(profilename,params.profile)){
+    PERROR("profile '{}' doesn't exist\n",profilename);
+    return -1;
+  };
   for(int i = 0; i < opts.size() -1; ++i){
     std::string_view opt = opts[i];
     if(opt == "-cn"){
@@ -23,5 +29,5 @@ int subparsers::revoke(Profile *profile, std::vector<std::string> opts){
     std::cout << "[error] Please specify a common name | -cn <name>\n";
     return -1;
   }
-  return actions::revoke(profile,&params);
+  return actions::revoke(params);
 }

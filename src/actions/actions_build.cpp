@@ -4,10 +4,11 @@ using namespace gpki;
 using subopts = gpki::subopts::build;
  
 
-int actions::build(Profile *profile, gpki::subopts::build *opts, ENTITY_TYPE type){
+int actions::build(gpki::subopts::build &opts){
+    Profile &profile = opts.profile;
     Entity entity;
-    entity.type = entity_type_str(type);
-    entity.profile_name = profile->name;
+    entity.type = entity_type_str(opts.type);
+    entity.profile_name = profile.name;
 
     std::string input;
     // Set country name
@@ -52,20 +53,20 @@ int actions::build(Profile *profile, gpki::subopts::build *opts, ENTITY_TYPE typ
       entity.subject.email = input;
     }
 
-    std::string gopenssl = profile->source + SLASH + "gopenssl.cnf";
+    std::string gopenssl = profile.source + SLASH + "gopenssl.cnf";
     if(entity.type == "ca"){
       /* CA */
         entity.req_path = "\0";
-        entity.key_path = profile->source + SLASH + "pki" + SLASH + "ca" + SLASH + "key";
-        entity.cert_path = profile->source + SLASH + "pki" + SLASH + "ca" + SLASH + "crt";
+        entity.key_path = profile.source + SLASH + "pki" + SLASH + "ca" + SLASH + "key";
+        entity.cert_path = profile.source + SLASH + "pki" + SLASH + "ca" + SLASH + "crt";
         std::string command = "openssl req"
         " -config " + gopenssl + 
         " -new -x509"
         " -out " + entity.cert_path + 
         " -keyout " + entity.key_path + 
         " -subj '" + entity.subject.oneliner() + "'" 
-        " -outform " + opts->csr_crt_format + 
-        " -keyform " + opts->key_format +
+        " -outform " + opts.csr_crt_format + 
+        " -keyform " + opts.key_format +
         " -noenc";
         if(system(command.c_str())){
             std::cout << "command '" << command << "'\n";
@@ -73,19 +74,19 @@ int actions::build(Profile *profile, gpki::subopts::build *opts, ENTITY_TYPE typ
         }
     }else{
       /* CLIENT / SERVER */
-        entity.req_path = profile->source + SLASH + "pki" + SLASH + "reqs" +
-                          SLASH + entity.subject.cn + "-csr." + opts->csr_crt_format;
-        entity.key_path = profile->source + SLASH + "pki" + SLASH + "keys" +
-                          SLASH + entity.subject.cn + "-key." + opts->key_format;
-        entity.cert_path = profile->source + SLASH + "pki" + SLASH + "certs" +
-                           SLASH + entity.subject.cn + "-crt." + opts->csr_crt_format;
+        entity.req_path = profile.source + SLASH + "pki" + SLASH + "reqs" +
+                          SLASH + entity.subject.cn + "-csr." + opts.csr_crt_format;
+        entity.key_path = profile.source + SLASH + "pki" + SLASH + "keys" +
+                          SLASH + entity.subject.cn + "-key." + opts.key_format;
+        entity.cert_path = profile.source + SLASH + "pki" + SLASH + "certs" +
+                           SLASH + entity.subject.cn + "-crt." + opts.csr_crt_format;
         std::string csr_command = "openssl req" 
-        " -newkey " + opts->key_size + ":" + opts->algorithm + 
+        " -newkey " + opts.key_size + ":" + opts.algorithm + 
         " -out " + entity.req_path + 
         " -keyout " + entity.key_path + 
         " -subj '" + entity.subject.oneliner() + "'" + 
-        " -outform " + opts->csr_crt_format + 
-        " -keyform " + opts->key_format +
+        " -outform " + opts.csr_crt_format + 
+        " -keyform " + opts.key_format +
         " -noenc";
         if(system(csr_command.c_str())){
             std::cout << "[FAIL] - command '" << csr_command << "'\n";
@@ -104,7 +105,7 @@ int actions::build(Profile *profile, gpki::subopts::build *opts, ENTITY_TYPE typ
             return -1;
         }
     }
-    std::ifstream file(profile->source + SLASH + "pki" + SLASH + "crl" + SLASH + "crlnumber");  
+    std::ifstream file(profile.source + SLASH + "pki" + SLASH + "crl" + SLASH + "crlnumber");  
    file >> entity.serial; 
     // Entity succesfully added to the pki, add to database
     return db::entities::add(&entity);

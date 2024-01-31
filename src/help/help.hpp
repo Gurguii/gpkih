@@ -2,6 +2,7 @@
 #include <iostream>
 #include <unordered_map>
 #include "../gpki.hpp"
+#include "../printing.hpp"
 
 namespace gpki::help{
 void usage();  
@@ -22,6 +23,9 @@ namespace gpki::help::init{
 void usage();
 }
 namespace gpki::help::remove{
+    void usage();
+}
+namespace gpki::help::create_pack{
     void usage();
 }
 using namespace gpki;

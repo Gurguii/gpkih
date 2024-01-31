@@ -18,11 +18,12 @@ static constexpr COLOR ORANGE = COLOR::orange;
 static constexpr COLOR CYAN = COLOR::cyan;
 static constexpr COLOR BLACK = COLOR::black;
 static constexpr COLOR ALICIA = COLOR::alice_blue;
+static constexpr COLOR LGREEN = COLOR::light_green;
 
 STYLE S_NONE = fg(BLACK); 
-STYLE  S_WARNING = fg(ORANGE) | EMPHASIS::underline;
+STYLE  S_WARNING = fg(ORANGE) | EMPHASIS::bold;
 STYLE S_INFO = fg(COLOR::pale_golden_rod) | EMPHASIS::italic;
-STYLE S_ERROR = fg(RED) | bg(BLACK) | EMPHASIS::underline;
+STYLE S_ERROR = fg(RED) | EMPHASIS::bold;
 
 // Styles for entity labels
 static inline std::string S_ELABEL(std::string st) {
@@ -39,7 +40,7 @@ static inline std::string S_PLABEL(std::string st) {
 }
 
 static inline std::string S_PLABEL_V(std::string st) {
-    return fmt::format(fg(GREEN) | EMPHASIS::italic | EMPHASIS::bold, st);
+    return fmt::format(fg(LGREEN) | EMPHASIS::italic | EMPHASIS::bold, st);
 }
 
 /* NORMAL PRINTING */
@@ -60,32 +61,28 @@ template <typename ...T> void PRINTF(std::string fmt, T&&... args){
 
 /* ERROR PRINTING */
 template <typename ...T> void PERROR(std::string fmt, T&&... args){
-    fmt::print(S_ERROR,fmt,std::forward<T>(args)...);
-};
-static inline void PERROR(std::string msg){
-    fmt::print(S_ERROR," [error] "+ msg);
+    fmt::print(S_ERROR," [error] " + fmt,std::forward<T>(args)...);
 };
 
 /* INFO PRINTING */
 template <typename ...T> void PINFO(std::string fmt, T&&... args){
     fmt::print(S_INFO," [info] " + fmt,std::forward<T>(args)...);
 };
-static inline void PINFO(std::string msg){
-    fmt::print(S_INFO," [info] "+ msg);
-};
 
 /* WARNING PRINTING*/
 template <typename ...T> void PWARN(std::string fmt, T&&... args){
-    fmt::print(S_WARNING, fmt,std::forward<T>(args)...);
+    fmt::print(S_WARNING," [warning] " + fmt,std::forward<T>(args)...);
 };
-static inline void PWARN(std::string msg){
-    fmt::print(S_WARNING," [warning] " + msg );
-};
+
+/* HINT PRINTING */
+static inline void PHINT(std::string hint) {
+  std::cout << fmt::format(fg(YELLOW),"💡 {}\n", hint);
+}
 
 static inline void PROGRAMSTARTING(){
     PINFO("Starting gpki - {:%d %h %Y @ %H:%M}\n", std::chrono::system_clock::now());
 };
 
 static inline void UNKNOWN_OPTION_MSG(std::string_view opt) {
-  fmt::print(fg(COLOR::antique_white)," unknown option '{}'",opt);
+  fmt::print(fg(COLOR::antique_white)," [parsing] unknown option '{}'\n",opt);
 }

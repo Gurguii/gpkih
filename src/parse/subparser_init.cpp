@@ -16,6 +16,6 @@ int subparsers::init(std::vector<std::string> opts){
       UNKNOWN_OPTION_MSG(opt);
     }
   }
-  actions::init(&params);
+  actions::init(params);
   return 0;
 }

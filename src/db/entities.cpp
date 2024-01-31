@@ -83,7 +83,7 @@ int db::entities::exists(str &profile, strview common_name) {
 }
 
 int db::entities::load(str &profile,
-                       strview common_name, Entity *entity_buff) {
+                       strview common_name, Entity &entity_buff) {
   std::ifstream file(DBDIR + profile + "_entities.csv");
   if (!file.is_open()) {
     return -1;
@@ -93,7 +93,7 @@ int db::entities::load(str &profile,
   while (getline(file, line)) {
     populate_from_entry(line, &info);
     if (info.subject.cn == common_name) {
-      *entity_buff = std::move(info);
+      entity_buff = std::move(info);
       return 0;
     }
   }

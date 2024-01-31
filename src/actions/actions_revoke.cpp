@@ -9,11 +9,12 @@
   {"certificate is on hold","certificateHold"} \
  }
 using namespace gpki; 
-int actions::revoke(Profile *profile, subopts::revoke *params){
+int actions::revoke(subopts::revoke &params){
+  Profile &profile = params.profile;
   Entity entity;
 
-  if(db::entities::load(profile->name, params->common_name, &entity)){
-    std::cout << "[error] - entity with common name '" << params->common_name << "' doesn't exist\n";
+  if(db::entities::load(profile.name, params.common_name, entity)){
+    std::cout << "[error] - entity with common name '" << params.common_name << "' doesn't exist\n";
     return -1;
   }
   auto reasons = crl_reasons;
@@ -26,15 +27,15 @@ int actions::revoke(Profile *profile, subopts::revoke *params){
   std::getline(std::cin,ans);
   choice = strtol(&ans[0],nullptr,10);
   if(choice < reasons.size()){
-    params->reason = crl_reasons[choice].second;
+    params.reason = crl_reasons[choice].second;
   }
   std::string command = "openssl ca"
-  " -config " + profile->gopenssl() +
+  " -config " + profile.gopenssl() +
   " -revoke " + entity.cert_path +  
-  " -crl_reason " + params->reason;
+  " -crl_reason " + params.reason;
   
   if(system(command.c_str())){
-    std::cout << "command '" + command + "' failed\n";
+    PERROR("command '{}' failed\n");
     return -1;
   }
   
@@ -43,7 +44,8 @@ int actions::revoke(Profile *profile, subopts::revoke *params){
   std::getline(std::cin,ans);
   if(ans == "y" || ans == "Y"){
     subopts::gencrl params;
-    actions::gencrl(profile,&params);
+    params.profile = std::move(profile);
+    actions::gencrl(params);
   }
   return 0;
 };

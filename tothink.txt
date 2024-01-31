@@ -7,3 +7,7 @@ p.flush();
 p.display(FORMAT::table);
 p.export(std::string outdir, EX_FORMAT::csv);
 etc.
+
+
+- Add an interactive alternative for each action (e.g when subparsers' args.empty() == true call the interactive
+method which will guide the user through, else call the action with given params)
