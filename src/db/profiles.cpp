@@ -63,6 +63,7 @@ int db::profiles::initialize() {
     return -1;
   }
   // Load profiles into existing_profiles
+  std::vector<str> remove_profiles;
   str line;
   Profile pinfo;
   int lines = 0;
@@ -70,16 +71,17 @@ int db::profiles::initialize() {
     ++lines;
     populate_from_entry(line, &pinfo);
     if(!fs::exists(pinfo.source)){
-      PWARN("Profile '{}' is in the database but source dir '{}' doesn't exist, removing entry from db\n",pinfo.name,pinfo.source);
+      PWARN("Profile '{}' is in the database but source dir '{}' doesn't exist, removing from db\n",pinfo.name,pinfo.source);
+      remove_profiles.emplace_back(pinfo.name);
       continue;
     }
       // emplace() returns pair<iterator,bool> where the bool indicates if emplacement was sucessful or not
       if (!existing_profiles.emplace(pinfo.name,pinfo).second){
-        std::cout << "couldn't add profile '" << pinfo.name << "to existing_profiles\n"; 
+        PERROR("couldn't add profile '{}' to existing_profiles\n", pinfo.name);
         return -1;
       };
   }
-  db::profiles::sync();
+  db::profiles::remove(remove_profiles);
   return existing_profiles.size(); 
 }
 
@@ -97,7 +99,9 @@ int db::profiles::add(Profile *profile) {
   return (fs::file_size(dbpath) > bsize ? 0 : -1);
 }
 
-int db::profiles::remove(str &profile) {
+int db::profiles::remove(std::vector<str> &profiles) {
+  for(auto &profile : profiles){
+  
   auto iter = existing_profiles.find(profile);
   if(iter == existing_profiles.end()){
     return -1;
@@ -105,7 +109,7 @@ int db::profiles::remove(str &profile) {
   Profile target = iter->second;
   if(prompt){
     str ans;
-    std::cout << "Files from profile '" << profile << "' about to get removed, continue? y/n : ";
+    PROMPT("Files from profile '" + profile + "' about to get removed, continue?","[y/n]:");
     std::getline(std::cin,ans);
     if(ans != "y" && ans != "Y"){
       std::cout << "Not removing anything ...\n";
@@ -125,21 +129,22 @@ int db::profiles::remove(str &profile) {
     seterror(fmt::format("couldn't remove entities' csv '{}'",db));
     return -1;
   }
+  }
   // call sync() to synchronize existing_profiles with profiles.csv contents
   return sync();
 }
+
 int db::profiles::remove_all(){
   // Using the map itself would cause in segmentation fault since
   // remove() calls existing_profiles.erase()
-  auto map_cpy = existing_profiles;
-  for(auto p : map_cpy){
-    str name = p.first;
-    if(remove(name)){
-      return -1;
-    };
+  std::vector<str> profiles;
+  for(auto kv : existing_profiles){
+    profiles.emplace_back(kv.first);
   }
+  remove(profiles);
   return 0;
 }
+
 int db::profiles::load(strview profile_name, Profile &pinfo) {
   if (!exists(profile_name)) {
     return -1;
@@ -161,7 +166,7 @@ int db::profiles::get_entities(str profile, std::vector<Entity> &buff){
   entry.assign("");
   while(getline(file,entry)){
     Entity entity;
-    entities::populate_from_entry(entry,&entity);
+    entities::populate_from_entry(entry,entity);
     buff.push_back(std::move(entity));
   }
   return 0;

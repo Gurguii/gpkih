@@ -26,7 +26,7 @@ void print_entity(Entity entity, ENTITY_FIELDS &fields) {
   sstream label;
     auto &subj = entity.subject;
     // Populate label and print 
-    label << fmt::format(  fg(WHITE),"\n------------------------------------") << "\n";
+    label << fmt::format(  fg(WHITE),"------------------------------------") << "\n";
     fields & E_COMMON   && label << S_ELABEL("Common name: ") << S_ELABEL_V(subj.cn) << "\n";
     fields & E_TYPE            && label << S_ELABEL("Type: ") << S_ELABEL_V(entity.type) << "\n";
     fields & E_SERIAL        && label << S_ELABEL("Serial: ") << S_ELABEL_V(entity.serial) << "\n";

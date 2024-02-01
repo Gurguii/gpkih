@@ -27,9 +27,9 @@ int subparsers::build(std::vector<std::string> opts) {
     if(opt == "-ca" || opt == "--ca"){
       type = ENTITY_TYPE::ca;
     }else if(opt == "-cl" || opt == "--client"){
-      type = ENTITY_TYPE::cl;
+      type = ENTITY_TYPE::client;
     }else if(opt == "-sv" || opt == "--server"){
-      type = ENTITY_TYPE::sv;
+      type = ENTITY_TYPE::server;
     }else if(opt == "-keysize" || opt == "--keysize"){
       params.key_size = opts[++i];
     }else if(opt == "-keyformat"){
@@ -43,7 +43,7 @@ int subparsers::build(std::vector<std::string> opts) {
     }
   }
   if(type == ENTITY_TYPE::none){
-    std::cout << "[error] Please specify an entity type -[ca|sv|cl]\n";
+    PERROR("please specify an entity type -[ca|sv|cl]\n");
     return -1;
   }
   return actions::build(params);

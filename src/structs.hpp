@@ -51,7 +51,7 @@ struct Entity {
   std::string type; // ca-sv-cl
   std::string serial;
   std::string csv_entry() {
-    return profile_name + "," + subject.cn + "," + type + "," +
+    return profile_name + "," + subject.cn + "," + type + "," + serial + "," +
            subject.country + "," + subject.state + "," + subject.location +
            "," + subject.organisation + "," + subject.email + "," + key_path +
            "," + req_path + "," + cert_path;
@@ -59,15 +59,27 @@ struct Entity {
 };
 } // namespace gpki
 
-enum class ENTITY_TYPE { none, ca, sv, cl };
+enum class ENTITY_TYPE { 
+  none = 0, 
+  #define ET_NONE = ENTITY_TYPE::none
+  ca = 2, 
+  #define ET_CA ENTITY_TYPE::ca
+  client = 4,
+  #define ET_CL ENTITY_TYPE::client
+  server = 8,
+  #define ET_SV ENTITY_TYPE::server
+};
+int operator&(ENTITY_TYPE lo,ENTITY_TYPE ro){
+  return (ui16)lo & (ui16)ro;
+}
 const auto entity_type_str = [](ENTITY_TYPE type) {
-  return (type == ENTITY_TYPE::ca
+  return (type & ET_CA
               ? "ca"
-              : (type == ENTITY_TYPE::sv ? "server" : "client"));
+              : (type & ET_SV ? "server" : "client"));
 };
 
 enum class ENTITY_FIELDS : uint16_t {
-  all = 4095,
+  all = 8191,
 #define E_ALL ENTITY_FIELDS::all
   none = 0,
 #define E_NONE ENTITY_FIELDS::none
@@ -79,21 +91,21 @@ enum class ENTITY_FIELDS : uint16_t {
 #define E_TYPE ENTITY_FIELDS::type
   serial = 16,
 #define E_SERIAL ENTITY_FIELDS::serial
-  subject_country = 16,
+  subject_country = 32,
 #define E_COUNTRY ENTITY_FIELDS::subject_country
-  subject_state = 32,
+  subject_state = 64,
 #define E_STATE ENTITY_FIELDS::subject_state
-  subject_location = 64,
+  subject_location = 128,
 #define E_LOCATION ENTITY_FIELDS::subject_location
-  subject_organisation = 128,
+  subject_organisation = 256,
 #define E_ORG ENTITY_FIELDS::subject_organisation
-  subject_email = 256,
+  subject_email = 512,
 #define E_MAIL ENTITY_FIELDS::subject_email
-  key_path = 512,
+  key_path = 1024,
 #define E_KEYPATH ENTITY_FIELDS::key_path
-  req_path = 1024,
+  req_path = 2048,
 #define E_REQPATH ENTITY_FIELDS::req_path
-  cert_path = 2048,
+  cert_path = 4096,
 #define E_CRTPATH ENTITY_FIELDS::cert_path
 };
 

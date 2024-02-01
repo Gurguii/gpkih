@@ -11,7 +11,25 @@
 /* Help functions */
 #include "help/help.cpp"
 
+static inline void ctrl_c_handler(int sig){
+  std::cout << "\n\n";
+  PINFO("cleaning up before exiting ...\n\n");
+  /* do cleanup */
+  exit(0);
+}
+
+
+static inline void register_signals(){
+  #ifdef __WIN32
+  SetConsoleCtrlHandler(ctrl_c_handler, TRUE);
+  #else
+  signal(SIGINT,ctrl_c_handler);
+  #endif
+}
+
 int main(int argc, const char **args) {
+  // Register signals
+  register_signals();
   // Add PROPER checks for openssl - openvpn existence
   PROGRAMSTARTING();
   if (!fs::exists(BASEDIR)) {

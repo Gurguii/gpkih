@@ -10,10 +10,13 @@ int subparsers::remove(std::vector<std::string> opts){
         return -1;
     }
     subopts::remove params;
-    str profilename = opts[0];
-    if(!db::profiles::exists(profilename)){
-        PERROR("profile '{}' doesn't exist\n",profilename);
-        return -1;
+    std::vector<str> profilenames;
+    sstream names(opts[0]);
+    str profile;
+    while(getline(names,profile,CSV_DELIMITER_c)){
+        if(db::profiles::exists(profile)){
+            profilenames.emplace_back(profile);
+        }
     }
-    return db::profiles::remove(profilename);
+    return db::profiles::remove(profilenames);
 }

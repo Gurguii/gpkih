@@ -21,9 +21,9 @@ static constexpr COLOR ALICIA = COLOR::alice_blue;
 static constexpr COLOR LGREEN = COLOR::light_green;
 
 STYLE S_NONE = fg(BLACK); 
-STYLE  S_WARNING = fg(ORANGE) | EMPHASIS::bold;
+STYLE  S_WARNING = fg(ORANGE) | EMPHASIS::bold | EMPHASIS::italic;
 STYLE S_INFO = fg(COLOR::pale_golden_rod) | EMPHASIS::italic;
-STYLE S_ERROR = fg(RED) | EMPHASIS::bold;
+STYLE S_ERROR = fg(RED) | EMPHASIS::bold | EMPHASIS::italic;
 
 // Styles for entity labels
 static inline std::string S_ELABEL(std::string st) {
@@ -79,6 +79,22 @@ static inline void PHINT(std::string hint) {
   std::cout << fmt::format(fg(YELLOW),"💡 {}\n", hint);
 }
 
+/* PROMPT PRINTING */
+static inline std::string PROMPT_icon(){
+    return fmt::format(fg(GREEN),"➜ ");
+};
+static inline std::string PROMPT_body(std::string &body){
+    return fmt::format(fg(WHITE),"{}",body);
+};
+static inline std::string PROMPT_answers(std::string &ans){
+    return fmt::format(fg(WHITE) | EMPHASIS::italic | EMPHASIS::bold,"{}",ans);
+};
+static inline void PROMPT(std::string msg){
+   fmt::print(" {} {}",PROMPT_icon(),PROMPT_body(msg));
+}
+static inline void PROMPT(std::string msg, std::string ans){
+   fmt::print(" {} {} {}",PROMPT_icon(),PROMPT_body(msg),PROMPT_answers(ans));
+}
 static inline void PROGRAMSTARTING(){
     PINFO("Starting gpki - {:%d %h %Y @ %H:%M}\n", std::chrono::system_clock::now());
 };

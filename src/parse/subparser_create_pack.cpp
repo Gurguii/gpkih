@@ -2,9 +2,9 @@
 #include <filesystem>
 
 int subparsers::create_pack(std::vector<str> opts){
-    // ./gpki create-pack <profiles> <csv_entities>
+    // ./gpki create-pack <profiles> <cn1,cn2...cnX>
     if(opts.empty()){
-        PERROR("profile name must be given\n");
+        PERROR("missing profile name must be given\n");
         PHINT("try gpki help create_pack\n");
         return -1;
     }
@@ -35,7 +35,7 @@ int subparsers::create_pack(std::vector<str> opts){
     for(int i = 0; i < opts.size(); ++i){
         strview opt = opts[i];
         if(opt == "-o" || opt == "--out"){
-            if(check_output_path(opts[++i])){
+            if(!create_output_path(opts[++i])){
                 params.outdir = opts[++i];
             }
         }else if(opt == "--inline"){

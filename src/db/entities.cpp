@@ -26,20 +26,20 @@ int db::entities::initialize(str profile) {
   return 0;
 }
 
-int db::entities::populate_from_entry(str &entry, Entity *entity) {
+int db::entities::populate_from_entry(str &entry, Entity &entity) {
   std::stringstream ss(entry);
-  getline(ss, entity->profile_name, CSV_DELIMITER_c);
-  getline(ss, entity->subject.cn, CSV_DELIMITER_c);
-  getline(ss, entity->type, CSV_DELIMITER_c);
-  getline(ss,entity->serial, CSV_DELIMITER_c);
-  getline(ss, entity->subject.country, CSV_DELIMITER_c);
-  getline(ss, entity->subject.state, CSV_DELIMITER_c);
-  getline(ss, entity->subject.location, CSV_DELIMITER_c);
-  getline(ss, entity->subject.organisation, CSV_DELIMITER_c);
-  getline(ss, entity->subject.email, CSV_DELIMITER_c);
-  getline(ss, entity->key_path, CSV_DELIMITER_c);
-  getline(ss, entity->req_path, CSV_DELIMITER_c);
-  getline(ss, entity->cert_path, CSV_DELIMITER_c);
+  getline(ss, entity.profile_name, CSV_DELIMITER_c);
+  getline(ss, entity.subject.cn, CSV_DELIMITER_c);
+  getline(ss, entity.type, CSV_DELIMITER_c);
+  getline(ss,entity.serial, CSV_DELIMITER_c);
+  getline(ss, entity.subject.country, CSV_DELIMITER_c);
+  getline(ss, entity.subject.state, CSV_DELIMITER_c);
+  getline(ss, entity.subject.location, CSV_DELIMITER_c);
+  getline(ss, entity.subject.organisation, CSV_DELIMITER_c);
+  getline(ss, entity.subject.email, CSV_DELIMITER_c);
+  getline(ss, entity.key_path, CSV_DELIMITER_c);
+  getline(ss, entity.req_path, CSV_DELIMITER_c);
+  getline(ss, entity.cert_path, CSV_DELIMITER_c);
   return 0;
 }
 int db::entities::populate_from_entry(str &entry,
@@ -61,7 +61,7 @@ int db::entities::populate_from_entry(str &profile, str &entry,str &cn,Entity &b
   std::string _cn;
   getline(ss,_cn,CSV_DELIMITER_c);
   if(_cn == cn){
-    return populate_from_entry(entry,&buff);
+    return populate_from_entry(entry,buff);
   }
   return 1;
 }
@@ -74,7 +74,7 @@ int db::entities::exists(str &profile, strview common_name) {
   str line;
   Entity info;
   while (getline(file, line)) {
-    populate_from_entry(line, &info);
+    populate_from_entry(line, info);
     if (info.subject.cn == common_name) {
       return 1;
     }
@@ -91,7 +91,7 @@ int db::entities::load(str &profile,
   str line;
   Entity info;
   while (getline(file, line)) {
-    populate_from_entry(line, &info);
+    populate_from_entry(line, info);
     if (info.subject.cn == common_name) {
       entity_buff = std::move(info);
       return 0;
@@ -100,9 +100,9 @@ int db::entities::load(str &profile,
   return -1;
 }
 
-int db::entities::add(Entity *entity) {
-  Entity &e = *entity;
-  str dbpath = _dbpath(entity->profile_name);
+int db::entities::add(Entity &entity) {
+  Entity &e = entity;
+  str dbpath = _dbpath(entity.profile_name);
   std::ofstream file(dbpath, std::ios::app);
   if (!file.is_open()) {
     return -1;
@@ -129,11 +129,12 @@ int db::entities::del(str &profile, strview cn) {
     return -1;
   }
   while (getline(file, line)) {
-    populate_from_entry(line, &buff);
+    populate_from_entry(line, buff);
     if (buff.profile_name != profile) {
       tmpfile << line << std::endl;
     }
   }
+  tmpfile.close();
   fs::remove(dbpath);
   fs::rename(tmpfilename, dbpath);
   return fs::exists(dbpath);

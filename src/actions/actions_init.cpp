@@ -154,11 +154,9 @@ int actions::init(subopts::init &params) {
       default_params.type = ENTITY_TYPE::ca;
       default_params.profile = std::move(profile);
       if (actions::build(default_params)) {
-        std::cout << "couldn't add entity\n";
         return -1;
       } else {
-        std::cout << "CA created\n";
-        // ./gpki list <profile> -ca
+        PINFO("CA succesfully created\n");
         return -1;
       };
     }
