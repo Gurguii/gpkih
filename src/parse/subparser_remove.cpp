@@ -6,7 +6,7 @@ int subparsers::remove(std::vector<std::string> opts){
     /* Parse subopts */
     if(opts.empty()){
         PERROR("profile name must be given\n");
-        PINFO("try gpki help remove\n");
+        PHINT("try gpki help remove\n");
         return -1;
     }
     subopts::remove params;
@@ -14,9 +14,11 @@ int subparsers::remove(std::vector<std::string> opts){
     sstream names(opts[0]);
     str profile;
     while(getline(names,profile,CSV_DELIMITER_c)){
-        if(db::profiles::exists(profile)){
-            profilenames.emplace_back(profile);
+        if(!db::profiles::exists(profile)){
+            PWARN("Profile '{}' doesn't exist, omitting\n", profile);
+            continue;
         }
+        profilenames.emplace_back(profile);
     }
     return db::profiles::remove(profilenames);
 }
