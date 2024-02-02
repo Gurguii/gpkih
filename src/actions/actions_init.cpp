@@ -1,5 +1,6 @@
 #include "../utils/gpkih_util_funcs.hpp"
 #include "actions.hpp"
+#include <exception>
 
 #define RELATIVE_DIRECTORY_PATHS                                               \
   std::vector<std::string> {                                                   \
@@ -42,10 +43,10 @@ template <typename T> int IS_VALID_PATH(T path) {
   if (!IS_ABSOLUT_PATH(path)) {
     return 0;
   };
-  if (std::filesystem::exists(path)) {
+  try {
+    if (std::filesystem::exists(path)) {
     std::string ans;
-    std::cout << "file or directory '" << path
-              << "' already exists, remove? y/n ";
+    PROMPT("file or directory '{}' already exists, remove?","[y/n]");
     getline(std::cin, ans);
     if (ans == "y" || ans == "Y") {
       return std::filesystem::remove_all(
@@ -53,6 +54,11 @@ template <typename T> int IS_VALID_PATH(T path) {
     }
     return 0;
   };
+  }catch (std::exception ex) {
+    PERROR("permission denied in '{}'\n",path);
+    return 0;
+  }
+
   return 1;
 }
 
@@ -62,9 +68,17 @@ int actions::init(subopts::init &params) {
   if (params.profile_name.empty() ||
       db::profiles::exists(params.profile_name)) {
     do {
-      std::cout << "[+] Please introduce desired profile name: ";
+      PROMPT("Desired profile name: ");
       std::getline(std::cin, profile.name);
-    } while (db::profiles::exists(profile.name));
+      if(db::profiles::exists(profile.name)){
+        PINFO("profile '{}' already exists\n");
+        continue;
+      }else if(profile.name.empty()){
+        PINFO("profile name can't be empty\n");
+        continue;
+      }
+      break;
+    } while (db::profiles::exists(profile.name) || profile.name.empty());
   } else {
     profile.name = std::move(params.profile_name);
   }
@@ -72,7 +86,7 @@ int actions::init(subopts::init &params) {
   if (params.profile_source.empty() ||
       !IS_VALID_PATH(params.profile_source)) {
     do {
-      std::cout << "[+] Please introduce pki base dir (absolute path): ";
+      PROMPT("Profile source dir (absolute path): ");
       std::getline(std::cin, profile.source);
     } while (!IS_VALID_PATH(profile.source));
   } else {
@@ -81,7 +95,7 @@ int actions::init(subopts::init &params) {
 
   // Check that we have write permissions in such path
   if (!hasWritePermissions(profile.source)) {
-    seterror("[error] Not write permissions in '" + profile.source + "'\n");
+    PERROR("no write permissions in '{}'",profile.source);
     return -1;
   };
 
@@ -90,7 +104,7 @@ int actions::init(subopts::init &params) {
     std::string path = profile.source + SLASH + relative;
     // std::cout << "directory: " << path << "\n";
     if (!std::filesystem::create_directories(path)) {
-      seterror("couldn't create directory " + path);
+      PERROR("couldn't rete directory '{}'",path);
       // Remove the profile source dir
       std::filesystem::remove_all(profile.source);
       return -1;
@@ -117,7 +131,7 @@ int actions::init(subopts::init &params) {
       [](char c) { return c == '\\'; }, '/');
 #endif
   if (sed(sed_src, sed_dst, {{"GPKI_BASEDIR", profile.source + "/pki"}})) {
-    std::cout << "gsed() failed\n";
+    PERROR("gsed failed()\n");
     return -1;
   }
 #ifdef __WIN32
@@ -136,8 +150,7 @@ int actions::init(subopts::init &params) {
   // Extra questions
   if (prompt) {
     // QUESTION 1
-    std::cout << "Create dhparam and openvpn static key (tls-crypt)? "
-                 "[recommended] Y/N: ";
+    PROMPT("Create dhparam and openvpn tls key? (recommended)","[y/n]");
     std::string ans;
     getline(std::cin, ans);
     if (ans == "y" || ans == "Y") {
@@ -147,7 +160,7 @@ int actions::init(subopts::init &params) {
     }
     ans.assign("");
     // QUESTION 2
-    std::cout << "Do you want to create the CA now? Y/N: ";
+    PROMPT("Create the CA now?","[y/n]");
     getline(std::cin, ans);
     if (ans == "y" || ans == "Y") {
       subopts::build default_params;

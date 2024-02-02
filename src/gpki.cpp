@@ -18,7 +18,6 @@ static inline void ctrl_c_handler(int sig){
   exit(0);
 }
 
-
 static inline void register_signals(){
   #ifdef __WIN32
   SetConsoleCtrlHandler(ctrl_c_handler, TRUE);
@@ -50,7 +49,7 @@ int main(int argc, const char **args) {
   if(p == -1){
     return -1; 
   }
-  PINFO("loaded [{}] profiles from {}{}profiles.csv\n",p,DBDIR,SLASH);
+  PINFO("Loaded [{}] profiles\n",p,DBDIR,SLASH);
   if (parse(argc - 1, args + 1)) {
     return -1;
   }

@@ -38,7 +38,7 @@ int db::profiles::sync(){
   }
   std::filesystem::remove(dbpath);
   std::filesystem::rename(tmpfile,dbpath);
-  PINFO("Database synchronized\n");
+  //PINFO("Database synchronized\n");
   return 0;
 }
 /* Requires only 1 call since the profiles
