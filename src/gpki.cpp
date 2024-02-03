@@ -33,7 +33,7 @@ int main(int argc, const char **args) {
   PROGRAMSTARTING();
   if (!fs::exists(BASEDIR)) {
     if (!fs::create_directory(BASEDIR)) {
-      PRINTF(S_ERROR,"Couldn't create directory '{}'",BASEDIR);
+      PERROR("Couldn't create directory '{}'",BASEDIR);
       return -1; 
     };
     str configdir = CURRENT_PATH + SLASH + ".." + SLASH + "config";

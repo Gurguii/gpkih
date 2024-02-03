@@ -22,11 +22,12 @@ int subparsers::revoke(std::vector<std::string> opts){
     }else if(opt == "-reason"){
       params.reason = opts[++i];
     }else{
-      std::cout << "option '" << opt << "' doesn't exist\n";
+      UNKNOWN_OPTION_MSG("option " + str{opt} + " doesn't exist");
     }
   }
   if(params.common_name.empty()){
-    std::cout << "[error] Please specify a common name | -cn <name>\n";
+    PWARN("common name required\n");
+    PHINT("try gpki help revoke");
     return -1;
   }
   return actions::revoke(params);

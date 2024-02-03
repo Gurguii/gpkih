@@ -12,19 +12,19 @@ int subparsers::create_pack(std::vector<str> opts){
         help::create_pack::usage();
         return -1;
     }
-    if(db::profiles::exists(opts[0])){
+    Profile profile;
+    if(db::profiles::load(opts[0],profile)){
         PERROR("profile '{}' doesn't exist\n");
         return -1;
     }
     subopts::create_pack params;
-    str &profilename = opts[0];
     sstream ss(opts[1]);
     str cn;
     // Load desired entities
     Entity e;
     while(getline(ss,cn,CSV_DELIMITER_c)){
-        if(db::entities::load(profilename,cn,e)){
-            PWARN("entity '{}' not found in profile '{}'\n",cn,profilename);
+        if(db::entities::load(profile.name,cn,e)){
+            PWARN("entity '{}' not found in profile '{}'\n",cn,profile.name);
             continue;
         }
         params.entities.push_back(e);

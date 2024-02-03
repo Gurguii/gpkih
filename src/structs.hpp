@@ -54,7 +54,7 @@ struct Entity {
 
 enum class ENTITY_TYPE { 
   none = 0, 
-  #define ET_NONE = ENTITY_TYPE::none
+  #define ET_NONE  ENTITY_TYPE::none
   ca = 2, 
   #define ET_CA ENTITY_TYPE::ca
   client = 4,
@@ -151,59 +151,12 @@ static bool operator&(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
   return (ui16)lo & (ui16)ro;
 }
 
-namespace gpki::subopts {
-
-// Generic params not related with any action
-struct params{
-  int prompt = 1;
+static inline str str_conversion(ENTITY_TYPE type){
+  return (type & ET_CA
+              ? "ca" : (type & ET_SV 
+              ? "server" : (type & ET_CL 
+              ? "client" : "none")));
 };
-
-struct init : params{
-  std::string profile_name;
-  std::string profile_source;
+template <typename T> str to_str(T enumclass){
+  return str_conversion(enumclass);
 };
-
-struct build : params{
-  std::string key_size = "1024";
-  std::string algorithm = "rsa";
-  std::string key_format = "pem";
-  std::string csr_crt_format = "pem";
-  ENTITY_TYPE type;
-  Profile profile;
-};
-
-struct revoke : params{
-  std::string common_name;
-  std::string reason = "not specified";
-  Profile profile;
-};
-
-struct gencrl : params{
-  /* No subopts */
-  Profile profile;
-};
-
-struct list : params{
-  std::vector<std::string> profiles;
-  std::vector<std::string> entities;
-
-  PROFILE_FIELDS pfields = P_ALL;
-  ENTITY_FIELDS efields = E_ALL;
-};
-
-struct remove : params{
-  str profile_name;
-};
-
-struct remove_all : params{
-  /* No subopts */
-};
-
-struct create_pack : params{
-  /* */
-  str profile_name;
-  std::vector<Entity> entities;
-  int inline_outfile = 0;
-  strview outdir;
-};
-} // namespace gpki::subopts ./gpki create-pack <profile> <cn1,cn2...cnX>
