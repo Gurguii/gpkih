@@ -12,12 +12,14 @@ int subparsers::create_pack(std::vector<str> opts){
         help::create_pack::usage();
         return -1;
     }
-    Profile profile;
+    subopts::create_pack params;
+    Profile &profile = params.profile;
+    
     if(db::profiles::load(opts[0],profile)){
         PERROR("profile '{}' doesn't exist\n");
         return -1;
     }
-    subopts::create_pack params;
+    
     sstream ss(opts[1]);
     str cn;
     // Load desired entities

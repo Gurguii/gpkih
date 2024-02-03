@@ -1,11 +1,13 @@
 #include "actions.hpp"
 
+#include <ios>
 #include <iostream>
 #include <fstream>
 #include <sstream>
 #include <string>
 #include <sys/types.h>
 #include <map>
+#include <unordered_map>
 #include <vector>
 
 #include "../../src/utils/gpkih_util_funcs.hpp"
@@ -15,174 +17,113 @@
 using str = std::string;
 using sstream = std::stringstream;
 using strview = std::string_view;
-using Config = std::map<str,str>;
+using Section = std::unordered_map<str,str>;
+#define map std::map
 
 enum class ETYPE {
     sv,
     cl
 };
 
+class VpnConfig{
+    public:
+    static inline Section common;
+    
+    static inline Section client;
+    static inline Section client_optional;
+
+    static inline Section server;
+    static inline Section server_optional;
+    
+
+
+    static void clear(){
+        common.clear();
+        client.clear();
+        client_optional.clear();
+        server.clear();
+        server_optional.clear();
+    }
+    static inline int empty(){
+        return common.empty() | client.empty() | client_optional.empty() | server.empty() | server_optional.empty();
+    }
+    static inline bool is_valid_section(str &line){
+        return section_mapping.find(line) != section_mapping.end();
+    }
+    static inline Section* get_section_ref(str &section){
+        return section_mapping[section];
+    }
+    private:
+    static inline std::unordered_map<str, Section*>section_mapping{
+        {"[ common ]",&common},
+        {"[ client ]",&client},
+        {"[ client.optional ]",&client_optional},
+        {"[ server ]",&server},
+        {"[ server.optional ]",&server_optional}
+    };
+};
+
 class vpn_config
 {
     private:
     static inline str profile;
-    static inline Config conf;
-
-    static void load_section(std::ifstream &file, int allow_empty_or_none = 1){
+    static inline VpnConfig conf{};
+    // Returns position to line where next section is
+    static int load_section(std::ifstream &file, Section &section, int allow_empty_or_none = 1){
         str line, key, val;
         sstream ss;
+        std::streampos pos;
         while(getline(file,line)){
             char c = line[0];
-            if(c == ' '){
+            if(line.empty() || c == '#'){
+                // empty / commented line, not interested
                 continue;
             }
-            if(c == '#' || c == '['){
-                break;
+            if(c == '['){
+                // reached new section
+                return pos;
             }
             ss.write(line.c_str(),line.size());
             getline(ss,key,' ');
             getline(ss,val,'\n');
-            if(val.empty() && !allow_empty_or_none){
-                PWARN("found unset value '{}'\n",val);
+            if(val.empty()){
+                PWARN("found unset value '{}'\n",key);
                 continue;
             }
-            conf.emplace(key,val);
+            section.emplace(key,val);
             ss.clear();
-        }
-    }
-    public:
-    static int set_profile(const char *path){
-        profile = path;
-        profile.clear();
-        conf.clear();
-        // Load common config
-        std::ifstream file(path);
-        str line;
-        while(getline(file,line)){
-            if(line == "[ common ]"){
-                PINFO("loading [ common ] section\n");
-                load_section(file);
-                break;
-            }
-        }
-        if(conf.empty()){
-            // didn't load common section, something happened
-            PERROR("couldn't load [ common ] section\n");
-            return -1;
+            pos = file.tellg();
         }
         return 0;
     }
-
-    static void get_config(Entity &entity, int split = 0, const char *outdir = nullptr){
-        if(profile.empty()){
-            PERROR("set_profile() must be called before doing calls to get_config()\n");
-            return;
-        }
-        if(entity.type == "client"){
-            switch(split){
-                case 0:
-                // inline
-                break;
-                case 1:
-                // split
-                break;
-            }
-        }else if(entity.type == "server"){
-            switch(split){
-                case 0:
-                // inline
-                break;
-                case 1:
-                // split
-                break;
-            }
-        }else{
-            PERROR("entity type '{}' not suitable for pack creation\n");
-            return;
-        }
-    }
-    // Print key - values from the loaded configuration 
-    static void print(){
-        for(auto kv : conf){
-            std::cout << "key: " << kv.first << " value: " << kv.second << "\n";
-        }
-    }
-    
-    // Write config file
-    static void write(str outpath){
-        if(profile.empty()){
-            PERROR("path hasn't been set\n");
-            PINFO("vpn_config::load(str template) must be called\n");
-        }
-        std::ofstream file(outpath);
-        if(!file.is_open()){
-            PERROR("couldn't create file '{}'\n", outpath);
-            return;
-        }
-        for(auto kv : conf){
-            file << kv.first << " " << kv.second << std::endl;
-        }
-    }   
-
-    // Load config file
-    static void load(const char *path, ETYPE type){
-        if(path == nullptr){
-            PERROR("path can't be null\n");
-            return;
-        }
+    public:
+    static int set(Profile &profile){
         if(!conf.empty()){
             conf.clear();
         }
+        str path = profile.source + SLASH + template_filename;
+        
+        // Load config
         std::ifstream file(path);
         if(!file.is_open()){
-            std::cerr << "couldn't open file " << path << "\n";
-            return;
+            PERROR("couldn't open config file '{}'\n",path);
+            return -1;
         }
         str line;
-        str key, val;
-        sstream ss;
-        // load [ common ] section
-        while(getline(file,line)){
-            if(line == "[ common ]"){
-                // Load common section
-                while(getline(file,line)){
-                    load_section(file);
-                }
-            }
-        }
-        // load type-specific section (client|server)
-       switch(type){
-            case ETYPE::cl:
-            //  load [ client ] and [ client.optional ] sections
-            while(getline(file,line)){
-                if(line == "[ client ]" || line == "[ client.optional ]"){
-                    while(getline(file,line)){
-                        load_section(file);
-                    }
-                }
-            }
-            break;
-            
-            case ETYPE::sv:
-            // load [ server ] and [ server.optional ] sections 
-            while(getline(file,line)){
-                if(line == "[ server ]" || line == "[ server.optional ]"){
-                    while(getline(file,line)){
-                        load_section(file);
-                    }
-                }
-            }
-            break;
-        }
-    }
-    void clear(){
-        conf.clear();
-    }
-    void client_properties(){
-        
-    }
-    void server_properties(){
 
+        while(getline(file,line)){
+            if(VpnConfig::is_valid_section(line)){
+                // Got section
+                PINFO("Loading section '{}'\n",line);
+                Section *ptr = VpnConfig::get_section_ref(line);
+                int next_section = load_section(file,*ptr);
+                for(auto kv : *ptr){
+                    std::cout << "key: " << kv.first << "  value: " << kv.second << "\n";
+                }
+                file.seekg(next_section);
+            }
+        }
+        return 0;
     }
 };
 
@@ -190,11 +131,12 @@ using namespace gpki;
 int actions::create_pack(subopts::create_pack &params){
     // ./gpki create-pack [profile] [cn1,cn2...cnX]
     Profile &profile = params.profile;
-    str basedir = profile.source + "packs" + SLASH;
-    if(create_output_path(basedir)){
-        return -1;
-    };
-    vpn_config::set_profile(profile.source.c_str());
+    str basedir = profile.source + SLASH + "packs" + SLASH;
+
+    // set profile 
+    vpn_config::set(profile);
+
+    return 0;
     for(Entity &e : params.entities){
         str outdir = basedir + e.subject.cn;
         if(!fs::create_directory(outdir)){
@@ -206,7 +148,7 @@ int actions::create_pack(subopts::create_pack &params){
         }else if(e.type == "server"){
 
         }else{
-            PERROR("cannot create pack for entity with type '{}'",e.type);
+            PERROR("cannot create pack for entity with type '{}'\n",e.type);
             return -1;
         }
     }

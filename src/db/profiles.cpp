@@ -112,7 +112,7 @@ int db::profiles::remove(std::vector<str> &profiles) {
     PROMPT("Files from profile '" + profile + "' about to get removed, continue?","[y/n]:");
     std::getline(std::cin,ans);
     if(ans != "y" && ans != "Y"){
-      std::cout << "Not removing anything ...\n";
+      PINFO("not removing anything\n");
       return 0;
     }
   }

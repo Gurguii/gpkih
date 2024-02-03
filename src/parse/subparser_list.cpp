@@ -44,7 +44,7 @@ int subparsers::list(std::vector<str> opts) {
             ENTITY_FIELDS f = emap[field];
             params.efields = params.efields | f;
           } else {
-            PINFO("field '{}' doesn't exist",field);
+            PWARN("field '{}' doesn't exist\n",field);
           }
         }
       }

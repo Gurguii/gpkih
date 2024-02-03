@@ -39,9 +39,11 @@ int main(int argc, const char **args) {
     str configdir = CURRENT_PATH + SLASH + ".." + SLASH + "config";
     fs::copy(configdir, CONFDIR, fs::copy_options::recursive);
     if (!fs::exists(CONFDIR) || !fs::is_directory(CONFDIR)) {
+      PERROR("couldn't create gpkih source dir '{}'\n",CONFDIR);
       return -1;
     }
     if (!fs::create_directory(DBDIR)) {
+      PERROR("couldn't create gpkih source db dir '{}'\n",DBDIR);
       return -1;
     };
   }

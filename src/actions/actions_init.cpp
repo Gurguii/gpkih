@@ -3,30 +3,30 @@
 #include <exception>
 
 #define RELATIVE_DIRECTORY_PATHS                                               \
-  std::vector<std::string> {                                                   \
-    "tls", "templates", "pki" + SLASH + "ca", "pki" + SLASH + "keys",          \
+  std::vector<str> {                                                   \
+    "tls", "pki" + SLASH + "ca", "pki" + SLASH + "keys",          \
         "pki" + SLASH + "crl", "pki" + SLASH + "serial", "packs",              \
         "pki" + SLASH + "certs", "pki" + SLASH + "reqs",                       \
         "pki" + SLASH + "database", "logs"                                     \
   }
 #define RELATIVE_FILE_PATHS                                                    \
-  std::unordered_map<std::string, std::string> {                               \
+  std::unordered_map<str, str> {                               \
     {"pki" + SLASH + "crl" + SLASH + "crlnumber", "1000"},                     \
         {"pki" + SLASH + "serial" + SLASH + "serial", "01"}, {                 \
       "pki" + SLASH + "database" + SLASH + "index.txt", ""                     \
     }                                                                          \
   }
 
-int create_dhparam(std::string_view outpath) {
-  std::string command =
-      "openssl dhparam -out " + std::string(outpath) + " 1024";
+int create_dhparam(strview outpath) {
+  str command =
+      "openssl dhparam -out " + str(outpath) + " 1024";
   if (system(command.c_str())) {
     return -1;
   }
   return 0;
 }
 int create_openvpn_static_key(std::string_view outpath) {
-  std::string command = "openvpn --genkey tls-crypt " + std::string(outpath);
+  str command = "openvpn --genkey tls-crypt " + str(outpath);
   if (system(command.c_str())) {
     return -1;
   }
@@ -44,12 +44,12 @@ template <typename T> int IS_VALID_PATH(T path) {
     return 0;
   };
   try {
-    if (std::filesystem::exists(path)) {
-    std::string ans;
-    PROMPT("file or directory '{}' already exists, remove?","[y/n]");
+    if (fs::exists(path)) {
+    str ans;
+    PROMPT("file or directory already exists, remove?","[y/n]");
     getline(std::cin, ans);
     if (ans == "y" || ans == "Y") {
-      return std::filesystem::remove_all(
+      return fs::remove_all(
           path); // true if file got deleted - valid path (its free)
     }
     return 0;
@@ -100,30 +100,40 @@ int actions::init(subopts::init &params) {
   };
 
   // Create directories
-  for (const std::string &relative : RELATIVE_DIRECTORY_PATHS) {
-    std::string path = profile.source + SLASH + relative;
+  for (const str &relative : RELATIVE_DIRECTORY_PATHS) {
+    str path = profile.source + SLASH + relative;
     // std::cout << "directory: " << path << "\n";
-    if (!std::filesystem::create_directories(path)) {
-      PERROR("couldn't rete directory '{}'",path);
+    if (!fs::create_directories(path)) {
+      PERROR("couldn't create directory '{}'",path);
       // Remove the profile source dir
-      std::filesystem::remove_all(profile.source);
+      fs::remove_all(profile.source);
       return -1;
     }
   }
   // Create files
-  for (const std::pair<std::string, std::string> &p : RELATIVE_FILE_PATHS) {
+  for (const std::pair<str, str> &p : RELATIVE_FILE_PATHS) {
     // p.first -> path
     // p.second -> default file contents
-    std::string path = profile.source + SLASH + p.first;
+    str path = profile.source + SLASH + p.first;
     std::ofstream(path, std::ios::app).write(p.second.c_str(), p.second.size());
-    if (!std::filesystem::exists(path)) {
+    if (!fs::exists(path)) {
       seterror("couldn't create file " + p.first);
       return -1;
     }
   }
+  // Copy templates.conf to profile
+  str templates_src = CONFDIR + template_filename;
+  str templates_dst = profile.source + SLASH + template_filename;
+  fs::copy(templates_src,templates_dst);
+
+  if(!fs::exists(templates_dst)){
+    PERROR("couldn't copy '{}' to '{}'\n",templates_dst);
+    return -1;
+  }
+
   // Adapt gopenssl.cnf file to the profile
-  std::string sed_src = CONFDIR + SLASH + "gopenssl.cnf";
-  std::string sed_dst = profile.source + SLASH + "gopenssl.cnf";
+  str sed_src = CONFDIR + "gopenssl.cnf";
+  str sed_dst = profile.source + SLASH + "gopenssl.cnf";
 
 #ifdef __WIN32
   std::replace_if(
@@ -151,7 +161,7 @@ int actions::init(subopts::init &params) {
   if (prompt) {
     // QUESTION 1
     PROMPT("Create dhparam and openvpn tls key? (recommended)","[y/n]");
-    std::string ans;
+    str ans;
     getline(std::cin, ans);
     if (ans == "y" || ans == "Y") {
       create_openvpn_static_key(profile.source + SLASH + "tls" + SLASH +

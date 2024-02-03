@@ -49,10 +49,10 @@ static int sed(std::string_view src, std::string_view dst,
   return 0;
 }
 
-static int create_output_path(strview path){
+static int create_output_path(str &path){
   if(fs::exists(path)){
       str ans;
-      PINFO("path '{}' exists, remove? y/n ");
+      PROMPT("path '" + path + "'exists, remove?","[y/n]");
       getline(std::cin,ans);
       for(char &c : ans){
         c = std::tolower(c);
