@@ -20,7 +20,7 @@ class vpn_config
 {
     private:
     const char *path;
-
+    std::unordered_map<str,str>sed_map{};
     protected:
     static inline Config conf{
         {"proto",""},
@@ -76,8 +76,8 @@ class vpn_config
                 {"port",""},
                 {"status",""},
                 {"explicit-exit-notify",""},
-                {"tls-auth",""}
-                       {"ifconfig-pool-persist"}});
+                {"tls-auth",""},
+                       {"ifconfig-pool-persist",""}});
                 break;
             default:
                 std::cerr << "Not a valid type\n";

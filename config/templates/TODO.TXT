@@ -1,0 +1,25 @@
+create a map<str,str>
+with the keys of the template.conf and the key of another map which contains the substition params in the .ovpn Files
+e.g 
+
+map sed_map<str,str>{
+    {"<SERVER>" = ""}
+}
+map parser<str,str>{
+    {"server","<SERVER>"}
+}
+so we iterate the file and do 
+str line, key, value;
+sstream ss;
+ifstream file(path);
+while(getline(file,line)){
+    /* Parse not valid lines */
+    ss.write(line.c_str(),line.size());
+    getline(ss,key,' ');
+    getline(ss,val,'\n');
+    if(parser.find(key) != parser.end()){
+        sed_map[parser[key]] = val;
+    }
+
+    ss.clear();
+}
