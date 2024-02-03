@@ -19,13 +19,6 @@ struct Profile {
   std::string gopenssl() { return source + SLASH + "gopenssl.cnf"; }
   std::string dir_crl() { return source + SLASH + "pki" + SLASH + "crl"; }
   std::string csv_entry() { return name + "," + source; }
-  void empty() {
-    name.assign("");
-    source.assign("");
-    status.ca_count = 0;
-    status.sv_count = 0;
-    status.cl_count = 0;
-  }
 };
 
 // #define SUBJECT_TEMPLATE "/C=%s/ST=%s/L=%s/O=%s/CN=%s/emailAddress=%s"
@@ -74,8 +67,9 @@ int operator&(ENTITY_TYPE lo,ENTITY_TYPE ro){
 }
 const auto entity_type_str = [](ENTITY_TYPE type) {
   return (type & ET_CA
-              ? "ca"
-              : (type & ET_SV ? "server" : "client"));
+              ? "ca" : (type & ET_SV 
+              ? "server" : (type & ET_CL 
+              ? "client" : "none")));
 };
 
 enum class ENTITY_FIELDS : uint16_t {

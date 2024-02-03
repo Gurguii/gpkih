@@ -4,6 +4,9 @@
 #include <filesystem>
 #include <iostream>
 #include <sstream>
+#include <map>
+#include <unordered_map>
+
 // Custom typenames
 using str = std::string;
 using strview = std::string_view;
