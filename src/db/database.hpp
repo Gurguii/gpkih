@@ -12,31 +12,6 @@
 #include "../printing.hpp"
 
 
-static inline std::unordered_map<ui16,ui8> _vecpos_map{ {1,0},
-  {2,1},
-  {4,2},
-  {8,3},
-  {16,4},
-  {32,5},
-  {64,6},
-  {128,7},
-  {256,8},
-  {512,9},
-  {1024,10},
-  {2048,11},
-  {4096,12},
-  {8192,13}
-};
-/* Returns field index when returning the csv entry as a vector 
-e.g name,source
-      test,/pki/test
-get_profile_index(ENTITY_FIELDS::subject_location) would return 5
-*/
-template <typename FIELD> 
-static inline int vecpos(FIELD field){
-  return _vecpos_map[static_cast<ui16>(field)];
-}
-
 namespace gpki::db::profiles {
 static inline std::map<std::string, Profile> existing_profiles{};
 static inline str dbheaders = "name,source";
@@ -62,6 +37,7 @@ static inline str dbheaders = "profile_name,common_name,type,serial,country,stat
                               "location,organisation,email,key_"
                               "path,req_path,"
                               "cert_path";
+
 static inline int initialized = 0;
 /*  */
 static int populate_from_entry(str &entry, Entity &entity);
@@ -74,9 +50,3 @@ static int add(Entity &entity);
 static int del(str &profile, strview cn);
 static int load(str &profile, strview common_name, Entity &entity_buff);
 } // namespace gpki::db::entities
-
-namespace gpki::db {
-static inline int initialize_dbs(str profile) {
-  return (profiles::initialize() | entities::initialize(profile));
-};
-} // namespace gpki::db

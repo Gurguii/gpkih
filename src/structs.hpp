@@ -6,52 +6,30 @@
 #include <vector>
 namespace gpki {
 
-struct ProfileStatus {
-  int ca_count = 0x00;
-  int sv_count = 0x00;
-  int cl_count = 0x00;
+enum class PROFILE_FIELDS : uint16_t {
+  all = 6,
+#define P_ALL PROFILE_FIELDS::all
+  none = 0,
+#define P_NONE PROFILE_FIELDS::none
+  name = 2,
+#define P_NAME PROFILE_FIELDS::name
+  source = 4
+#define P_SRC PROFILE_FIELDS::source
 };
-
-struct Profile {
-  std::string name;
-  std::string source;
-  ProfileStatus status;
-  std::string gopenssl() { return source + SLASH + "gopenssl.cnf"; }
-  std::string dir_crl() { return source + SLASH + "pki" + SLASH + "crl"; }
-  std::string csv_entry() { return name + "," + source; }
+/* PROFILE OPERATORS */
+static PROFILE_FIELDS operator|(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
+  return static_cast<PROFILE_FIELDS>((ui16)lo | (ui16)ro);
 };
-
-// #define SUBJECT_TEMPLATE "/C=%s/ST=%s/L=%s/O=%s/CN=%s/emailAddress=%s"
-struct Subject {
-  std::string country = "ES";
-  std::string state = "GRAN CANARIAS";
-  std::string location = "LAS PALMAS";
-  std::string organisation = "MARIWANOS";
-  std::string cn;
-  std::string email = "NONE";
-  std::string oneliner() {
-    return "/C=" + country + "/ST=" + state + "/L=" + location +
-           "/O=" + organisation + "/CN=" + cn + "/emailAddress=" + email;
-  }
-};
-
-struct Entity {
-  Subject subject;
-  std::string key_path;
-  std::string req_path;
-  std::string cert_path;
-  std::string profile_name;
-  std::string type; // ca-sv-cl
-  std::string serial;
-  std::string csv_entry() {
-    return profile_name + "," + subject.cn + "," + type + "," + serial + "," +
-           subject.country + "," + subject.state + "," + subject.location +
-           "," + subject.organisation + "," + subject.email + "," + key_path +
-           "," + req_path + "," + cert_path;
-  }
-};
-} // namespace gpki
-
+static bool operator&(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
+  return (ui16)lo & (ui16)ro;
+}
+/* PROFILE STRING -> PROFILE_FIELD MAP*/
+static inline std::unordered_map<std::string, PROFILE_FIELDS> profile_fields_map() {
+  return {
+      {"name", PROFILE_FIELDS::name},
+      {"source", PROFILE_FIELDS::source},
+  };
+}
 enum class ENTITY_TYPE { 
   none = 0, 
   #define ET_NONE  ENTITY_TYPE::none
@@ -62,15 +40,14 @@ enum class ENTITY_TYPE {
   server = 8,
   #define ET_SV ENTITY_TYPE::server
 };
+std::unordered_map<str,ENTITY_TYPE>entity_type_map{
+  {"ca",ET_CA},
+  {"server",ET_SV},
+  {"client",ET_CL}
+};
 int operator&(ENTITY_TYPE lo,ENTITY_TYPE ro){
   return (ui16)lo & (ui16)ro;
 }
-const auto entity_type_str = [](ENTITY_TYPE type) {
-  return (type & ET_CA
-              ? "ca" : (type & ET_SV 
-              ? "server" : (type & ET_CL 
-              ? "client" : "none")));
-};
 
 enum class ENTITY_FIELDS : uint16_t {
   all = 8191,
@@ -102,7 +79,14 @@ enum class ENTITY_FIELDS : uint16_t {
   cert_path = 4096,
 #define E_CRTPATH ENTITY_FIELDS::cert_path
 };
-
+/* ENTITY OPERATORS */
+static ENTITY_FIELDS operator|(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
+  return static_cast<ENTITY_FIELDS>((ui16)lo | (ui16)ro);
+}
+static bool operator&(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
+  return (ui16)lo & (ui16)ro;
+}
+/* ENTITY STRING -> ENTITY_FIELD MAP*/
 static inline std::unordered_map<std::string, ENTITY_FIELDS> entity_fields_map() {
   return {{"profile", ENTITY_FIELDS::profile},
           {"cn", ENTITY_FIELDS::subject_cn},
@@ -118,39 +102,38 @@ static inline std::unordered_map<std::string, ENTITY_FIELDS> entity_fields_map()
           {"crt", ENTITY_FIELDS::cert_path}};
 }
 
-enum class PROFILE_FIELDS : uint16_t {
-  all = 6,
-#define P_ALL PROFILE_FIELDS::all
-  none = 0,
-#define P_NONE PROFILE_FIELDS::none
-  name = 2,
-#define P_NAME PROFILE_FIELDS::name
-  source = 4
-#define P_SRC PROFILE_FIELDS::source
+struct ProfileStatus {
+  int ca_count = 0x00;
+  int sv_count = 0x00;
+  int cl_count = 0x00;
 };
 
-static inline std::unordered_map<std::string, PROFILE_FIELDS> profile_fields_map() {
-  return {
-      {"name", PROFILE_FIELDS::name},
-      {"source", PROFILE_FIELDS::source},
-  };
-}
-
-/* PROFILE OPERATORS */
-static PROFILE_FIELDS operator|(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
-  return static_cast<PROFILE_FIELDS>((ui16)lo | (ui16)ro);
+struct Profile {
+  std::string name;
+  std::string source;
+  ProfileStatus status;
+  std::string gopenssl() { return source + SLASH + "gopenssl.cnf"; }
+  std::string dir_crl() { return source + SLASH + "pki" + SLASH + "crl"; }
+  std::string csv_entry() { return name + "," + source; }
 };
-static bool operator&(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
-  return (ui16)lo & (ui16)ro;
-}
-/* ENTITY OPERATORS */
-static ENTITY_FIELDS operator|(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
-  return static_cast<ENTITY_FIELDS>((ui16)lo | (ui16)ro);
-}
-static bool operator&(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
-  return (ui16)lo & (ui16)ro;
-}
 
+// #define SUBJECT_TEMPLATE "/C=%s/ST=%s/L=%s/O=%s/CN=%s/emailAddress=%s"
+struct Subject {
+  std::string country = "ES";
+  std::string state = "GRAN CANARIAS";
+  std::string location = "LAS PALMAS";
+  std::string organisation = "MARIWANOS";
+  std::string cn;
+  std::string email = "NONE";
+  std::string oneliner() {
+    return "/C=" + country + "/ST=" + state + "/L=" + location +
+           "/O=" + organisation + "/CN=" + cn + "/emailAddress=" + email;
+  }
+};
+
+static inline str str_conversion(PROFILE_FIELDS field){
+  return (field & P_NAME ? "name" : "source");
+}
 static inline str str_conversion(ENTITY_TYPE type){
   return (type & ET_CA
               ? "ca" : (type & ET_SV 
@@ -160,3 +143,19 @@ static inline str str_conversion(ENTITY_TYPE type){
 template <typename T> str to_str(T enumclass){
   return str_conversion(enumclass);
 };
+struct Entity {
+  Subject subject;
+  std::string key_path;
+  std::string req_path;
+  std::string cert_path;
+  std::string profile_name;
+  ENTITY_TYPE type; // ca-sv-cl
+  std::string serial;
+  std::string csv_entry() {
+    return profile_name + "," + subject.cn + "," + to_str(type) + "," + serial + "," +
+           subject.country + "," + subject.state + "," + subject.location +
+           "," + subject.organisation + "," + subject.email + "," + key_path +
+           "," + req_path + "," + cert_path;
+  }
+};
+} // namespace gpki

@@ -7,7 +7,7 @@ using subopts = gpki::subopts::build;
 int actions::build(gpki::subopts::build &opts){
     Profile &profile = opts.profile;
     Entity entity;
-    entity.type = entity_type_str(opts.type);
+    entity.type = opts.type;
     entity.profile_name = profile.name;
 
     std::string input;
@@ -59,7 +59,7 @@ int actions::build(gpki::subopts::build &opts){
     }
 
     std::string gopenssl = profile.source + SLASH + "gopenssl.cnf";
-    if(entity.type == "ca"){
+    if(entity.type == ET_CA){
       /* CA */
         entity.req_path = "\0";
         entity.key_path = profile.source + SLASH + "pki" + SLASH + "ca" + SLASH + "key";
@@ -103,7 +103,7 @@ int actions::build(gpki::subopts::build &opts){
       " -in " + entity.req_path + 
       " -out " + entity.cert_path +
       " -subj '" + entity.subject.oneliner() + "'"
-      " -extfile " + CONFDIR + SLASH + "x509" + SLASH + entity.type +
+      " -extfile " + CONFDIR + SLASH + "x509" + SLASH + to_str(entity.type) +
       " -notext";
       if(!prompt){
         crt_command += " -batch";

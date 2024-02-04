@@ -28,9 +28,11 @@ int db::entities::initialize(str profile) {
 
 int db::entities::populate_from_entry(str &entry, Entity &entity) {
   std::stringstream ss(entry);
+  str buff;
   getline(ss, entity.profile_name, CSV_DELIMITER_c);
   getline(ss, entity.subject.cn, CSV_DELIMITER_c);
-  getline(ss, entity.type, CSV_DELIMITER_c);
+  getline(ss, buff, CSV_DELIMITER_c); 
+  entity.type = entity_type_map[buff];
   getline(ss,entity.serial, CSV_DELIMITER_c);
   getline(ss, entity.subject.country, CSV_DELIMITER_c);
   getline(ss, entity.subject.state, CSV_DELIMITER_c);
@@ -42,6 +44,7 @@ int db::entities::populate_from_entry(str &entry, Entity &entity) {
   getline(ss, entity.cert_path, CSV_DELIMITER_c);
   return 0;
 }
+
 int db::entities::populate_from_entry(str &entry,
                                       std::vector<std::string> &entity_fields) {
   str field;
@@ -51,6 +54,7 @@ int db::entities::populate_from_entry(str &entry,
   }
   return 0;
 }
+
 int db::entities::populate_from_entry(str &profile, str &entry,str &cn,Entity &buff){
   std::ifstream file(DBDIR + profile + "_entities.csv");
   if(!file.is_open()){

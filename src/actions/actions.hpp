@@ -9,6 +9,7 @@
 #include "../gpki.hpp"
 #include "../db/database.hpp"
 #include "../utils/gpkih_util_funcs.hpp"
+#include "../utils/vpn_config.hpp"
 #include "../printing.hpp"
 #include "../parse/subparser.hpp"
 
@@ -67,7 +68,12 @@ struct create_pack : params{
   strview outdir;
 };
 
-struct get_set : params{
+// ./gpki set <profile> <prop>=<val> <prop>=<val>
+struct get : params{
+  Profile profile;
+};
+
+struct set : params{
   Profile profile;
 };
 } // namespace gpki::subopts ./gpki create-pack <profile> <cn1,cn2...cnX>
@@ -83,7 +89,7 @@ namespace gpki::actions
   int create_pack(subopts::create_pack &params);
   
   /* Getting/setting vpn config properties from profile*/
-  int get();
-  int set();
-  // remove is usable but not added here yet
+  int get(subopts::get &params);
+  int set(subopts::set &params);
+  // remove() usable but not added here yet
 }
