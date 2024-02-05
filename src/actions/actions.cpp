@@ -4,3 +4,5 @@
 #include "actions_revoke.cpp"
 #include "actions_init.cpp"
 #include "actions_create_pack.cpp"
+#include "actions_get.cpp"
+#include "actions_set.cpp"

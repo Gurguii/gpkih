@@ -22,11 +22,11 @@ int actions::create_pack(subopts::create_pack &params){
     str basedir = profile.source + SLASH + "packs" + SLASH;
 
     // set profile 
-    vpn_config::set(profile);
+    VpnConfig::set(profile);
 
     // check that required fields are set
     for(Entity &e : params.entities){
-        if(vpn_config::check_required_fields(e.type)){
+        if(VpnConfig::check_required_fields(e.type)){
             return -1;
         }
     }

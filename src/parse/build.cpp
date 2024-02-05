@@ -1,8 +1,8 @@
-#include "subparser.hpp"
+#include "parser.hpp"
 
 // SYNTAX : ./gpki build <profile> [subopts]
 using namespace gpki;
-int subparsers::build(std::vector<std::string> opts) {
+int parsers::build(std::vector<std::string> opts) {
   if(opts.empty()){
     PERROR("profile must be given\n");
     PHINT("try 'gpki help build' for extra help\n");

@@ -1,35 +1,18 @@
-#include <cstring>
-#include <unordered_map>
-#include <vector>
+#include "parser.hpp"
+#include "build.cpp"
+#include "create_pack.cpp"
+#include "gencrl.cpp"
+#include "get.cpp"
+#include "init.cpp"
+#include "list.cpp"
+#include "remove_all.cpp"
+#include "remove.cpp"
+#include "revoke.cpp"
+#include "set.cpp"
 
-#include "../db/database.hpp"
-#include "../help/help.hpp"
-#include "../gpki.hpp"
-
-#include "subparser_build.cpp"
-#include "subparser_gencrl.cpp"
-#include "subparser_init.cpp"
-#include "subparser_list.cpp"
-#include "subparser_revoke.cpp"
-#include "subparser_remove.cpp"
-#include "subparser_remove_all.cpp"
-#include "subparser_create_pack.cpp"
-
-std::unordered_map<str, int (*)(std::vector<str>)>
-    SUBPARSERS{
-        {"init",gpki::subparsers::init},
-        {"list",gpki::subparsers::list},
-        {"remove-all",gpki::subparsers::remove_all},
-        {"build", gpki::subparsers::build},
-        {"revoke", gpki::subparsers::revoke},
-        {"gencrl", gpki::subparsers::gencrl},
-        {"remove",gpki::subparsers::remove},
-        {"create-pack",gpki::subparsers::create_pack}
-    };
-
-namespace gpki {
+using namespace gpki;
 // [!] parse() does not expect to receive program name in args
-int parse(int argc, const char **_args) {
+int parsers::parse(int argc, const char **_args) {
   if (argc == 0) {
     help::usage();
     return -1;
@@ -59,11 +42,10 @@ int parse(int argc, const char **_args) {
     return 0;
   }
   // Check if action exists
-  if (SUBPARSERS.find(action) == SUBPARSERS.end()){
+  if (ACTION_PARSERS.find(action) == ACTION_PARSERS.end()){
     PERROR("action '{}' doesn't exist\n",action);
     return 0;
   }
   args.erase(args.begin());
-  return SUBPARSERS[action](std::move(args));
+  return ACTION_PARSERS[action](std::move(args));
 }
-} // namespace gpki

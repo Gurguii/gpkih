@@ -52,7 +52,7 @@ int main(int argc, const char **args) {
     return -1; 
   }
   PINFO("Loaded [{}] profiles\n",p,DBDIR,SLASH);
-  if (parse(argc - 1, args + 1)) {
+  if (gpki::parsers::parse(argc - 1, args + 1)) {
     return -1;
   }
   return 0;

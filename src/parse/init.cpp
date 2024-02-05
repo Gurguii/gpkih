@@ -1,9 +1,8 @@
-#pragma once
-#include "subparser.hpp"
+#include "parser.hpp"
 
 using namespace gpki;
 
-int subparsers::init(std::vector<std::string> opts){
+int parsers::init(std::vector<std::string> opts){
   opts.push_back("\0");
   subopts::init params;
   for(int i = 0; i < opts.size() -1 ; ++i){

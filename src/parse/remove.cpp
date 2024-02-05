@@ -1,8 +1,8 @@
-#include "subparser.hpp"
+#include "parser.hpp"
 
 using namespace gpki;
 
-int subparsers::remove(std::vector<std::string> opts){
+int parsers::remove(std::vector<std::string> opts){
     /* Parse subopts */
     if(opts.empty()){
         PERROR("profile name must be given\n");

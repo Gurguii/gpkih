@@ -1,6 +1,7 @@
 #pragma once
 #include <fstream>
 #include <cstdio>
+#include <unordered_map>
 
 #include "../gpki.hpp"
 #include "../printing.hpp"
@@ -20,7 +21,6 @@ static inline str SECTION_SERVER_OPT  = "[ server.optional ]";
 
 namespace gpki
 {
-
 class VpnConfig{
     public:
     static inline Section common{};
@@ -41,58 +41,21 @@ class VpnConfig{
     static inline int empty(){
         return common.empty() | client.empty() | client_optional.empty() | server.empty() | server_optional.empty();
     }
-};
-
-class vpn_config
-{
-    private:
-    static inline std::unordered_map<str, Section>section_mapping{
-        {SECTION_COMMON,VpnConfig::common},
-        {SECTION_CLIENT,VpnConfig::client},
-        {SECTION_CLIENT_OPT,VpnConfig::client_optional},
-        {SECTION_SERVER,VpnConfig::server},
-        {SECTION_SERVER_OPT,VpnConfig::server_optional}
-    };
-    static inline bool is_valid_section(str &line){
-        return section_mapping.find(line) != section_mapping.end();
+    static inline bool client_prop_exists(str &key){
+        return client.find(key) != client.end() || client_optional.find(key) != client_optional.end();
     }
-    static inline int _set = 0;
-    static inline str profile;
-    static inline VpnConfig conf{};
-    // Returns position to line where next section is
-    static int load_section(std::ifstream &file, Section &section, int allow_empty_or_none = 1){
-        str line, key, val;
-        sstream ss;
-        std::streampos pos;
-        while(getline(file,line)){
-            char c = line[0];
-            if(line.empty() || c == '#'){
-                // empty / commented line, not interested
-                continue;
-            }
-            if(c == '['){
-                // reached new section
-                return pos;
-            }
-            ss.write(line.c_str(),line.size());
-            getline(ss,key,' ');
-            getline(ss,val,'\n');
-            if(val.empty()){
-                PWARN("found unset value '{}'\n",key);
-                continue;
-            }
-            section.emplace(key,val);
-            ss.clear();
-            pos = file.tellg();
-        }
-        return 0;
+    static inline bool server_prop_exists(str &key){
+        return server.find(key) != server.end() || server_optional.find(key) != server_optional.end();
     }
-    public:
-    /* Loads config from given profile's template.conf inside VpnConfig Sections
-    which is an alias for unordered_map<string,string> holding {common | client | server} configuration */
+    static inline bool common_prop_exists(str &key){
+        return common.find(key) != common.end();
+    }
+    static inline bool prop_exists(str &key){
+        return client_prop_exists(key) | server_prop_exists(key) | common_prop_exists(key);
+    }
     static int set(Profile &profile){
-        if(!conf.empty()){
-            conf.clear();
+        if(!empty()){
+            clear();
         }
         str path = profile.source + SLASH + template_filename;
         
@@ -108,13 +71,14 @@ class vpn_config
         while(getline(file,line)){
             if(is_valid_section(line)){
                 // Got section
-                // PINFO("Loading section '{}'\n",line);
                 Section &ref = section_mapping[line];
                 int next_section = load_section(file,ref);
                 file.seekg(next_section);
             }
         }
         _set = 1;
+        // 
+
         return 0;
     }
 
@@ -147,6 +111,51 @@ class vpn_config
             return -1;
         }
         return rcode;
+    }
+
+    private:
+    static inline std::unordered_map<str, Section>section_mapping{
+        {SECTION_COMMON,VpnConfig::common},
+        {SECTION_CLIENT,VpnConfig::client},
+        {SECTION_CLIENT_OPT,VpnConfig::client_optional},
+        {SECTION_SERVER,VpnConfig::server},
+        {SECTION_SERVER_OPT,VpnConfig::server_optional}
+    };
+
+    static inline bool is_valid_section(str &line){
+        return section_mapping.find(line) != section_mapping.end();
+    }
+
+    static inline int _set = 0;
+    static inline str profile;
+
+    // Returns position to line where next section is
+    static int load_section(std::ifstream &file, Section &section, int allow_empty_or_none = 1){
+        str line, key, val;
+        sstream ss;
+        std::streampos pos;
+        while(getline(file,line)){
+            char first = line[0];
+            if(line.empty() || first == '#'){
+                // empty / commented line, not interested
+                continue;
+            }
+            if(first == '['){
+                // reached new section
+                return pos;
+            }
+            ss.write(line.c_str(),line.size());
+            getline(ss,key,' ');
+            getline(ss,val,'\n');
+            if(val.empty()){
+                PWARN("found unset value '{}'\n",key);
+                continue;
+            }
+            section.emplace(key,val);
+            ss.clear();
+            pos = file.tellg();
+        }
+        return 0;
     }
 };
 } // namespace gpki

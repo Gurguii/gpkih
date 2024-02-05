@@ -1,6 +1,6 @@
-#include "subparser.hpp"
+#include "parser.hpp"
 using namespace gpki;
-int subparsers::gencrl(std::vector<std::string> opts){
+int parsers::gencrl(std::vector<std::string> opts){
   // ./gpki gencrl <profile> [subopts]
   if(opts.empty()){
     PERROR("profile must be given\n");

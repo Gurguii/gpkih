@@ -143,6 +143,7 @@ static inline str str_conversion(ENTITY_TYPE type){
 template <typename T> str to_str(T enumclass){
   return str_conversion(enumclass);
 };
+
 struct Entity {
   Subject subject;
   std::string key_path;

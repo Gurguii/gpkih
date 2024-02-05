@@ -6,6 +6,8 @@
 #include "help_init.cpp"
 #include "help_remove.cpp"
 #include "help_create_pack.cpp"
+#include "get.cpp"
+#include "set.cpp"
 
 void help::usage() {
   std::cout << R"(
@@ -55,7 +57,11 @@ void call_helper(strview action){
     help::remove::usage();
   }else if(action == "create-pack"){
     help::create_pack::usage();
-    }else{
+  }else if(action == "set"){
+    help::set::usage();
+  }else if(action == "get"){
+    help::get::usage();
+  }else{
     PINFO("no help defined for '{}'\n",action);
   }
 }

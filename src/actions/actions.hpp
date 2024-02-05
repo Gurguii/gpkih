@@ -11,7 +11,7 @@
 #include "../utils/gpkih_util_funcs.hpp"
 #include "../utils/vpn_config.hpp"
 #include "../printing.hpp"
-#include "../parse/subparser.hpp"
+
 
 namespace gpki::subopts { 
 // Generic params not related with any action
@@ -70,6 +70,9 @@ struct create_pack : params{
 
 // ./gpki set <profile> <prop>=<val> <prop>=<val>
 struct get : params{
+  std::vector<strview> cl_properties;
+  std::vector<strview> sv_properties;
+  std::vector<strview> common_properties;
   Profile profile;
 };
 

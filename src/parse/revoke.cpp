@@ -1,8 +1,8 @@
-#include "subparser.hpp"
+#include "parser.hpp"
 
 // SYNTAX ./gpki revoke <profile> [subopts]
 using namespace gpki;
-int subparsers::revoke(std::vector<std::string> opts){
+int parsers::revoke(std::vector<std::string> opts){
   if(opts.size() == 0){
     PERROR("profile name must be given");
     PHINT("try gpki help revoke\n");

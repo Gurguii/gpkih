@@ -28,5 +28,11 @@ namespace gpki::help::remove{
 namespace gpki::help::create_pack{
     void usage();
 }
+namespace gpki::help::get{
+    void usage();
+}
+namespace gpki::help::set{
+    void usage();
+}
 using namespace gpki;
 void call_helper(strview action);

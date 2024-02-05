@@ -1,7 +1,7 @@
-#include "subparser.hpp"
+#include "parser.hpp"
 #include <filesystem>
 
-int subparsers::create_pack(std::vector<str> opts){
+int parsers::create_pack(std::vector<str> opts){
     // ./gpki create-pack <profiles> <cn1,cn2...cnX>
     if(opts.empty()){
         PERROR("missing profile name must be given\n");

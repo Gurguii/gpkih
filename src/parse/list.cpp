@@ -1,7 +1,7 @@
-#include "subparser.hpp"
+#include "parser.hpp"
 
 using namespace gpki;
-int subparsers::list(std::vector<str> opts) {
+int parsers::list(std::vector<str> opts) {
   subopts::list params;
   if (opts.empty()) {
     return actions::list(params);
