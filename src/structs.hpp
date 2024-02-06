@@ -4,8 +4,8 @@
 #include <string>
 #include <unordered_map>
 #include <vector>
-namespace gpki {
 
+namespace gpki {
 enum class PROFILE_FIELDS : uint16_t {
   all = 6,
 #define P_ALL PROFILE_FIELDS::all
@@ -21,7 +21,7 @@ static PROFILE_FIELDS operator|(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
   return static_cast<PROFILE_FIELDS>((ui16)lo | (ui16)ro);
 };
 static bool operator&(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
-  return (ui16)lo & (ui16)ro;
+  return static_cast<bool>((ui16)lo & (ui16)ro);
 }
 /* PROFILE STRING -> PROFILE_FIELD MAP*/
 static inline std::unordered_map<std::string, PROFILE_FIELDS> profile_fields_map() {
@@ -81,10 +81,10 @@ enum class ENTITY_FIELDS : uint16_t {
 };
 /* ENTITY OPERATORS */
 static ENTITY_FIELDS operator|(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
-  return static_cast<ENTITY_FIELDS>((ui16)lo | (ui16)ro);
+  return static_cast<ENTITY_FIELDS>(static_cast<ui16>(lo) | static_cast<ui16>(ro));
 }
 static bool operator&(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
-  return (ui16)lo & (ui16)ro;
+  return static_cast<ui16>(lo) & static_cast<ui16>(ro);
 }
 /* ENTITY STRING -> ENTITY_FIELD MAP*/
 static inline std::unordered_map<std::string, ENTITY_FIELDS> entity_fields_map() {
@@ -159,4 +159,55 @@ struct Entity {
            "," + req_path + "," + cert_path;
   }
 };
-} // namespace gpki
+
+/* UNUSED */
+enum class vpn_cl_conf : ui64 
+{
+  remote = 2,
+  remote_cert_tls = 4,
+};
+enum class vpn_cl_conf_opt : ui64 
+{
+  installdir = 8,
+  verb = 16,
+};
+enum class vpn_sv_conf : ui64
+{
+  virtual_server = 32,
+  listen_port = 64,
+  status = 128,
+  explicit_exit_notify = 256,
+  keepalive = 512,
+  crl_verify = 1024
+};
+enum class vpn_sv_conf_opt : ui64
+{
+  dh = 2048,
+  ifconfig_pool_persist = 4096,
+  push = 8192,
+  verb = 16384
+};
+enum class vpn_common_conf : ui64 {
+  protocol = 32768,
+  device = 65536,
+  cipher = 131072,
+  tls = 262144,
+};
+
+std::unordered_map<str,ui64> vpn_conf_map{
+  {"remote",static_cast<ui64>(vpn_cl_conf::remote)},
+  {"remote-cert-tls",static_cast<ui64>(vpn_cl_conf::remote_cert_tls)},
+  {"installdir",static_cast<ui64>(vpn_cl_conf_opt::installdir)},
+  {"client.verbose",static_cast<ui64>(vpn_cl_conf_opt::verb)},
+  {"server",static_cast<ui64>(vpn_sv_conf::virtual_server)},
+  {"port",static_cast<ui64>(vpn_sv_conf::listen_port)},
+  {"status",static_cast<ui64>(vpn_sv_conf::status)},
+  {"explicit-exit-notify",static_cast<ui64>(vpn_sv_conf::explicit_exit_notify)},
+  {"keepalive",static_cast<ui64>(vpn_sv_conf::keepalive)},
+  {"crl-verify",static_cast<ui64>(vpn_sv_conf::crl_verify)},
+{"dh",static_cast<ui64>(vpn_sv_conf_opt::dh)},
+{"ifconfig-pool-persist",static_cast<ui64>(vpn_sv_conf_opt::ifconfig_pool_persist)},
+{"push",static_cast<ui64>(vpn_sv_conf_opt::push)},
+{"server.verbose",static_cast<ui64>(vpn_sv_conf_opt::verb)}
+};
+}; // namespace gpki

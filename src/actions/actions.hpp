@@ -70,9 +70,10 @@ struct create_pack : params{
 
 // ./gpki set <profile> <prop>=<val> <prop>=<val>
 struct get : params{
-  std::vector<strview> cl_properties;
-  std::vector<strview> sv_properties;
-  std::vector<strview> common_properties;
+  ui64 properties;
+  std::vector<str> cl_properties;
+  std::vector<str> sv_properties;
+  std::vector<str> common_properties;
   Profile profile;
 };
 

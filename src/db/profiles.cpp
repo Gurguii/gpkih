@@ -20,7 +20,7 @@ int db::profiles::populate_from_entry(str &entry,
 }
 
 /* Synchronizes profiles.csv with existing_profiles so that only valid profiles (with existing source dir) in
-existing_profiles are  present in profiles.csv */
+existing_profiles are  left in profiles.csv */
 int db::profiles::sync(){
   std::string tmpfile = dbpath + ".tmp";
   std::ofstream tmp(tmpfile);
