@@ -16,7 +16,7 @@ int parsers::create_pack(std::vector<str> opts){
     Profile &profile = params.profile;
     
     if(db::profiles::load(opts[0],profile)){
-        PERROR("profile '{}' doesn't exist\n");
+        PERROR("profile '{}' doesn't exist\n",opts[0]);
         return -1;
     }
     

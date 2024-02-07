@@ -4,7 +4,7 @@
 using namespace gpki;
 int parsers::revoke(std::vector<std::string> opts){
   if(opts.size() == 0){
-    PERROR("profile name must be given");
+    PERROR("profile name must be given\n");
     PHINT("try gpki help revoke\n");
     return -1;
   }

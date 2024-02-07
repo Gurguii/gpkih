@@ -61,7 +61,7 @@ struct remove_all : params{
 };
 
 struct create_pack : params{
-  /* */
+  /* gpki create-pack <profile> cliente1,cliente2... */
   Profile profile;
   std::vector<Entity> entities;
   int inline_outfile = 0;

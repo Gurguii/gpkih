@@ -110,6 +110,36 @@ class VpnConfig{
         }
         return 0;
     }
+
+    static int dump(strview outfile, ENTITY_TYPE type){
+        std::ofstream file(outfile.data());
+        if(!file.is_open()){
+            PERROR("couldn't create '{}'\n",outfile);
+            return -1;
+        }   
+        std::vector<Section *> cfg;
+        switch(type){
+            case ET_CL:
+            cfg = {&common, &client, &client_optional};
+            break;
+            case ET_SV:
+            cfg = {&common,&server,&server_optional};
+            break;
+            default:
+            PERROR("invalid entity type, only client and server entities are suitable\n");
+            return -1;
+        }
+        for(Section *s : cfg){
+            Section &section = *s;
+            for(auto kv : section){
+                if(kv.second == "UNSET"){
+                    file << "# ";
+                }
+                file << kv.first << " " << kv.second << std::endl;
+            }
+        }
+        return 0;
+    }
     /* Set the values in templates.conf to the ones in the Section's values, used to save file changes */
     static int sync(){
         std::ifstream conf_file(config_path);
@@ -123,34 +153,32 @@ class VpnConfig{
             PERROR("couldn't create temporary file '{}' failed to synchronize\n", tmp);
             return -1;
         }
-        str line, key;
-        sstream ss;
+        str line, key, val;
         Section *ptr = nullptr;
+        char firstchar;
         while(getline(conf_file,line)){
-            key.assign("");
-            ss.clear();
-            ss.write(line.c_str(),line.size());
-            char first = line[0];
-            if(first == '#' || first == ' ' || first == '['){
+            firstchar = line[0];
+            if(firstchar == '#' | firstchar == '[' | line.empty()){
+                tmpfile << line << std::endl;;
                 continue;
             }
-            getline(ss,key,' ');
-            ptr = prop_exists(key);
+            sstream ss(line);
+            ss >> key;
+            ptr = VpnConfig::prop_exists(key);
             if(ptr == nullptr){
-                //PWARN("property '{}' not recognized, omitting\n",key);
+                PWARN("skipping unknown property '{}'\n",key);
                 continue;
             }
-           std::cout << "key: " << key << " value: " << (*ptr)[key] << "\n";;
-           tmpfile << key << " " << (*ptr)[key] << std::endl;  
-           if(!fs::remove(config_path)){
-            PERROR("couldn't remove original config_path\n");
-            fs::remove(tmp);
-            return -1;
-           };
-           fs::rename(tmp,config_path);
-           ptr = nullptr;
+            strview newval = (*ptr)[key];
+            tmpfile << key << " " << newval << std::endl;
         }
-        return 0;
+        PINFO("Synchronizing vpn config\n");
+        if(!fs::remove(config_path)){   
+            PERROR("couldn't remove config file\n");
+            fs::remove(tmp);
+        };
+        fs::rename(tmp,config_path);
+        return 0;                                           
     }
     /* Must be called before further stuff is done with this class, this loads config
         from profile's templates.conf file into Sections (std::unordered_map<std::string,std::string>) */
@@ -189,7 +217,6 @@ class VpnConfig{
         }
         int rcode = 0;
         if(type == ET_CL){
-            std::cout << "CHECKING CLIENT FIELDS\n";
             Section &ref = *section_mapping[SECTION_CLIENT];
             for(auto &kv : ref){
                 if(kv.second == "UNSET"){
@@ -198,7 +225,6 @@ class VpnConfig{
                 }
             }
         }else if(type == ET_SV){
-            std::cout << "CHECKING SERVER FIELDS\n";
             Section &ref = *section_mapping[SECTION_SERVER];
             for(auto &kv : ref){
                 if(kv.second == "UNSET"){
@@ -233,9 +259,9 @@ class VpnConfig{
     // Returns position to line where next section is
     static int load_section(std::ifstream &file, Section &section, int allow_empty_or_none = 1){
         str line, key, val;
-        sstream ss;
         std::streampos pos;
         while(getline(file,line)){
+            sstream ss;
             char first = line[0];
             if(line.empty() || first == '#'){
                 // empty / commented line, not interested
@@ -245,13 +271,9 @@ class VpnConfig{
                 // reached new section
                 return pos;
             }
-            ss.write(line.c_str(),line.size());
+            ss << line;
             getline(ss,key,' ');
-            getline(ss,val,'\n');
-            if(val.empty()){
-                PWARN("found unset value '{}'\n",key);
-                continue;
-            }
+            getline(ss,val);
             section.emplace(key,val);
             ss.clear();
             pos = file.tellg();

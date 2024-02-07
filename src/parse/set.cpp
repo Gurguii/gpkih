@@ -45,7 +45,12 @@ int parsers::set(std::vector<str> opts){
             continue;
         }
     }
-    std::cout << VpnConfig::common["remote"] <<"\n";
+
+    //for(auto kv : VpnConfig::client){
+    //    std::cout << "key: " << kv.first << "\n";
+    //    std::cout << "val: " << kv.second << "\n";
+    //}
+    
     if(VpnConfig::sync()){
         return -1;
     }

@@ -1,5 +1,6 @@
 #include "actions.hpp"
 
+#include <filesystem>
 #include <ios>
 #include <iostream>
 #include <fstream>
@@ -20,32 +21,27 @@ int actions::create_pack(subopts::create_pack &params){
     // ./gpki create-pack [profile] [cn1,cn2...cnX]
     Profile &profile = params.profile;
     str basedir = profile.source + SLASH + "packs" + SLASH;
-
     // set profile 
     VpnConfig::set(profile);
-
     // check that required fields are set
     for(Entity &e : params.entities){
         if(VpnConfig::check_required_fields(e.type)){
             return -1;
         }
     }
-
-    return 0;
     for(Entity &e : params.entities){
         str outdir = basedir + e.subject.cn;
-        if(!fs::create_directory(outdir)){
-            PERROR("couldn't create directory '{}'\n",outdir);
-            return -1;
+        str outfile = outdir + SLASH + e.subject.cn + ".ovpn";
+        if(!fs::is_directory(outdir)){
+            if(!fs::create_directory(outdir)){
+                PERROR("couldn't create directory '{}'\n",outdir);
+                return -1;
+            }
         }
-        if(e.type == ET_CL){
-
-        }else if(e.type ==  ET_SV){
-
-        }else{
-            PERROR("cannot create pack for entity with type '{}'\n",to_str(e.type));
-            return -1;
-        }
+        if(VpnConfig::dump(outfile, e.type)){
+            PERROR("couldn't create '{}' pack\n",e.subject.cn);
+            continue;
+        };
     }
     return 0;
 }
