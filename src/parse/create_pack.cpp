@@ -37,11 +37,12 @@ int parsers::create_pack(std::vector<str> opts){
     for(int i = 0; i < opts.size(); ++i){
         strview opt = opts[i];
         if(opt == "-o" || opt == "--out"){
-            if(!create_output_path(opts[++i])){
-                params.outdir = opts[++i];
+            if(create_output_path(opts[++i])){
+                return -1;
             }
-        }else if(opt == "--inline"){
-            params.inline_outfile = 1;           
+            params.outdir = opts[++i];
+        }else if(opt == "--split"){
+            params.inline_outfile = 0;           
         }
     }
     return actions::create_pack(params);

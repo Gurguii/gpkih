@@ -19,7 +19,7 @@
 
 int create_dhparam(strview outpath) {
   str command =
-      "openssl dhparam -out " + str(outpath) + " 1024";
+      "openssl dhparam -out " + str(outpath) + " 2048";
   if (system(command.c_str())) {
     return -1;
   }
@@ -166,7 +166,7 @@ int actions::init(subopts::init &params) {
     if (ans == "y" || ans == "Y") {
       create_openvpn_static_key(profile.source + SLASH + "tls" + SLASH +
                                 "ta.key");
-      create_dhparam(profile.source + SLASH + "tls" + SLASH + "dhparam1024");
+      create_dhparam(profile.source + SLASH + "tls" + SLASH + "dhparam2048");
     }
     ans.assign("");
     // QUESTION 2

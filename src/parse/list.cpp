@@ -61,7 +61,7 @@ int parsers::list(std::vector<str> opts) {
             PROFILE_FIELDS f = pmap[field];
             params.pfields = params.pfields | f;
           } else {
-            std::cout << "Field '" << field << "' doesn't exist\n";
+            PWARN("Field '{}' doesn't exist\n", field);
           }
         }
       }

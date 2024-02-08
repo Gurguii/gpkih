@@ -81,7 +81,6 @@ int actions::list(subopts::list &params) {
   } else {
     /* OPTION 4 */
     // certain profiles certain entities
-
   }
   return 0;
 }

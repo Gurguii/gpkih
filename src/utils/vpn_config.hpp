@@ -111,14 +111,14 @@ class VpnConfig{
         return 0;
     }
 
-    static int dump(strview outfile, ENTITY_TYPE type){
+    static int dump(strview outfile, Profile &profile, Entity &entity){
         std::ofstream file(outfile.data());
         if(!file.is_open()){
             PERROR("couldn't create '{}'\n",outfile);
             return -1;
         }   
         std::vector<Section *> cfg;
-        switch(type){
+        switch(entity.type){
             case ET_CL:
             cfg = {&common, &client, &client_optional};
             break;
@@ -138,6 +138,7 @@ class VpnConfig{
                 file << kv.first << " " << kv.second << std::endl;
             }
         }
+        file.close();
         return 0;
     }
     /* Set the values in templates.conf to the ones in the Section's values, used to save file changes */

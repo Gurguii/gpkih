@@ -161,6 +161,8 @@ struct Entity {
 };
 
 /* UNUSED */
+// this would allow having the whole vpn configuration file in a ui64
+// with just the ca cert and entity key|cert left
 enum class vpn_cl_conf : ui64 
 {
   remote = 2,

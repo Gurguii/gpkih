@@ -6,10 +6,9 @@ void help::revoke::usage(){
 == revoke ==
   
 [ syntax ]
-  ./gpki revoke <profile> [subopts]
+  ./gpki revoke <profile> <comma,separated,CN's> [subopts]
   
 [ subopts ]
-  -cn : specify entity common name
-  -reason : revocation reason
+  --reason : revocation reason
 )";
 }

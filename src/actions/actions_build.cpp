@@ -64,21 +64,23 @@ int actions::build(gpki::subopts::build &opts){
         entity.req_path = "\0";
         entity.key_path = profile.source + SLASH + "pki" + SLASH + "ca" + SLASH + "key";
         entity.cert_path = profile.source + SLASH + "pki" + SLASH + "ca" + SLASH + "crt";
-        std::string command = "openssl req"
-        " -config " + gopenssl + 
-        " -new -x509"
-        " -out " + entity.cert_path + 
-        " -keyout " + entity.key_path + 
-        " -subj '" + entity.subject.oneliner() + "'" 
-        " -outform " + opts.csr_crt_format + 
-        " -keyform " + opts.key_format +
-        " -noenc";
+        str command = fmt::format("openssl req -config {} -new -x509 -out {} -keyout {} -subj '{}' -outform {} -keyform {} -noenc",gopenssl,
+                                  entity.cert_path, entity.key_path, entity.subject.oneliner(), opts.csr_crt_format, opts.key_format);
+        //std::string command = "openssl req"
+        //" -config " + gopenssl + 
+        //" -new -x509"
+        //" -out " + entity.cert_path + 
+        //" -keyout " + entity.key_path + 
+        //" -subj '" + entity.subject.oneliner() + "'" 
+        //" -outform " + opts.csr_crt_format + 
+        //" -keyform " + opts.key_format +
+        //" -noenc";
         if(system(command.c_str())){
-            std::cout << "command '" << command << "'\n";
-            return -1;
+          PERROR("command '{}' FAILED\n", command);
+          return -1;
         }
     }else{
-      /* CLIENT / SERVER */
+      /* CLIENT | SERVER */
       entity.req_path = profile.source + SLASH + "pki" + SLASH + "reqs" +
                         SLASH + entity.subject.cn + "-csr." + opts.csr_crt_format;
       entity.key_path = profile.source + SLASH + "pki" + SLASH + "keys" +
@@ -103,7 +105,7 @@ int actions::build(gpki::subopts::build &opts){
       " -in " + entity.req_path + 
       " -out " + entity.cert_path +
       " -subj '" + entity.subject.oneliner() + "'"
-      " -extfile " + CONFDIR + SLASH + "x509" + SLASH + to_str(entity.type) +
+      " -extfile " + CONFDIR + "x509" + SLASH + to_str(entity.type) +
       " -notext";
       if(!prompt){
         crt_command += " -batch";

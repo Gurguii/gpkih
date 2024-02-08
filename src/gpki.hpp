@@ -23,11 +23,13 @@ namespace fs = std::filesystem;
 static inline str CURRENT_PATH = fs::current_path().string();
 static inline str SLASH = "\\";
 static inline str BASEDIR = str(std::getenv("LOCALAPPDATA")) + "\\gpkih\\";
+static inline str EOL = "\r\n";
 #else
 /* LINUX STUFF */
 static inline str CURRENT_PATH = fs::current_path();
 static inline str SLASH = "/";
 static inline str BASEDIR = str(std::getenv("HOME")) + "/.config/gpkih/";
+static inline str EOL = "\n";
 #endif
 
 static inline str DBDIR = BASEDIR + "db" + SLASH;

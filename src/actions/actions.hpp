@@ -34,7 +34,7 @@ struct build : params{
 };
 
 struct revoke : params{
-  std::string common_name;
+  std::vector<str> common_name;
   std::string reason = "not specified";
   Profile profile;
 };
@@ -64,7 +64,7 @@ struct create_pack : params{
   /* gpki create-pack <profile> cliente1,cliente2... */
   Profile profile;
   std::vector<Entity> entities;
-  int inline_outfile = 0;
+  int inline_outfile = 1;
   strview outdir;
 };
 

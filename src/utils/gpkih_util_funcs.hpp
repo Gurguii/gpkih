@@ -20,7 +20,7 @@ static bool hasWritePermissions(std::string dirpath) {
           {{"GPKI_BASEDIR", "WISKONSIN"}})
 */
 static int sed(std::string_view src, std::string_view dst,
-        std::unordered_map<std::string_view, std::string_view> vals) {
+  std::unordered_map<std::string_view, std::string_view> vals) {
   std::ifstream srcfile(src.data());
   if (!srcfile.is_open()) {
     return -1;
@@ -41,14 +41,17 @@ static int sed(std::string_view src, std::string_view dst,
       }
       dstfile << " ";
     }
-    dstfile << std::endl;
+    dstfile << EOL;
   }
-  dstfile << std::endl;
+  dstfile << EOL;
   srcfile.close();
   dstfile.close();
   return 0;
 }
 
+// Attempts to create the target path (directory)
+// - checks if a file already exists
+// - creates every non-existant intermediary directory
 static int create_output_path(str &path){
   if(fs::exists(path)){
       str ans;
@@ -60,10 +63,12 @@ static int create_output_path(str &path){
       if(ans == "n" || ans == "no"){
         return -1;
       }
-      if(!fs::remove_all(path)){
-        PERROR("couldn't remove '{}'\n", path);
-        return -1;
-      }
+    try{
+      fs::remove_all(path);
+    }catch(fs::filesystem_error err){
+      PERROR(err.what());
+      return -1;
+    }
   }else{
     if(!fs::create_directories(path)){
       PERROR("couldn't create directory '{}'\n",path);
