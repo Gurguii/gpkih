@@ -2,14 +2,14 @@
 
 using namespace gpki;
 
-void help::remove::usage(){
-    std::cout << R"(
+void help::remove::usage() {
+  std::cout << R"(
 == remove ==
 
 [ syntax ]
-./gpki remove <profile> [subopts]
+ ./gpki remove <profile> [subopts]
 
 [ subopts ]
-
+  -all : remove all profiles instead
 )";
 }

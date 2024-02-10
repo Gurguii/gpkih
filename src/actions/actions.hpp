@@ -1,30 +1,29 @@
 #pragma once
-#include <iostream>
-#include <string>
-#include <vector>
-#include <ostream>
 #include <algorithm>
 #include <cstdint>
+#include <iostream>
+#include <ostream>
+#include <string>
+#include <vector>
 
-#include "../gpki.hpp"
 #include "../db/database.hpp"
+#include "../gpki.hpp"
+#include "../printing.hpp"
 #include "../utils/gpkih_util_funcs.hpp"
 #include "../utils/vpn_config.hpp"
-#include "../printing.hpp"
 
-
-namespace gpki::subopts { 
+namespace gpki::subopts {
 // Generic params not related with any action
-struct params{
+struct params {
   int prompt = 1;
 };
 
-struct init : params{
+struct init : params {
   std::string profile_name;
   std::string profile_source;
 };
 
-struct build : params{
+struct build : params {
   std::string key_size = "1024";
   std::string algorithm = "rsa";
   std::string key_format = "pem";
@@ -33,18 +32,18 @@ struct build : params{
   Profile profile;
 };
 
-struct revoke : params{
+struct revoke : params {
   std::vector<str> common_name;
   std::string reason = "not specified";
   Profile profile;
 };
 
-struct gencrl : params{
+struct gencrl : params {
   /* No subopts */
   Profile profile;
 };
 
-struct list : params{
+struct list : params {
   std::vector<std::string> profiles;
   std::vector<std::string> entities;
 
@@ -52,15 +51,12 @@ struct list : params{
   ENTITY_FIELDS efields = E_ALL;
 };
 
-struct remove : params{
-  str profile_name;
+struct remove : params {
+  std::vector<str> profiles;
+  int all = 0;
 };
 
-struct remove_all : params{
-  /* No subopts */
-};
-
-struct create_pack : params{
+struct create_pack : params {
   /* gpki create-pack <profile> cliente1,cliente2... */
   Profile profile;
   std::vector<Entity> entities;
@@ -69,7 +65,7 @@ struct create_pack : params{
 };
 
 // ./gpki set <profile> <prop>=<val> <prop>=<val>
-struct get : params{
+struct get : params {
   ui64 properties;
   std::vector<str> cl_properties;
   std::vector<str> sv_properties;
@@ -77,23 +73,21 @@ struct get : params{
   Profile profile;
 };
 
-struct set : params{
+struct set : params {
   Profile profile;
 };
-} // namespace gpki::subopts ./gpki create-pack <profile> <cn1,cn2...cnX>
+} // namespace gpki::subopts
 
-
-namespace gpki::actions
-{
-  int init(subopts::init &params);
-  int build(subopts::build &params);
-  int revoke(subopts::revoke &params);
-  int gencrl(subopts::gencrl &params);
-  int list(subopts::list &params);
-  int create_pack(subopts::create_pack &params);
-  
-  /* Getting/setting vpn config properties from profile*/
-  int get(subopts::get &params);
-  int set(subopts::set &params);
-  // remove() usable but not added here yet
-}
+namespace gpki::actions {
+int init(subopts::init &params);
+int build(subopts::build &params);
+int revoke(subopts::revoke &params);
+int gencrl(subopts::gencrl &params);
+int list(subopts::list &params);
+int create_pack(subopts::create_pack &params);
+int remove(subopts::remove &params);
+/* Getting/setting vpn config properties from profile*/
+int get(subopts::get &params);
+int set(subopts::set &params);
+// remove() usable but not added here yet
+} // namespace gpki::actions

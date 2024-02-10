@@ -5,7 +5,6 @@
 #include "get.cpp"
 #include "init.cpp"
 #include "list.cpp"
-#include "remove_all.cpp"
 #include "remove.cpp"
 #include "revoke.cpp"
 #include "set.cpp"
@@ -17,17 +16,17 @@ int parsers::parse(int argc, const char **_args) {
     help::usage();
     return -1;
   }
-  std::vector<str> args(_args,_args+argc);
+  std::vector<str> args(_args, _args + argc);
   int s = args.size();
-  for(int i = 0; i < s; ++i){
+  for (int i = 0; i < s; ++i) {
     strview op = args[i];
-    if (op == "-y" || op == "--noprompt"){
+    if (op == "-y" || op == "--noprompt") {
       prompt = 0;
-      args.erase(args.begin()+i);
+      args.erase(args.begin() + i);
       --s;
     }
   }
-  if(args.size() == 0){
+  if (args.size() == 0) {
     help::usage();
     return -1;
   }
@@ -42,8 +41,8 @@ int parsers::parse(int argc, const char **_args) {
     return 0;
   }
   // Check if action exists
-  if (ACTION_PARSERS.find(action) == ACTION_PARSERS.end()){
-    PERROR("action '{}' doesn't exist\n",action);
+  if (ACTION_PARSERS.find(action) == ACTION_PARSERS.end()) {
+    PERROR("action '{}' doesn't exist\n", action);
     return 0;
   }
   args.erase(args.begin());
