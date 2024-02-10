@@ -187,7 +187,7 @@ class VpnConfig{
         if(!empty()){
             clear();
         }
-        str path = profile.source + SLASH + template_filename;
+        str path = profile.source + SLASH + gpkih_conf_filename;
         config_path = path;
         // Load config
         std::ifstream file(path);

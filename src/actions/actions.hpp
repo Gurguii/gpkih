@@ -13,9 +13,10 @@
 #include "../utils/vpn_config.hpp"
 
 namespace gpki::subopts {
-// Generic params not related with any action
+// Generic params not related with any particular action
 struct params {
-  int prompt = 1;
+  static inline int prompt = 1;
+  static inline int autoanswer_yes = 0;
 };
 
 struct init : params {
@@ -89,5 +90,4 @@ int remove(subopts::remove &params);
 /* Getting/setting vpn config properties from profile*/
 int get(subopts::get &params);
 int set(subopts::set &params);
-// remove() usable but not added here yet
 } // namespace gpki::actions

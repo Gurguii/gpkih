@@ -17,15 +17,19 @@ int parsers::parse(int argc, const char **_args) {
     return -1;
   }
   std::vector<str> args(_args, _args + argc);
-  int s = args.size();
-  for (int i = 0; i < s; ++i) {
+  // Check global sub-options 
+  for (int i = 0; i < argc; ++i) {
     strview op = args[i];
-    if (op == "-y" || op == "--noprompt") {
-      prompt = 0;
+    if (op == "-y") {
+      subopts::params::autoanswer_yes = 1;
       args.erase(args.begin() + i);
-      --s;
+      --argc;
+    }else if(op == "--noprompt"){
+      subopts::params::prompt = 0;
+      args.erase(args.begin() + i);
     }
   }
+  // Action must be given
   if (args.size() == 0) {
     help::usage();
     return -1;

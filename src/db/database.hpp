@@ -14,7 +14,7 @@
 namespace gpki::db::profiles {
 static inline std::map<std::string, Profile> existing_profiles{};
 static inline str dbheaders = "name,source";
-static inline str dbpath = DBDIR + "profiles.csv";
+static inline str dbpath = DB_DIRPATH + "profiles.csv";
 static int
 sync(); // overwrites profiles.csv with the profiles in existing_profiles while
         // checking that source dirs from existing_profiles indeed exist
@@ -23,8 +23,8 @@ static int populate_from_entry(str &entry, Profile *profile);
 static int populate_from_entry(str &entry, std::vector<str> &fields);
 static int exists(strview profile_name);
 static int add(Profile *profile);
-static int remove(std::vector<str> &profiles);
-static int remove_all();
+static int remove(std::vector<str> &profiles,int prompt);
+static int remove_all(int prompt);
 static int load(strview profile_name, Profile &pinfo);
 static int get_entities(str profile, std::vector<Entity> &buff);
 } // namespace gpki::db::profiles
@@ -33,7 +33,7 @@ namespace gpki::db::entities {
 static inline str suffix = "_entities";
 static inline str ext = ".csv";
 static inline str _dbpath(str &profile) {
-  return DBDIR + profile + suffix + ext;
+  return DB_DIRPATH + profile + suffix + ext;
 }
 
 static inline str dbheaders =

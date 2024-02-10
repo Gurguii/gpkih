@@ -1,10 +1,9 @@
 #include "database.hpp"
-#include <fstream>
 using namespace gpki;
 
 /* Requires a call whenever we change the profile context */
 int db::entities::initialize(str profile) {
-  str dbpath = DBDIR + profile + "_entities.csv";
+  str dbpath = DB_DIRPATH + profile + "_entities.csv";
   if (!fs::exists(dbpath)) {
     std::ofstream db(dbpath);
     if (!db.is_open()) {
@@ -13,16 +12,15 @@ int db::entities::initialize(str profile) {
     }
     db << dbheaders << std::endl;
     db.close();
-    // std::cout << "entity csv created\n";
     return 0;
   }
   str headers(dbheaders.size(), '\x00');
   std::ifstream(dbpath).read(&headers[0], headers.size());
   if (headers != dbheaders) {
+    PERROR("entity headers do not match\n");
     std::cout << "entity headers do not match\n";
     return -1;
   }
-  initialized = 1;
   return 0;
 }
 
@@ -56,7 +54,7 @@ int db::entities::populate_from_entry(str &entry,
 }
 
 int db::entities::populate_from_entry(str &profile, str &entry,str &cn,Entity &buff){
-  std::ifstream file(DBDIR + profile + "_entities.csv");
+  std::ifstream file(DB_DIRPATH + profile + "_entities.csv");
   if(!file.is_open()){
     seterror(fmt::format("couldn't entities database for '{}'",profile));
     return -1;
@@ -71,7 +69,7 @@ int db::entities::populate_from_entry(str &profile, str &entry,str &cn,Entity &b
 }
 
 int db::entities::exists(str &profile, strview common_name) {
-  std::ifstream file(DBDIR +  profile + "_entities.csv");
+  std::ifstream file(DB_DIRPATH +  profile + "_entities.csv");
   if (!file.is_open()) {
     return -1;
   }
@@ -88,7 +86,7 @@ int db::entities::exists(str &profile, strview common_name) {
 
 int db::entities::load(str &profile,
                        strview common_name, Entity &entity_buff) {
-  std::ifstream file(DBDIR + profile + "_entities.csv");
+  std::ifstream file(DB_DIRPATH + profile + "_entities.csv");
   if (!file.is_open()) {
     return -1;
   }

@@ -34,11 +34,7 @@ int actions::revoke(subopts::revoke &params){
   if(choice < reasons.size()){
     params.reason = reasons[choice].second;
   }
-
-  std::string command = "openssl ca"
-  " -config " + profile.gopenssl() +
-  " -revoke " + entity.cert_path +  
-  " -crl_reason " + params.reason;
+  str command = fmt::format("openssl ca -config {} -revoke {} -crl_reason {}",profile.gopenssl(),entity.cert_path,params.reason);
   
   if(system(command.c_str())){
     PERROR("command '{}' failed\n", command);

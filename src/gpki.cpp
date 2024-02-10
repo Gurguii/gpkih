@@ -12,7 +12,8 @@
 #include "help/help.cpp"
 
 static inline void ctrl_c_handler(int sig){
-  std::cout << "\n\n";
+  std::cout << "\n";
+  PROGRAMEXITING();
   PINFO("cleaning up before exiting ...\n\n");
   /* do cleanup */
   exit(0);
@@ -37,13 +38,13 @@ int main(int argc, const char **args) {
       return -1; 
     };
     str configdir = CURRENT_PATH + SLASH + ".." + SLASH + "config";
-    fs::copy(configdir, CONFDIR, fs::copy_options::recursive);
-    if (!fs::exists(CONFDIR) || !fs::is_directory(CONFDIR)) {
-      PERROR("couldn't create gpkih source dir '{}'\n",CONFDIR);
+    fs::copy(configdir, CONF_DIRPATH, fs::copy_options::recursive);
+    if (!fs::exists(CONF_DIRPATH) || !fs::is_directory(CONF_DIRPATH)) {
+      PERROR("couldn't create gpkih source dir '{}'\n",CONF_DIRPATH);
       return -1;
     }
-    if (!fs::create_directory(DBDIR)) {
-      PERROR("couldn't create gpkih source db dir '{}'\n",DBDIR);
+    if (!fs::create_directory(DB_DIRPATH)) {
+      PERROR("couldn't create gpkih source db dir '{}'\n",DB_DIRPATH);
       return -1;
     };
   }
@@ -51,7 +52,7 @@ int main(int argc, const char **args) {
   if(p == -1){
     return -1; 
   }
-  PINFO("Loaded [{}] profiles\n",p,DBDIR,SLASH);
+  PINFO("Loaded [{}] profiles\n",p,DB_DIRPATH,SLASH);
   if (gpki::parsers::parse(argc - 1, args + 1)) {
     return -1;
   }

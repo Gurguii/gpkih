@@ -4,12 +4,8 @@
 #include <ios>
 #include <iostream>
 #include <fstream>
-#include <sstream>
 #include <string>
 #include <sys/types.h>
-#include <map>
-#include <unordered_map>
-#include <vector>
 
 #include "../../src/utils/gpkih_util_funcs.hpp"
 #include "../../src/structs.hpp"

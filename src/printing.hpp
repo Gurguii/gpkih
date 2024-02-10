@@ -100,7 +100,10 @@ static inline void PROGRAMSTARTING() {
   PINFO("Starting gpki - {:%d %h %Y @ %H:%M}\n",
         std::chrono::system_clock::now());
 };
-
+static inline void PROGRAMEXITING() {
+  PINFO("Exiting gpki - {:%d %h %Y @ %H:%M}\n",
+        std::chrono::system_clock::now());
+};
 static inline void UNKNOWN_OPTION_MSG(std::string_view opt) {
   fmt::print(fg(COLOR::antique_white), " [parsing] unknown option '{}'\n", opt);
 }

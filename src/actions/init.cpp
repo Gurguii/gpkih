@@ -18,20 +18,20 @@
   }
 
 int create_dhparam(strview outpath) {
-  str command =
-      "openssl dhparam -out " + str(outpath) + " 2048";
+  str command = fmt::format("openssl dhparam -out {} 2048",outpath);
   if (system(command.c_str())) {
     return -1;
   }
   return 0;
 }
 int create_openvpn_static_key(std::string_view outpath) {
-  str command = "openvpn --genkey tls-crypt " + str(outpath);
+  str command = fmt::format("openvpn --genkey tls-crypt {}",outpath);
   if (system(command.c_str())) {
     return -1;
   }
   return 0;
 }
+
 template <typename T> int IS_ABSOLUT_PATH(T path) {
 #ifdef _WIN32
   return std::isalpha(path[0]);
@@ -65,16 +65,19 @@ template <typename T> int IS_VALID_PATH(T path) {
 using namespace gpki;
 int actions::init(subopts::init &params) {
   Profile profile;
+  if(!params.profile_name.empty() && db::profiles::exists(params.profile_name)){
+    PWARN("profile '{}' already exists\n", params.profile_name);
+  }
   if (params.profile_name.empty() ||
       db::profiles::exists(params.profile_name)) {
     do {
       PROMPT("Desired profile name: ");
       std::getline(std::cin, profile.name);
       if(db::profiles::exists(profile.name)){
-        PINFO("profile '{}' already exists\n");
+        PWARN("profile '{}' already exists\n",profile.name);
         continue;
       }else if(profile.name.empty()){
-        PINFO("profile name can't be empty\n");
+        PWARN("profile name can't be empty\n");
         continue;
       }
       break;
@@ -122,8 +125,8 @@ int actions::init(subopts::init &params) {
     }
   }
   // Copy templates.conf to profile
-  str templates_src = CONFDIR + template_filename;
-  str templates_dst = profile.source + SLASH + template_filename;
+  str templates_src = CONF_DIRPATH + gpkih_conf_filename;
+  str templates_dst = profile.source + SLASH + gpkih_conf_filename;
   fs::copy(templates_src,templates_dst);
 
   if(!fs::exists(templates_dst)){
@@ -132,7 +135,7 @@ int actions::init(subopts::init &params) {
   }
 
   // Adapt gopenssl.cnf file to the profile
-  str sed_src = CONFDIR + "gopenssl.cnf";
+  str sed_src = CONF_DIRPATH + "gopenssl.cnf";
   str sed_dst = profile.source + SLASH + "gopenssl.cnf";
 
 #ifdef __WIN32
@@ -158,31 +161,47 @@ int actions::init(subopts::init &params) {
   db::entities::initialize(profile.name);
   
   // Extra questions
-  if (prompt) {
+  if (params.prompt) {
     // QUESTION 1
-    PROMPT("Create dhparam and openvpn tls key? (recommended)","[y/n]");
-    str ans;
-    getline(std::cin, ans);
-    if (ans == "y" || ans == "Y") {
-      create_openvpn_static_key(profile.source + SLASH + "tls" + SLASH +
-                                "ta.key");
-      create_dhparam(profile.source + SLASH + "tls" + SLASH + "dhparam2048");
-    }
-    ans.assign("");
-    // QUESTION 2
-    PROMPT("Create the CA now?","[y/n]");
-    getline(std::cin, ans);
-    if (ans == "y" || ans == "Y") {
-      subopts::build default_params;
-      default_params.type = ENTITY_TYPE::ca;
-      default_params.profile = std::move(profile);
-      if (actions::build(default_params)) {
-        return -1;
-      } else {
-        PINFO("CA succesfully created\n");
-        return -1;
-      };
-    }
+    if(!params.autoanswer_yes){
+      PROMPT("Create dhparam and openvpn tls key? (recommended)","[y/n]");
+      str ans;
+      getline(std::cin, ans);
+      if (ans == "y" || ans == "Y") {
+        create_openvpn_static_key(profile.source + SLASH + "tls" + SLASH +
+                                  "ta.key");
+        create_dhparam(profile.source + SLASH + "tls" + SLASH + "dhparam2048");
+      }
+      ans.assign("");
+      // QUESTION 2
+      PROMPT("Create the CA now?","[y/n]");
+      getline(std::cin, ans);
+      if (ans == "y" || ans == "Y") {
+        subopts::build default_params{
+          .type = ET_CA,
+          .profile = std::move(profile)
+        };
+        if (actions::build(default_params)) {
+          return -1;
+        } else {
+          PINFO("CA succesfully created\n");
+          return -1;
+        };
+      }
+    }else{
+      create_openvpn_static_key(fmt::format("{}{}tls{}ta.key",profile.source,SLASH,SLASH));
+      create_dhparam(fmt::format("{}{}tls{}dhparam2048",profile.source,SLASH,SLASH));
+      subopts::build default_params{
+          .type = ET_CA,
+          .profile = std::move(profile)
+        };
+        if (actions::build(default_params)) {
+          return -1;
+        } else {
+          PINFO("CA succesfully created\n");
+          return -1;
+        };
+    } 
   }
   return 0;
 }

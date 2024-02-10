@@ -1,13 +1,25 @@
 #include "actions.hpp"
-#include <cstddef>
 using namespace gpki;
-using subopts = gpki::subopts::build;
 
-
-int actions::build(gpki::subopts::build &opts){
-    Profile &profile = opts.profile;
+static void _get_and_set(std::string &st){
+  std::string input;
+  std::getline(std::cin,input);
+  if(!input.empty()){
+    st = input;
+  }
+}
+static inline str _server_client_csr_command(str &gopenssl, subopts::build &params, Entity &entity){
+  return fmt::format("openssl req -newkey {}:{} -out {} -keyout {} -subj '{}' -outform {} -keyform {} -noenc",params.key_size, params.algorithm, entity.req_path,
+                     entity.key_path, entity.subject.oneliner(), params.csr_crt_format, params.key_format);
+}
+static inline str _server_client_crt_command(str &gopenssl, Entity &entity){
+  return fmt::format("openssl ca -config {} -in {} -out {} -subj '{}' -extfile {}x509{}{} -notext",gopenssl,entity.req_path,entity.cert_path,
+                     entity.subject.oneliner(), CONF_DIRPATH, SLASH, to_str(entity.type));
+}
+int actions::build(gpki::subopts::build &params){
+    Profile &profile = params.profile;
     Entity entity;
-    entity.type = opts.type;
+    entity.type = params.type;
     entity.profile_name = profile.name;
 
     std::string input;
@@ -19,22 +31,13 @@ int actions::build(gpki::subopts::build &opts){
     }
     // Set state name
     PROMPT("State or Province Name (full name) [" + entity.subject.state + "]: ");
-    std::getline(std::cin, input);
-    if (!input.empty()) {
-      entity.subject.state = input;
-    }
+    _get_and_set(entity.subject.state);
     // Set location
     PROMPT("Locality Name [" + entity.subject.location + "]: ");
-    std::getline(std::cin, input);
-    if (!input.empty()) {
-      entity.subject.location = input;
-    }
+    _get_and_set(entity.subject.location);
     // Set organisation
     PROMPT("Organisation Name [" + entity.subject.organisation + "]: ");
-    std::getline(std::cin, input);
-    if (!input.empty()) {
-      entity.subject.organisation = input;
-    }
+    _get_and_set(entity.subject.organisation);
     // *MANDATORY Set common name
     input.assign("");
     PROMPT("Common Name: ");
@@ -65,16 +68,7 @@ int actions::build(gpki::subopts::build &opts){
         entity.key_path = profile.source + SLASH + "pki" + SLASH + "ca" + SLASH + "key";
         entity.cert_path = profile.source + SLASH + "pki" + SLASH + "ca" + SLASH + "crt";
         str command = fmt::format("openssl req -config {} -new -x509 -out {} -keyout {} -subj '{}' -outform {} -keyform {} -noenc",gopenssl,
-                                  entity.cert_path, entity.key_path, entity.subject.oneliner(), opts.csr_crt_format, opts.key_format);
-        //std::string command = "openssl req"
-        //" -config " + gopenssl + 
-        //" -new -x509"
-        //" -out " + entity.cert_path + 
-        //" -keyout " + entity.key_path + 
-        //" -subj '" + entity.subject.oneliner() + "'" 
-        //" -outform " + opts.csr_crt_format + 
-        //" -keyform " + opts.key_format +
-        //" -noenc";
+                                  entity.cert_path, entity.key_path, entity.subject.oneliner(), params.csr_crt_format, params.key_format);
         if(system(command.c_str())){
           PERROR("command '{}' FAILED\n", command);
           return -1;
@@ -82,32 +76,19 @@ int actions::build(gpki::subopts::build &opts){
     }else{
       /* CLIENT | SERVER */
       entity.req_path = profile.source + SLASH + "pki" + SLASH + "reqs" +
-                        SLASH + entity.subject.cn + "-csr." + opts.csr_crt_format;
+                        SLASH + entity.subject.cn + "-csr." + params.csr_crt_format;
       entity.key_path = profile.source + SLASH + "pki" + SLASH + "keys" +
-                        SLASH + entity.subject.cn + "-key." + opts.key_format;
+                        SLASH + entity.subject.cn + "-key." + params.key_format;
       entity.cert_path = profile.source + SLASH + "pki" + SLASH + "certs" +
-                         SLASH + entity.subject.cn + "-crt." + opts.csr_crt_format;
-      std::string csr_command = "openssl req" 
-      " -newkey " + opts.key_size + ":" + opts.algorithm + 
-      " -out " + entity.req_path + 
-      " -keyout " + entity.key_path + 
-      " -subj '" + entity.subject.oneliner() + "'" + 
-      " -outform " + opts.csr_crt_format + 
-      " -keyform " + opts.key_format +
-      " -noenc";
+                         SLASH + entity.subject.cn + "-crt." + params.csr_crt_format;
+      auto csr_command = _server_client_csr_command(gopenssl, params, entity);
       if(system(csr_command.c_str())){
           PERROR("command '{}' failed\n", csr_command);
           return -1;
       }
       // SECOND COMMAND
-      std::string crt_command = "openssl ca" 
-      " -config " + gopenssl + 
-      " -in " + entity.req_path + 
-      " -out " + entity.cert_path +
-      " -subj '" + entity.subject.oneliner() + "'"
-      " -extfile " + CONFDIR + "x509" + SLASH + to_str(entity.type) +
-      " -notext";
-      if(!prompt){
+      auto crt_command = _server_client_crt_command(gopenssl, entity);
+      if(!params.autoanswer_yes){
         crt_command += " -batch";
       }
       if(system(crt_command.c_str())){

@@ -1,5 +1,4 @@
 #include "database.hpp"
-#include <filesystem>
 using namespace gpki;
 
 int db::profiles::populate_from_entry(str &entry, Profile *profile) {
@@ -85,7 +84,7 @@ int db::profiles::initialize() {
       return -1;
     };
   }
-  db::profiles::remove(remove_profiles);
+  db::profiles::remove(remove_profiles,0);
   return existing_profiles.size();
 }
 
@@ -103,7 +102,7 @@ int db::profiles::add(Profile *profile) {
   return (fs::file_size(dbpath) > bsize ? 0 : -1);
 }
 
-int db::profiles::remove(std::vector<str> &profiles) {
+int db::profiles::remove(std::vector<str> &profiles,int prompt) {
   for (auto &profile : profiles) {
 
     auto iter = existing_profiles.find(profile);
@@ -130,7 +129,7 @@ int db::profiles::remove(std::vector<str> &profiles) {
     // remove profile from existing_profiles
     existing_profiles.erase(iter);
     // remove profile entities db
-    str db = DBDIR + target.name + "_entities.csv";
+    str db = DB_DIRPATH + target.name + "_entities.csv";
     if (!fs::remove(db)) {
       seterror(fmt::format("couldn't remove entities' csv '{}'", db));
       return -1;
@@ -140,14 +139,14 @@ int db::profiles::remove(std::vector<str> &profiles) {
   return sync();
 }
 
-int db::profiles::remove_all() {
+int db::profiles::remove_all(int prompt) {
   // Using the map itself would cause in segmentation fault since
   // remove() calls existing_profiles.erase()
   std::vector<str> profiles;
   for (auto kv : existing_profiles) {
     profiles.emplace_back(kv.first);
   }
-  remove(profiles);
+  remove(profiles, prompt);
   return 0;
 }
 
@@ -160,7 +159,7 @@ int db::profiles::load(strview profile_name, Profile &pinfo) {
 }
 
 int db::profiles::get_entities(str profile, std::vector<Entity> &buff) {
-  str edb = DBDIR + SLASH + profile + "_entities.csv";
+  str edb = DB_DIRPATH + SLASH + profile + "_entities.csv";
   std::ifstream file(edb);
   if (!file.is_open()) {
     PERROR("couldn't open database {}\n", edb);

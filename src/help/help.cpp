@@ -40,13 +40,9 @@ Revoke certicates
 Generate crl
   ./gpki gencrl [profile] [subopts]
 
-[ remove ]
+[ remove ]
 Remove profile files and database entry
   ./gpki remove [profile/s]
-
-[ remove-all ]
-Same as remove but  to all profiles
-  ./gpki remove-all
 
 [ set ]
 Change profile's vpn configuration
@@ -78,6 +74,6 @@ void call_helper(strview action) {
   } else if (action == "get") {
     help::get::usage();
   } else {
-    PINFO("no help defined for '{}'\n", action);
+    PERROR("no help defined for '{}'\n", action);
   }
 }

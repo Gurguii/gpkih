@@ -1,7 +1,10 @@
+- Automaticly create an inline file for each client created and remove the create_pack option, or implement it differently, using a property from gpkih.conf
+or a cmd opt to create a compressed file containing the user config file and every other file inside the opt path, e.g
+./gpki create-pack <profile> <entity> -add <path>
+This would create a compressed file (default 7z and changeable by user) containing the entity config file + files inside <path> or <path> itself if it's a file 
 - *In subparsers* Add a function that does the if(opts.empty()){PERROR; PHINT} to avoid code duplication on every action that requires a profile name
 this could also be avoided if i do what i wrote in tothink.txt about interactive versions of each action so that when no args given the interactive action 
 gets called instead, which will prompt the user
-- Implement create_pack(inline|splitted)
 - Add some csv check for file modifications not made by 'gpki' (store timestamps in a file??) 
 - Fix openssl command not working in Windows (both system() and CreateProcessA() fail executing the openssl command but if you copy paste it it works)
 - Add dependency check on startup (openssl,openvpn) - also do not make openvpn strictly required (just for the tls keys generation)

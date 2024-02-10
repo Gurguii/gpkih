@@ -32,11 +32,13 @@ static inline str BASEDIR = str(std::getenv("HOME")) + "/.config/gpkih/";
 static inline str EOL = "\n";
 #endif
 
-static inline str DBDIR = BASEDIR + "db" + SLASH;
-static inline str CONFDIR = BASEDIR + "config" + SLASH;
+static inline str DB_DIRNAME = "db";
+static inline str CONF_DIRNAME = "config";
 
-static inline str template_filename = "templates.conf";
-static inline str gpkih_filename = "gpkih.conf";
+static inline str DB_DIRPATH = BASEDIR + DB_DIRNAME + SLASH;
+static inline str CONF_DIRPATH = BASEDIR + CONF_DIRNAME + SLASH;
+
+static inline str gpkih_conf_filename = "gpkih.conf";
 
 #define CSV_DELIMITER_s ","
 #define CSV_DELIMITER_c ','
@@ -44,5 +46,3 @@ static inline str gpkih_filename = "gpkih.conf";
 static inline str last_gpki_error = "no error";
 static inline void seterror(str err) { last_gpki_error = err; }
 static inline str lasterror() { return last_gpki_error; }
-
-static int prompt = 1;
