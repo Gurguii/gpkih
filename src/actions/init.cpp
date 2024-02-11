@@ -12,7 +12,7 @@
 #define RELATIVE_FILE_PATHS                                                    \
   std::unordered_map<str, str> {                               \
     {"pki" + SLASH + "crl" + SLASH + "crlnumber", "1000"},                     \
-        {"pki" + SLASH + "serial" + SLASH + "serial", "01"}, {                 \
+       {"pki" + SLASH + "serial" + SLASH + "serial", "01"}, {                 \
       "pki" + SLASH + "database" + SLASH + "index.txt", ""                     \
     }                                                                          \
   }
@@ -154,17 +154,17 @@ int actions::init(subopts::init &params) {
 #endif
 
   // Add profile to database
+  auto entry = profile.csv_entry();
   if (db::profiles::add(&profile)) {
     return -1;
   }
   // Initialize entities db
   db::entities::initialize(profile.name);
-  
   // Extra questions
   if (params.prompt) {
     // QUESTION 1
     if(!params.autoanswer_yes){
-      PROMPT("Create dhparam and openvpn tls key? (recommended)","[y/n]");
+      PROMPT("Create dhparam? " + fmt::format(fg(COLOR::lime) | EMPHASIS::underline | EMPHASIS::italic, "(highly recommended)"),"[y/n]");
       str ans;
       getline(std::cin, ans);
       if (ans == "y" || ans == "Y") {
@@ -197,10 +197,9 @@ int actions::init(subopts::init &params) {
         };
         if (actions::build(default_params)) {
           return -1;
-        } else {
-          PINFO("CA succesfully created\n");
-          return -1;
-        };
+        } 
+        PINFO("CA succesfully created\n");
+      return 0;
     } 
   }
   return 0;

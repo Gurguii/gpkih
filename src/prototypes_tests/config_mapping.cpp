@@ -5,6 +5,7 @@
 #include <string>
 #include <string_view>
 #include <unordered_map>
+#include <fmt/format.h>
 
 namespace fs = std::filesystem;
 
@@ -21,10 +22,6 @@ enum class FILE_ERROR {
 #define F_NOOPEN static_cast<int>(FILE_ERROR::__cant_open)
 };
 
-enum {
-  wiski
-  #define WISKI wiski
-};
 int map_config_file(std::string_view path,
                     std::unordered_map<std::string, std::string> &buffer,
                     char section_opening_char = '[',
@@ -48,15 +45,14 @@ int map_config_file(std::string_view path,
       continue;
     } 
     if (first == section_opening_char && last == section_closing_char) {
-      int optional;
       line.erase(line.begin());
       line.erase(line.begin()+line.size()-1);
-      auto iter = std::find(line.begin(),line.end(),subsection_delimiter);
-      if(iter != line.end()){
-        // remove the subsection to group every key-val 
-        // into the main section's map
-        line.erase(iter,line.end());
-      }
+      //auto iter = std::find(line.begin(),line.end(),subsection_delimiter);
+      //if(iter != line.end()){
+      //  // remove the subsection to group every key-val 
+      //  // into the main section's map
+      //  line.erase(iter,line.end());
+      //}
       line.erase(std::remove(line.begin(),line.end(),' '),line.end());
       // At this point we should have just the desired section name
       std::string sname = line;
@@ -75,7 +71,7 @@ int map_config_file(std::string_view path,
         std::string key, val;
         getline(ss,key,keyval_delim);
         ss >> val;
-        buffer.emplace(key,val);
+        buffer.emplace(fmt::format("{}.{}",sname,key),val);
         prevline = file.tellg();
       }
     }

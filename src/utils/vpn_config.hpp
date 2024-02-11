@@ -1,8 +1,8 @@
 #pragma once
 #include <fstream>
-#include <cstdio>
 #include <unordered_map>
 #include <filesystem>
+#include <vector>
 #include "../gpki.hpp"
 #include "../printing.hpp"
 #include "../structs.hpp"
@@ -15,28 +15,22 @@ using Section = std::unordered_map<str,str>;
 
 static inline str SECTION_COMMON = "[ common ]";
 static inline str SECTION_CLIENT = "[ client ]";
-static inline str SECTION_CLIENT_OPT  = "[ client.optional ]";
 static inline str SECTION_SERVER = "[ server ]";
-static inline str SECTION_SERVER_OPT  = "[ server.optional ]";
+static inline str SECTION_PKI = "[ pki ]";
 
 namespace gpki
 {
-class VpnConfig{
+class GpkihConfig{
     public:
     static inline Section common{};
-    
     static inline Section client{};
-    static inline Section client_optional{};
-
     static inline Section server{};
-    static inline Section server_optional{};
+    static inline Section pki{};
 
     static void clear(){
         common.clear();
         client.clear();
-        client_optional.clear();
         server.clear();
-        server_optional.clear();
     }
     static inline int set_common_prop(str &key, str &nval)
     {
@@ -49,32 +43,28 @@ class VpnConfig{
     }
     static inline int set_client_prop(str &key, str &nval){
         if(client.find(key) != client.end()){
+            // key exists
             client[key] = nval;
-        }else if(client_optional.find(key) != client_optional.end()){
-            client_optional[key] = nval;
-        }else{
-            return -1;
+            return 0;
         }
-        return 0;
+        return -1;
     }
     static inline int set_server_prop(str &key, str &nval){
         if(server.find(key) != server.end()){
+            // key exists
             server[key] = nval;
-        }else if(server_optional.find(key) != server_optional.end()){
-            server_optional[key] = nval;
-        }else{
-            return -1;
+            return 0;
         }
-        return 0;
+        return -1;
     }
     static inline int empty(){
-        return common.empty() | client.empty() | client_optional.empty() | server.empty() | server_optional.empty();
+        return common.empty() | client.empty() | server.empty();
     }
     static inline bool client_prop_exists(str &key){
-        return client.find(key) != client.end() || client_optional.find(key) != client_optional.end();
+        return client.find(key) != client.end();
     }
     static inline bool server_prop_exists(str &key){
-        return server.find(key) != server.end() || server_optional.find(key) != server_optional.end();
+        return server.find(key) != server.end();
     }
     static inline bool common_prop_exists(str &key){
         return common.find(key) != common.end();
@@ -84,12 +74,8 @@ class VpnConfig{
             return &common;
         }else if(client.find(key) != client.end()){
             return &client;
-        }else if(client_optional.find(key) != client_optional.end()){
-            return &client_optional;
         }else if(server.find(key) != server.end()){
             return &server;
-        }else if(server_optional.find(key) != server_optional.end()){
-            return &server_optional;
         }else{
             return nullptr;
         }
@@ -99,36 +85,35 @@ class VpnConfig{
             common[key] = nval;
         }else if(client.find(key) != client.end()){
             client[key] = nval;
-        }else if(client_optional.find(key) != client_optional.end()){
-            client_optional[key] = nval;
         }else if(server.find(key) != server.end()){
             server[key] = nval;
-        }else if(server_optional.find(key) != server_optional.end()){
-            server_optional[key] = nval;
         }else{
             return -1;
         }
         return 0;
     }
-
-    static int dump(strview outfile, Profile &profile, Entity &entity){
+    // Dumps config file related with ENTITY_TYPE to outfile
+    // @valid_entity_types - ET_CL(ENTITY_TYPE::client) and ET_SV(ENTITY_TYPE::server)
+    static int dump(strview outfile, ENTITY_TYPE type){
+        // TODO - add output file checks first
         std::ofstream file(outfile.data());
         if(!file.is_open()){
             PERROR("couldn't create '{}'\n",outfile);
             return -1;
         }   
         std::vector<Section *> cfg;
-        switch(entity.type){
+        switch(type){
             case ET_CL:
-            cfg = {&common, &client, &client_optional};
+            cfg = {&common, &client};
             break;
             case ET_SV:
-            cfg = {&common,&server,&server_optional};
+            cfg = {&common,&server};
             break;
             default:
             PERROR("invalid entity type, only client and server entities are suitable\n");
             return -1;
         }
+        // Add every key-val (configuration) commenting out the ones that are not set
         for(Section *s : cfg){
             Section &section = *s;
             for(auto kv : section){
@@ -165,7 +150,7 @@ class VpnConfig{
             }
             sstream ss(line);
             ss >> key;
-            ptr = VpnConfig::prop_exists(key);
+            ptr = GpkihConfig::prop_exists(key);
             if(ptr == nullptr){
                 PWARN("skipping unknown property '{}'\n",key);
                 continue;
@@ -243,11 +228,9 @@ class VpnConfig{
     private:
     static inline str config_path;
     static inline std::unordered_map<str, Section*>section_mapping{
-        {SECTION_COMMON,&VpnConfig::common},
-        {SECTION_CLIENT,&VpnConfig::client},
-        {SECTION_CLIENT_OPT,&VpnConfig::client_optional},
-        {SECTION_SERVER,&VpnConfig::server},
-        {SECTION_SERVER_OPT,&VpnConfig::server_optional}
+        {SECTION_COMMON,&GpkihConfig::common},
+        {SECTION_CLIENT,&GpkihConfig::client},
+        {SECTION_SERVER,&GpkihConfig::server},
     };
 
     static inline bool is_valid_section(str &line){
@@ -255,7 +238,6 @@ class VpnConfig{
     }
 
     static inline int _set = 0;
-    static inline str profile;
 
     // Returns position to line where next section is
     static int load_section(std::ifstream &file, Section &section, int allow_empty_or_none = 1){

@@ -17,7 +17,7 @@ int parsers::set(std::vector<str> opts){
         return -1;
     };
     opts.erase(opts.begin());
-    VpnConfig::set(profile);
+    GpkihConfig::set(profile);
     str section,prop,nval;
     sstream ss;
     std::vector<str>nonexist_props;
@@ -29,16 +29,16 @@ int parsers::set(std::vector<str> opts){
         getline(ss,prop,'=');
         getline(ss,nval);
         if(section == "client" || section == "cl"){
-            if(VpnConfig::client_prop_exists(prop)){
-                VpnConfig::set_client_prop(prop,nval);
+            if(GpkihConfig::client_prop_exists(prop)){
+                GpkihConfig::set_client_prop(prop,nval);
             }
         }else if(section == "server" || section == "sv"){
-            if(VpnConfig::server_prop_exists(prop)){
-                VpnConfig::set_server_prop(prop,nval);
+            if(GpkihConfig::server_prop_exists(prop)){
+                GpkihConfig::set_server_prop(prop,nval);
             }
         }else if(section == "common"){
-            if(VpnConfig::common_prop_exists(prop)){
-                VpnConfig::set_common_prop(prop,nval);
+            if(GpkihConfig::common_prop_exists(prop)){
+                GpkihConfig::set_common_prop(prop,nval);
             }
         }else{
             PERROR("section '{}' doesn't exist\n",section);
@@ -46,7 +46,7 @@ int parsers::set(std::vector<str> opts){
         }
     }
     
-    if(VpnConfig::sync()){
+    if(GpkihConfig::sync()){
         return -1;
     }
     return 0;

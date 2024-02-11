@@ -65,10 +65,9 @@ int actions::list(subopts::list &params) {
   if (profiles.empty()) {
     if (entities.empty()) {
       /* OPTION 1 */
-      // all profiles all entities
+      // all profiles
       for (auto p : db::profiles::existing_profiles) {
         print_profile(p.first, params.pfields);
-        print_profile_entities(p.first, params.efields);
       }
       return 0;
     } else {

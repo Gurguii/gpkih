@@ -21,7 +21,6 @@ int parsers::build(std::vector<std::string> opts) {
   opts.erase(opts.begin());
   opts.push_back("\0");
   // override default build params with user arguments and set
-  // right function to be executed
   for(int i = 0; i < opts.size(); ++i){
     std::string_view opt = opts[i];
     if(opt == "-ca" || opt == "--ca"){

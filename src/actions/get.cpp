@@ -17,32 +17,24 @@ int actions::get(subopts::get &params) {
   Profile &profile = params.profile;
   if (!params.cl_properties.empty()) {
     for (auto &prop : params.cl_properties) {
-      if (VpnConfig::client.find(prop.data()) != VpnConfig::client.end()) {
+      if (GpkihConfig::client.find(prop.data()) != GpkihConfig::client.end()) {
         PRINTF("{}.{}\n", styled_title("client"),
-               styled_key_prop(prop, VpnConfig::client[prop.data()], ET_CL));
-      } else {
-        PRINTF("{}.{}\n", styled_title("client"),
-               styled_key_prop(prop, VpnConfig::client_optional[prop.data()],
-                               ET_CL));
-      }
+               styled_key_prop(prop, GpkihConfig::client[prop.data()], ET_CL));
+      }    
     }
   }
   if (!params.sv_properties.empty()) {
     for (auto &prop : params.sv_properties) {
-      if (VpnConfig::server.find(prop.data()) != VpnConfig::server.end()) {
+      if (GpkihConfig::server.find(prop.data()) != GpkihConfig::server.end()) {
         PRINTF("{}.{}\n", styled_title("server"),
-               styled_key_prop(prop, VpnConfig::server[prop.data()], ET_SV));
-      } else {
-        PRINTF("{}.{}\n", styled_title("server"),
-               styled_key_prop(prop, VpnConfig::server_optional[prop.data()],
-                               ET_SV));
+               styled_key_prop(prop, GpkihConfig::server[prop.data()], ET_SV));
       }
     }
   }
   if (!params.common_properties.empty()) {
     for (auto &prop : params.common_properties) {
       PRINTF("{}.{}\n", styled_title("common"),
-             styled_key_prop(prop, VpnConfig::common[prop.data()], ET_SV));
+             styled_key_prop(prop, GpkihConfig::common[prop.data()], ET_SV));
     }
   }
   // ./gpki get <profile> prop1,prop2...propN

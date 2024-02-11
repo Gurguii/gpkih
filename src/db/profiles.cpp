@@ -27,7 +27,6 @@ int db::profiles::sync() {
     return -1;
   }
   tmp << dbheaders << std::endl;
-  ;
   for (auto &p : existing_profiles) {
     Profile &ref = p.second;
     if (std::filesystem::exists(ref.source) &&
@@ -99,10 +98,14 @@ int db::profiles::add(Profile *profile) {
   int bsize = fs::file_size(dbpath);
   std::ofstream db(dbpath, std::ios::app);
   db << profile->csv_entry() << std::endl;
-  return (fs::file_size(dbpath) > bsize ? 0 : -1);
+  if(fs::file_size(dbpath) > bsize){
+    // profile succesfully added
+    existing_profiles.emplace(profile->name, *profile);
+  };
+  return 0;
 }
 
-int db::profiles::remove(std::vector<str> &profiles,int prompt) {
+int db::profiles::remove(std::vector<str> &profiles,int autoanswer_yes) {
   for (auto &profile : profiles) {
 
     auto iter = existing_profiles.find(profile);
@@ -110,7 +113,8 @@ int db::profiles::remove(std::vector<str> &profiles,int prompt) {
       return -1;
     }
     Profile target = iter->second;
-    if (prompt) {
+    if (!autoanswer_yes) {
+      // ask before removing
       str ans;
       PROMPT("Files from profile '" + profile +
                  "' about to get removed, continue?",
@@ -139,14 +143,14 @@ int db::profiles::remove(std::vector<str> &profiles,int prompt) {
   return sync();
 }
 
-int db::profiles::remove_all(int prompt) {
+int db::profiles::remove_all(int autoanswer_yes) {
   // Using the map itself would cause in segmentation fault since
   // remove() calls existing_profiles.erase()
   std::vector<str> profiles;
   for (auto kv : existing_profiles) {
     profiles.emplace_back(kv.first);
   }
-  remove(profiles, prompt);
+  remove(profiles, autoanswer_yes);
   return 0;
 }
 

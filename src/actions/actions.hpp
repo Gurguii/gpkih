@@ -25,10 +25,11 @@ struct init : params {
 };
 
 struct build : params {
-  std::string key_size = "1024";
+  std::string key_size = "2048";
   std::string algorithm = "rsa";
   std::string key_format = "pem";
   std::string csr_crt_format = "pem";
+  std::string days = "60";
   ENTITY_TYPE type;
   Profile profile;
 };
@@ -57,14 +58,6 @@ struct remove : params {
   int all = 0;
 };
 
-struct create_pack : params {
-  /* gpki create-pack <profile> cliente1,cliente2... */
-  Profile profile;
-  std::vector<Entity> entities;
-  int inline_outfile = 1;
-  strview outdir;
-};
-
 // ./gpki set <profile> <prop>=<val> <prop>=<val>
 struct get : params {
   ui64 properties;
@@ -85,7 +78,6 @@ int build(subopts::build &params);
 int revoke(subopts::revoke &params);
 int gencrl(subopts::gencrl &params);
 int list(subopts::list &params);
-int create_pack(subopts::create_pack &params);
 int remove(subopts::remove &params);
 /* Getting/setting vpn config properties from profile*/
 int get(subopts::get &params);

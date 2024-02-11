@@ -101,7 +101,7 @@ static inline void PROGRAMSTARTING() {
         std::chrono::system_clock::now());
 };
 static inline void PROGRAMEXITING() {
-  PINFO("Exiting gpki - {:%d %h %Y @ %H:%M}\n",
+  PINFO("Starting gpki - {:%d %h %Y @ %H:%M}\n",
         std::chrono::system_clock::now());
 };
 static inline void UNKNOWN_OPTION_MSG(std::string_view opt) {

@@ -1,6 +1,5 @@
 #include "parser.hpp"
 #include "build.cpp"
-#include "create_pack.cpp"
 #include "gencrl.cpp"
 #include "get.cpp"
 #include "init.cpp"
@@ -8,6 +7,7 @@
 #include "remove.cpp"
 #include "revoke.cpp"
 #include "set.cpp"
+#include "genkey.cpp"
 
 using namespace gpki;
 // [!] parse() does not expect to receive program name in args

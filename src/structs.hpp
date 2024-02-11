@@ -3,7 +3,6 @@
 #include <cstdint>
 #include <string>
 #include <unordered_map>
-#include <vector>
 
 namespace gpki {
 enum class PROFILE_FIELDS : uint16_t {
@@ -100,21 +99,24 @@ entity_fields_map() {
           {"crt", ENTITY_FIELDS::cert_path}};
 }
 
-struct ProfileStatus {
-  int ca_count = 0x00;
-  int sv_count = 0x00;
-  int cl_count = 0x00;
-};
-
 struct Profile {
   std::string name;
   std::string source;
-  ProfileStatus status;
+  ui8 ca_created = 0;
+  ui16 sv_count = 0;
+  ui16 cl_count = 0;
+
   inline std::string gopenssl() { return source + SLASH + "gopenssl.cnf"; }
   inline std::string dir_crl() {
-    return source + SLASH + "pki" + SLASH + "crl";
+    return fmt::format("{}{}pki{}crl",source,SLASH,SLASH);
   }
-  inline std::string csv_entry() { return name + "," + source; }
+  inline std::string csv_entry() { return fmt::format("{},{},{},{},{}",name,source,ca_created,sv_count,cl_count); }
+  inline str ca_crt(){
+    return fmt::format("{}{}pki{}ca{}crt",source,SLASH,SLASH,SLASH);
+  }
+  inline str ca_key(){
+    return fmt::format("{}{}pki{}ca{}key",source,SLASH,SLASH,SLASH);
+  }
 };
 
 // #define SUBJECT_TEMPLATE "/C=%s/ST=%s/L=%s/O=%s/CN=%s/emailAddress=%s"

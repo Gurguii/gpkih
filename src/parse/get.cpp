@@ -24,7 +24,7 @@ int parsers::get(std::vector<str> opts) {
   }
 
   opts.erase(opts.begin());
-  VpnConfig::set(profile);
+  GpkihConfig::set(profile);
 
   str section, prop; // valid scopes -> common client server
   sstream ss;
@@ -37,15 +37,12 @@ int parsers::get(std::vector<str> opts) {
     if (section == "client" || section == "cl") {
       getline(ss, prop);
       if (prop.empty() && params.cl_properties.empty()) {
-        for (const auto &kv : VpnConfig::client) {
-          params.cl_properties.emplace_back(kv.first);
-        }
-        for (const auto &kv : VpnConfig::client_optional) {
+        for (const auto &kv : GpkihConfig::client) {
           params.cl_properties.emplace_back(kv.first);
         }
         continue;
       }
-      if (VpnConfig::client_prop_exists(prop)) {
+      if (GpkihConfig::client_prop_exists(prop)) {
         params.cl_properties.emplace_back(prop);
         continue;
       }
@@ -53,31 +50,25 @@ int parsers::get(std::vector<str> opts) {
     } else if (section == "server" || section == "sv") {
       getline(ss, prop);
       if (prop.empty() && params.sv_properties.empty()) {
-        for (const auto &kv : VpnConfig::server) {
-          params.sv_properties.emplace_back(kv.first);
-        }
-        for (const auto &kv : VpnConfig::server_optional) {
+        for (const auto &kv : GpkihConfig::server) {
           params.sv_properties.emplace_back(kv.first);
         }
         continue;
       }
-      if (VpnConfig::server_prop_exists(prop)) {
+      if (GpkihConfig::server_prop_exists(prop)) {
         params.sv_properties.emplace_back(prop);
         continue;
       }
       nonexist_props.emplace_back(prop);
-    } else if (section == "common") {
+    } else if (section == "common" || section == "com") {
       getline(ss, prop);
       if (prop.empty() && params.common_properties.empty()) {
-        for (const auto &kv : VpnConfig::server) {
-          params.common_properties.emplace_back(kv.first);
-        }
-        for (const auto &kv : VpnConfig::server_optional) {
+        for (const auto &kv : GpkihConfig::server) {
           params.common_properties.emplace_back(kv.first);
         }
         continue;
       }
-      if (VpnConfig::common_prop_exists(prop)) {
+      if (GpkihConfig::common_prop_exists(prop)) {
         params.common_properties.emplace_back(prop);
         continue;
       }

@@ -54,15 +54,15 @@ static int sed(std::string_view src, std::string_view dst,
 // - creates every non-existant intermediary directory
 static int create_output_path(str &path){
   if(fs::exists(path)){
-      str ans;
-      PROMPT("path '" + path + "'exists, remove?","[y/n]");
-      getline(std::cin,ans);
-      for(char &c : ans){
-        c = std::tolower(c);
-      }
-      if(ans == "n" || ans == "no"){
-        return -1;
-      }
+    str ans;
+    PROMPT("path '" + path + "'exists, remove?","[y/n]");
+    getline(std::cin,ans);
+    for(char &c : ans){
+      c = std::tolower(c);
+    }
+    if(ans == "n" || ans == "no"){
+      return -1;
+    }
     try{
       fs::remove_all(path);
     }catch(fs::filesystem_error err){
