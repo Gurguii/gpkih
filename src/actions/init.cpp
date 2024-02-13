@@ -1,20 +1,23 @@
 #include "../utils/gpkih_util_funcs.hpp"
+#include "../config_management.hpp"
 #include "actions.hpp"
 #include <exception>
-
+static inline str openssl_conf_filename = "gopenssl.conf";
 #define RELATIVE_DIRECTORY_PATHS                                               \
-  std::vector<str> {                                                   \
-    "tls", "pki" + SLASH + "ca", "pki" + SLASH + "keys",          \
-        "pki" + SLASH + "crl", "pki" + SLASH + "serial", "packs",              \
-        "pki" + SLASH + "certs", "pki" + SLASH + "reqs",                       \
-        "pki" + SLASH + "database", "logs"                                     \
+  std::vector<str> \
+  {                                                   \
+    "tls",\
+    "pki" + SLASH + "ca", "pki" + SLASH + "keys",\
+    "pki" + SLASH + "crl", "pki" + SLASH + "serial", "packs",\
+    "pki" + SLASH + "certs", "pki" + SLASH + "reqs",\
+    "pki" + SLASH + "database", "logs"\
   }
 #define RELATIVE_FILE_PATHS                                                    \
-  std::unordered_map<str, str> {                               \
+  std::unordered_map<str, str>  \
+  {                             \
     {"pki" + SLASH + "crl" + SLASH + "crlnumber", "1000"},                     \
-       {"pki" + SLASH + "serial" + SLASH + "serial", "01"}, {                 \
-      "pki" + SLASH + "database" + SLASH + "index.txt", ""                     \
-    }                                                                          \
+    {"pki" + SLASH + "serial" + SLASH + "serial", "01"},                            \
+    {"pki" + SLASH + "database" + SLASH + "index.txt", ""},                                                                          \
   }
 
 int create_dhparam(strview outpath) {
@@ -105,7 +108,6 @@ int actions::init(subopts::init &params) {
   // Create directories
   for (const str &relative : RELATIVE_DIRECTORY_PATHS) {
     str path = profile.source + SLASH + relative;
-    // std::cout << "directory: " << path << "\n";
     if (!fs::create_directories(path)) {
       PERROR("couldn't create directory '{}'",path);
       // Remove the profile source dir
@@ -124,19 +126,20 @@ int actions::init(subopts::init &params) {
       return -1;
     }
   }
-  // Copy templates.conf to profile
-  str templates_src = CONF_DIRPATH + gpkih_conf_filename;
-  str templates_dst = profile.source + SLASH + gpkih_conf_filename;
-  fs::copy(templates_src,templates_dst);
-
-  if(!fs::exists(templates_dst)){
-    PERROR("couldn't copy '{}' to '{}'\n",templates_dst);
-    return -1;
+  // Copy required config files to profile
+  for(auto &filenames : {gpkih_conf_filename,vpn_conf_filename,pki_conf_filename}){
+    str src = fmt::format("{}{}",CONF_DIRPATH, filenames);
+    str dst = fmt::format("{}{}{}",profile.source,SLASH,filenames);
+    fs::copy(src,dst);
+    if(!fs::exists(dst)){
+      PERROR("couldn't copy '{}' to '{}'\n", src, dst);
+      return -1;
+    }
   }
 
   // Adapt gopenssl.cnf file to the profile
-  str sed_src = CONF_DIRPATH + "gopenssl.cnf";
-  str sed_dst = profile.source + SLASH + "gopenssl.cnf";
+  str sed_src = CONF_DIRPATH + openssl_conf_filename;
+  str sed_dst = profile.source + SLASH + openssl_conf_filename;
 
 #ifdef __WIN32
   std::replace_if(
@@ -179,7 +182,7 @@ int actions::init(subopts::init &params) {
       if (ans == "y" || ans == "Y") {
         subopts::build default_params{
           .type = ET_CA,
-          .profile = std::move(profile)
+          .profile = &profile
         };
         if (actions::build(default_params)) {
           return -1;
@@ -193,7 +196,7 @@ int actions::init(subopts::init &params) {
       create_dhparam(fmt::format("{}{}tls{}dhparam2048",profile.source,SLASH,SLASH));
       subopts::build default_params{
           .type = ET_CA,
-          .profile = std::move(profile)
+          .profile = &profile
         };
         if (actions::build(default_params)) {
           return -1;

@@ -1,4 +1,5 @@
 #pragma once
+#include "config_management.hpp"
 #include "gpki.hpp"
 #include <cstdint>
 #include <string>
@@ -106,17 +107,11 @@ struct Profile {
   ui16 sv_count = 0;
   ui16 cl_count = 0;
 
-  inline std::string gopenssl() { return source + SLASH + "gopenssl.cnf"; }
-  inline std::string dir_crl() {
-    return fmt::format("{}{}pki{}crl",source,SLASH,SLASH);
-  }
+  inline std::string gopenssl() { return fmt::format("{}{}{}",source,SLASH,"gopenssl.conf"); }
+  inline std::string dir_crl() { return fmt::format("{}{}pki{}crl",source,SLASH,SLASH); }
   inline std::string csv_entry() { return fmt::format("{},{},{},{},{}",name,source,ca_created,sv_count,cl_count); }
-  inline str ca_crt(){
-    return fmt::format("{}{}pki{}ca{}crt",source,SLASH,SLASH,SLASH);
-  }
-  inline str ca_key(){
-    return fmt::format("{}{}pki{}ca{}key",source,SLASH,SLASH,SLASH);
-  }
+  inline str ca_crt(){ return fmt::format("{}{}pki{}ca{}crt",source,SLASH,SLASH,SLASH); }
+  inline str ca_key(){ return fmt::format("{}{}pki{}ca{}key",source,SLASH,SLASH,SLASH);}
 };
 
 // #define SUBJECT_TEMPLATE "/C=%s/ST=%s/L=%s/O=%s/CN=%s/emailAddress=%s"
@@ -162,7 +157,9 @@ struct Entity {
 
 /* UNUSED */
 // this would allow having the whole vpn configuration file in a ui64
-// with just the ca cert and entity key|cert left
+// with just the ca cert and entity key|cert left in order to check 
+// which properties the user wants to get/set so that we can
+// create labels like vpnconf & CONF_CLIENT_REMOTE && label << key << separator << value;
 enum class vpn_cl_conf : ui64 {
   remote = 2,
   remote_cert_tls = 4,

@@ -25,13 +25,13 @@ struct init : params {
 };
 
 struct build : params {
-  std::string key_size = "2048";
-  std::string algorithm = "rsa";
-  std::string key_format = "pem";
-  std::string csr_crt_format = "pem";
-  std::string days = "60";
+  static inline std::string key_size = "2048";
+  static inline std::string algorithm = "rsa";
+  static inline std::string key_format = "pem";
+  static inline std::string csr_crt_format = "pem";
+  static inline std::string days = "60";
   ENTITY_TYPE type;
-  Profile profile;
+  Profile* profile = nullptr;
 };
 
 struct revoke : params {

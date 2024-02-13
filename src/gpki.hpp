@@ -43,8 +43,6 @@ static inline str CONF_DIRNAME = "config";
 static inline str DB_DIRPATH = BASEDIR + DB_DIRNAME + SLASH;
 static inline str CONF_DIRPATH = BASEDIR + CONF_DIRNAME + SLASH;
 
-static inline str gpkih_conf_filename = "gpkih.conf";
-
 #define CSV_DELIMITER_s ","
 #define CSV_DELIMITER_c ','
 

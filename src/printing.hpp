@@ -20,10 +20,10 @@ static constexpr COLOR BLACK = COLOR::black;
 static constexpr COLOR ALICIA = COLOR::alice_blue;
 static constexpr COLOR LGREEN = COLOR::light_green;
 
-STYLE S_NONE = fg(BLACK);
-STYLE S_WARNING = fg(ORANGE) | EMPHASIS::bold | EMPHASIS::italic;
-STYLE S_INFO = fg(COLOR::pale_golden_rod) | EMPHASIS::italic;
-STYLE S_ERROR = fg(RED) | EMPHASIS::bold | EMPHASIS::italic;
+static STYLE S_NONE = fg(BLACK);
+static STYLE S_WARNING = fg(ORANGE) | EMPHASIS::bold | EMPHASIS::italic;
+static STYLE S_INFO = fg(COLOR::pale_golden_rod) | EMPHASIS::italic;
+static STYLE S_ERROR = fg(RED) | EMPHASIS::bold | EMPHASIS::italic;
 
 // Styles for entity labels
 static inline std::string S_ELABEL(std::string st) {

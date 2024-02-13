@@ -103,7 +103,7 @@ static inline int _create_config(str &profile_name, std::vector<str> &common_nam
 }
 /* BUILD CA-SERVER-CLIENT CERTIFICATES */
 int actions::build(gpki::subopts::build &params){
-  Profile &profile = params.profile;
+  Profile &profile = *params.profile;
   Entity entity;
   entity.type = params.type;
   entity.profile_name = profile.name;
@@ -143,16 +143,15 @@ int actions::build(gpki::subopts::build &params){
     return -1;
   }
 
-  std::string gopenssl = profile.source + SLASH + "gopenssl.cnf";
+  std::string gopenssl = profile.source + SLASH + "gopenssl.conf";
   // Load serial number
   str fpath = profile.source + SLASH + "pki" + SLASH + "serial" + SLASH + "serial";
   std::fstream file(fpath,std::ios::in | std::ios::out);  
   if(!file.is_open()){  
-    PERROR("couldn't open file '{}'\n",fpath);
+    PERROR("couldn't open serial file '{}'\n",fpath);
     return -1;
   }
-  file >> entity.serial; 
-  file.close();
+  file >> entity.serial;
   if(entity.type == ET_CA){
     /* CA */
     entity.req_path = "\0";
@@ -164,11 +163,17 @@ int actions::build(gpki::subopts::build &params){
       PERROR("command '{}' FAILED\n", command);
       return -1;
     }
-    // Increment serial and save it to serial file
-    entity.serial = std::to_string(std::stoi(entity.serial)+1); 
+
+    // Increment serial and update file
+    int _s = strtol(entity.serial.c_str(), nullptr, 16);
+    ++_s;
+    str hex_serial = fmt::format("{:x}",_s);
     file.seekg(SEEK_SET);
-    file << entity.serial;
-    file.close();
+    if(hex_serial.size() == 1){
+      file << "0";
+    }
+    file << hex_serial;
+    file.flush();
   }else{
     /* CLIENT | SERVER */
     entity.req_path = profile.source + SLASH + "pki" + SLASH + "reqs" +
@@ -193,6 +198,7 @@ int actions::build(gpki::subopts::build &params){
       return -1;
     }
   }
+  
   //
   if(entity.type & ET_SV || entity.type & ET_CL){
     GpkihConfig::load(profile); // Load profile's gpkih.conf file
@@ -223,6 +229,8 @@ int actions::build(gpki::subopts::build &params){
       return -1;
     break;
   }
+
+  fmt::print("profile count: cl:{} sv:{} ca_created:{}\n", profile.cl_count, profile.sv_count, profile.ca_created);
   // Update database
   return db::profiles::sync();
 }

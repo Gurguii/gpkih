@@ -26,6 +26,8 @@ static int remove(std::vector<str> &profiles,int prompt);
 static int remove_all(int prompt);
 static int load(strview profile_name, Profile &pinfo);
 static int get_entities(str profile, std::vector<Entity> &buff);
+/* TESTING */
+static Profile* load(strview profile_name);
 } // namespace gpki::db::profiles
 
 namespace gpki::db::entities {

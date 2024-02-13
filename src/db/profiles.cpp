@@ -157,12 +157,21 @@ int db::profiles::remove_all(int autoanswer_yes) {
   return 0;
 }
 
+// Returns pointer to profile in existing_profiles 
+// or nullptr if it doesn't exist
 int db::profiles::load(strview profile_name, Profile &pinfo) {
   if (!exists(profile_name)) {
     return -1;
   }
   pinfo = existing_profiles[profile_name.data()];
   return 0;
+}
+
+Profile* db::profiles::load(strview profile_name){
+  if(!exists(profile_name)){
+    return nullptr;
+  }
+  return &existing_profiles[profile_name.data()];
 }
 
 int db::profiles::get_entities(str profile, std::vector<Entity> &buff) {

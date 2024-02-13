@@ -1,3 +1,4 @@
+#include "config_management.cpp"
 #include "printing.hpp"
 #include "structs.hpp"
 #include "gpki.hpp"
@@ -11,8 +12,8 @@
 /* Help functions */
 #include "help/help.cpp"
 
-static inline std::vector<int(*)()> cleanup_functions{db::profiles::sync};
 
+static inline std::vector<int(*)()> cleanup_functions{db::profiles::sync};
 static inline void cleanup(){
   std::cout << "\n";
   std::vector<std::future<int>> tasks{};

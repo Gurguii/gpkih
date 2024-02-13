@@ -10,7 +10,7 @@
 #include "../help/help.hpp"
 #include "../printing.hpp"
 #include "../structs.hpp"
-
+#include "../config_management.hpp"
 namespace gpki::parsers {
 // main parser
 static int parse(int argc, const char **_args);

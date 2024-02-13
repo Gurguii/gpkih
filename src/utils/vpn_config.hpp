@@ -22,6 +22,7 @@ namespace gpki
 {
 class GpkihConfig{
     public:
+    /* maps representing each section inside profile's gpkih.conf */
     static inline Section common{};
     static inline Section client{};
     static inline Section server{};
@@ -182,7 +183,7 @@ class GpkihConfig{
         if(!empty()){
             clear();
         }
-        str path = profile.source + SLASH + gpkih_conf_filename;
+        str path = profile.source + SLASH + "gpkih.conf";
         config_path = path;
         // Load config
         std::ifstream file(path);
@@ -191,8 +192,7 @@ class GpkihConfig{
             return -1;
         }
         str line;
-
-        // Load templates.conf sections
+        // gpkih.conf sections
         while(getline(file,line)){
             if(is_valid_section(line)){
                 // Got section
