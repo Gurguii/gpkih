@@ -1,5 +1,6 @@
 #pragma once
 #include <csignal>
+#include <future>
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>

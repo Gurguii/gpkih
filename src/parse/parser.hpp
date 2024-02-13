@@ -5,7 +5,7 @@
 #include <iostream>
 #include <string>
 #include <vector>
-
+#include <map>
 #include "../actions/actions.hpp"
 #include "../help/help.hpp"
 #include "../printing.hpp"
@@ -21,9 +21,8 @@ static int revoke(std::vector<str> opts);
 static int gencrl(std::vector<str> opts);
 static int list(std::vector<str> opts);
 static int remove(std::vector<str> opts);
+static int config(std::vector<str> opts);
 // unimplemented
-static int get(std::vector<str> opts);
-static int set(std::vector<str> opts);
 static int genkey(std::vector<str> opts);
 } // namespace gpki::parsers
 
@@ -34,7 +33,6 @@ static inline std::unordered_map<str, int (*)(std::vector<str>)> ACTION_PARSERS{
     {"revoke", gpki::parsers::revoke},
     {"gencrl", gpki::parsers::gencrl},
     {"remove", gpki::parsers::remove},
-    {"get", gpki::parsers::get},
-    {"set", gpki::parsers::set},
+    {"config", gpki::parsers::config},
     {"genkey", gpki::parsers::genkey}
 };

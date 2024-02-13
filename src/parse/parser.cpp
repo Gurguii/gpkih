@@ -1,13 +1,12 @@
 #include "parser.hpp"
 #include "build.cpp"
 #include "gencrl.cpp"
-#include "get.cpp"
 #include "init.cpp"
 #include "list.cpp"
 #include "remove.cpp"
 #include "revoke.cpp"
-#include "set.cpp"
 #include "genkey.cpp"
+#include "config.cpp"
 
 using namespace gpki;
 // [!] parse() does not expect to receive program name in args
@@ -17,6 +16,7 @@ int parsers::parse(int argc, const char **_args) {
     return -1;
   }
   std::vector<str> args(_args, _args + argc);
+
   // Check global sub-options 
   for (int i = 0; i < argc; ++i) {
     strview op = args[i];
@@ -27,6 +27,7 @@ int parsers::parse(int argc, const char **_args) {
     }else if(op == "--noprompt"){
       subopts::params::prompt = 0;
       args.erase(args.begin() + i);
+      --argc;
     }
   }
   // Action must be given

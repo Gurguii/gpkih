@@ -127,9 +127,8 @@ struct Subject {
   std::string organisation = "MARIWANOS";
   std::string cn;
   std::string email = "NONE";
-  inline std::string oneliner() {
-    return "/C=" + country + "/ST=" + state + "/L=" + location +
-           "/O=" + organisation + "/CN=" + cn + "/emailAddress=" + email;
+  inline str oneliner(){
+    return fmt::format("/C={}/ST={}/L={}/O={}/CN={}/emailAddress={}",country,state,location,organisation,cn,email);
   }
 };
 

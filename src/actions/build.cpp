@@ -195,7 +195,7 @@ int actions::build(gpki::subopts::build &params){
   }
   //
   if(entity.type & ET_SV || entity.type & ET_CL){
-    GpkihConfig::set(profile); // Load profile's gpkih.conf file
+    GpkihConfig::load(profile); // Load profile's gpkih.conf file
     std::vector<Entity> ents{entity};
     if(_create_config(profile, ents)){
       return -1;

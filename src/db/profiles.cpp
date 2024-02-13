@@ -26,13 +26,13 @@ int db::profiles::sync() {
     seterror("couldn't open tmpfile to synchronize database\n");
     return -1;
   }
-  tmp << dbheaders << std::endl;
+  tmp << dbheaders << EOL;
   for (auto &p : existing_profiles) {
     Profile &ref = p.second;
     if (std::filesystem::exists(ref.source) &&
         std::filesystem::is_directory(ref.source)) {
       // good
-      tmp << (ref.csv_entry()) << std::endl;
+      tmp << (ref.csv_entry()) << EOL;
     }
   }
   std::filesystem::remove(dbpath);
@@ -47,7 +47,7 @@ int db::profiles::initialize() {
     // Create
     std::ofstream db(dbpath);
     if (!db.is_open()) {
-      std::cout << "couldn't create file '" << dbpath << "'\n";
+      PERROR("couldn't create file '{}'\n",dbpath);
       return -1;
     }
     db << dbheaders << std::endl;
@@ -58,23 +58,23 @@ int db::profiles::initialize() {
   str headers;
   getline(file, headers);
   if (headers != dbheaders) {
-    std::cout << "profile headers do not match\n";
+    PERROR("profile headers do not match - original: '{}' current: '{}'",dbheaders,headers);
     return -1;
   }
   // Load profiles into existing_profiles
   std::vector<str> remove_profiles;
   str line;
-  Profile pinfo;
-  int lines = 0;
+    int lines = 0;
   while (getline(file, line)) {
+    Profile pinfo;
     ++lines;
     populate_from_entry(line, &pinfo);
     if (!fs::exists(pinfo.source)) {
       PWARN("Profile '{}' is in the database but source dir '{}' doesn't "
             "exist, removing from db\n",
             pinfo.name, pinfo.source);
+      // profile must be in existing_profiles since remove() checks for it
       remove_profiles.emplace_back(pinfo.name);
-      continue;
     }
     // emplace() returns pair<iterator,bool> where the bool indicates if
     // emplacement was sucessful or not
@@ -83,7 +83,7 @@ int db::profiles::initialize() {
       return -1;
     };
   }
-  db::profiles::remove(remove_profiles,0);
+  db::profiles::remove(remove_profiles,1);
   return existing_profiles.size();
 }
 
@@ -107,7 +107,6 @@ int db::profiles::add(Profile *profile) {
 
 int db::profiles::remove(std::vector<str> &profiles,int autoanswer_yes) {
   for (auto &profile : profiles) {
-
     auto iter = existing_profiles.find(profile);
     if (iter == existing_profiles.end()) {
       return -1;
@@ -126,17 +125,21 @@ int db::profiles::remove(std::vector<str> &profiles,int autoanswer_yes) {
       }
     }
     // remove profile files
-    if (!std::filesystem::remove_all(target.source)) {
-      seterror("couldn't remove source dir for profile '" + target.name + "'");
-      return -1;
-    };
+    if(fs::exists(target.source)){
+      if (!std::filesystem::remove_all(target.source)) {
+        seterror("couldn't remove source dir for profile '" + target.name + "'");
+        return -1;
+      };
+    }
     // remove profile from existing_profiles
     existing_profiles.erase(iter);
     // remove profile entities db
     str db = DB_DIRPATH + target.name + "_entities.csv";
-    if (!fs::remove(db)) {
-      seterror(fmt::format("couldn't remove entities' csv '{}'", db));
-      return -1;
+    if(fs::exists(db)){
+      if (!fs::remove(db)) {
+        seterror(fmt::format("couldn't remove entities' csv '{}'", db));
+        return -1;
+      }
     }
   }
   // call sync() to synchronize existing_profiles with profiles.csv contents
@@ -163,7 +166,7 @@ int db::profiles::load(strview profile_name, Profile &pinfo) {
 }
 
 int db::profiles::get_entities(str profile, std::vector<Entity> &buff) {
-  str edb = DB_DIRPATH + SLASH + profile + "_entities.csv";
+  str edb = DB_DIRPATH + profile + "_entities.csv";
   std::ifstream file(edb);
   if (!file.is_open()) {
     PERROR("couldn't open database {}\n", edb);

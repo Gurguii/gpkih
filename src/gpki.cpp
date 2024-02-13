@@ -11,12 +11,26 @@
 /* Help functions */
 #include "help/help.cpp"
 
-static inline void ctrl_c_handler(int sig){
+static inline std::vector<int(*)()> cleanup_functions{db::profiles::sync};
+
+static inline void cleanup(){
   std::cout << "\n";
+  std::vector<std::future<int>> tasks{};
+  // launch every task asynchronously
+  for(auto cleanup_func : cleanup_functions){
+    tasks.push_back(std::move(std::async(std::launch::async,cleanup_func)));
+  }
   PROGRAMEXITING();
-  PINFO("cleaning up before exiting ...\n\n");
-  /* do cleanup */
+  // wait for every task to finish
+  for(auto &t : tasks){
+    t.wait();
+  }
   exit(0);
+}
+
+static inline void ctrl_c_handler(int sig){
+  PINFO("caught ctrl+c signal, cleaning up before exiting ...\n\n");
+  cleanup();
 }
 
 static inline void register_signals(){

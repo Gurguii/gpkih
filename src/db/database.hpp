@@ -15,8 +15,8 @@ namespace gpki::db::profiles {
 static inline std::map<std::string, Profile> existing_profiles{};
 static inline str dbheaders = "name,source,ca,total_servers,total_clients";
 static inline str dbpath = DB_DIRPATH + "profiles.csv";
-static int
-sync(); // overwrites profiles.csv with the profiles in existing_profiles while
+static inline int initialized = 0;
+static int sync(); // overwrites profiles.csv with the profiles in existing_profiles while
 static int initialize();
 static int populate_from_entry(str &entry, Profile *profile);
 static int populate_from_entry(str &entry, std::vector<str> &fields);

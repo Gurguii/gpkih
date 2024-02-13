@@ -79,7 +79,7 @@ int revoke(subopts::revoke &params);
 int gencrl(subopts::gencrl &params);
 int list(subopts::list &params);
 int remove(subopts::remove &params);
-/* Getting/setting vpn config properties from profile*/
+/* Getting/setting vpn|pki config properties from profile*/
 int get(subopts::get &params);
 int set(subopts::set &params);
 } // namespace gpki::actions

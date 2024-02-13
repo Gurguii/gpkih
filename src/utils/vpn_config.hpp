@@ -26,12 +26,13 @@ class GpkihConfig{
     static inline Section client{};
     static inline Section server{};
     static inline Section pki{};
-
+    
     static void clear(){
-        common.clear();
-        client.clear();
-        server.clear();
+        for(Section *&ptr : _sections_ptr){
+            ptr->clear();
+        }
     }
+
     static inline int set_common_prop(str &key, str &nval)
     {
         if(common.find(key) != common.end()){
@@ -57,9 +58,18 @@ class GpkihConfig{
         }
         return -1;
     }
+    static inline int set_pki_prop(str &key, str &nval){
+        if(pki.find(key) == pki.end()){
+            // key exists
+            pki[key] = nval;
+            return 0;
+        }
+        return -1;
+    }
     static inline int empty(){
         return common.empty() | client.empty() | server.empty();
     }
+    /* check property */
     static inline bool client_prop_exists(str &key){
         return client.find(key) != client.end();
     }
@@ -69,26 +79,26 @@ class GpkihConfig{
     static inline bool common_prop_exists(str &key){
         return common.find(key) != common.end();
     }
-    static inline Section* prop_exists(str &key){
-        if(common.find(key) != common.end()){
-            return &common;
-        }else if(client.find(key) != client.end()){
-            return &client;
-        }else if(server.find(key) != server.end()){
-            return &server;
-        }else{
-            return nullptr;
-        }
+    static inline bool pki_prop_exists(str &key){
+        return pki.find(key) != pki.end();
     }
+    static inline Section* prop_exists(str &key){
+        for(Section *& section : _sections_ptr){
+            Section &s = *section;
+            if(s.find(key) != s.end()){
+                return section;
+            }
+        }
+        return nullptr;
+    }
+    /* set property */
     static inline int set_prop(str &key,str &nval){
-        if(common.find(key) != common.end()){
-            common[key] = nval;
-        }else if(client.find(key) != client.end()){
-            client[key] = nval;
-        }else if(server.find(key) != server.end()){
-            server[key] = nval;
-        }else{
-            return -1;
+        for(Section *& section : _sections_ptr){
+            Section &s = *section;
+            if(s.find(key) != s.end()){
+                s[key] = nval;
+                return 0;
+            }
         }
         return 0;
     }
@@ -168,7 +178,7 @@ class GpkihConfig{
     }
     /* Must be called before further stuff is done with this class, this loads config
         from profile's templates.conf file into Sections (std::unordered_map<std::string,std::string>) */
-    static int set(Profile &profile){
+    static int load(Profile &profile){
         if(!empty()){
             clear();
         }
@@ -191,14 +201,13 @@ class GpkihConfig{
                 file.seekg(next_section);
             }
         }
-
         _set = 1;
         return 0;
     }
 
     static int check_required_fields(ENTITY_TYPE type){
         if(!_set){
-            PERROR("vpn_config::set() must be called first in order to load adecuate templates.conf\n");
+            PERROR("vpn_config::set() must be called first in order to load adecuate gpkih.conf\n");
             return -1;
         }
         int rcode = 0;
@@ -226,11 +235,13 @@ class GpkihConfig{
     }
 
     private:
+    static inline std::vector<Section*> _sections_ptr{&common,&client,&server,&pki};
     static inline str config_path;
     static inline std::unordered_map<str, Section*>section_mapping{
         {SECTION_COMMON,&GpkihConfig::common},
         {SECTION_CLIENT,&GpkihConfig::client},
         {SECTION_SERVER,&GpkihConfig::server},
+        {SECTION_PKI,&GpkihConfig::pki}
     };
 
     static inline bool is_valid_section(str &line){
