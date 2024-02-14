@@ -27,9 +27,9 @@ static int genkey(std::vector<str> opts);
 } // namespace gpki::parsers
 
 static inline std::unordered_map<str, int (*)(std::vector<str>)> ACTION_PARSERS{
-    {"init", gpki::parsers::init},
-    {"list", gpki::parsers::list},
-    {"build", gpki::parsers::build},
+    {"init",   gpki::parsers::init},
+    {"list",   gpki::parsers::list},
+    {"build",  gpki::parsers::build},
     {"revoke", gpki::parsers::revoke},
     {"gencrl", gpki::parsers::gencrl},
     {"remove", gpki::parsers::remove},

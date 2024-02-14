@@ -10,7 +10,6 @@
 #include "../gpki.hpp"
 #include "../printing.hpp"
 #include "../utils/gpkih_util_funcs.hpp"
-#include "../utils/vpn_config.hpp"
 
 namespace gpki::subopts {
 // Generic params not related with any particular action

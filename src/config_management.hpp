@@ -31,17 +31,6 @@ static inline bool operator&(CONFIG_FILE lo, CONFIG_FILE ro){
 	return static_cast<bool>(static_cast<uint8_t>(lo) & static_cast<uint8_t>(ro));
 }
 
-#define GPKI_OK 0
-enum class FILE_ERROR {
-  __doesnt_exist = 2,
-#define F_NOEXIST static_cast<int>(FILE_ERROR::__doesnt_exist)
-  __no_read = 4,
-#define F_NOREAD static_cast<int>(FILE_ERROR::__no_read)
-  __no_write = 8,
-#define F_NOWRITE static_cast<int>(FILE_ERROR::__no_write)
-  __cant_open = 16,
-#define F_NOOPEN static_cast<int>(FILE_ERROR::__cant_open)
-};
 
 // Static class to manage stuff related with
 // configuration files such as loading
@@ -50,6 +39,7 @@ enum class FILE_ERROR {
 class Config
 {
 private:
+	Profile *profile;
 	// When loaded, config mappings will look like
 	// e.g _conf_vpn[client][key] = val
 	//     _conf_vpn[server][key] = val
@@ -57,16 +47,34 @@ private:
 	// the adecuate ConfigMap will be populated with
 	// each config section, with each section being 
 	// loaded in a map key
-	static inline ConfigMap _conf_gpkih; // gpkih.conf
-	static inline ConfigMap _conf_vpn; // openvpn.conf
-	static inline ConfigMap _conf_pki; // pki.conf
+	ConfigMap _conf_gpkih; // gpkih.conf
+	ConfigMap _conf_vpn;   // openvpn.conf
+	ConfigMap _conf_pki;   // pki.conf
 	// Loads sections from file into given buff
 	// like explained just above 
-	static int load_file(str &&file, ConfigMap& buff);
+	int load_file(str &&file, ConfigMap& buff);
 public:
-	// Must be called before any further action
-	static int load(Profile &profile, CONFIG_FILE file_to_load = CONFIG_ALL);
+	// UNUSED
+	static inline str VPN_SECTION_COMMON = "common";
+	static inline str VPN_SECTION_SERVER = "server";
+	static inline str VPN_SECTION_CLIENT = "client";
+	
+	Config(Profile &profile, CONFIG_FILE file_to_load = CONFIG_ALL);
 
-	static ConfigMap *get(CONFIG_FILE sections);
-	static bool exists(strview &key, CONFIG_FILE sections);
+	ConfigMap *get(CONFIG_FILE sections);
+	bool exists(strview key, CONFIG_FILE sections);
+
+	// Dumps vpn configuration (key-map values) to outpath
+	// it does file checks and dumps appropiate configuration
+	// based on given ENTITY_TYPE (only client|server are valid)
+	bool dump_vpn_conf(strview outpath, ENTITY_TYPE type);
+	// Will this be useful at all??
+	// bool dump_pki_conf(strview outpath);
+	// bool dump_gpkih_conf(strview outpath);
+	bool dump(strview outpath, CONFIG_FILE files);
+	// Sets the contents on config files to the ones 
+	// in the ConfigMap mapped values, effectively updating
+	// the configuration file in case the map got edited
+	// after being loaded
+	bool sync(CONFIG_FILE files);
 };

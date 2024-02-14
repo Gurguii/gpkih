@@ -1,13 +1,12 @@
 #include "parser.hpp"
 
 
-int load_profile_config(Profile *profile){
+int load_profile_config(Profile *profile, Config &profile_conf){
   if(!fs::exists(profile->source)){
+    return F_NOEXIST;
     return -1;
   }
-  if(GpkihConfig::load(*profile)){
-    return -1;
-  };
+  Config _profile_conf();
   return 0;
 }
 

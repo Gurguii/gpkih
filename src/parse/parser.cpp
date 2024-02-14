@@ -17,6 +17,12 @@ int parsers::parse(int argc, const char **_args) {
   }
   std::vector<str> args(_args, _args + argc);
 
+  // Action must be given
+  if (args.size() == 0) {
+    help::usage();
+    return -1;
+  }
+
   // Check global sub-options 
   for (int i = 0; i < argc; ++i) {
     strview op = args[i];
@@ -30,11 +36,7 @@ int parsers::parse(int argc, const char **_args) {
       --argc;
     }
   }
-  // Action must be given
-  if (args.size() == 0) {
-    help::usage();
-    return -1;
-  }
+
   str action = args[0];
 
   if (action == "help") {
@@ -43,13 +45,15 @@ int parsers::parse(int argc, const char **_args) {
     } else {
       help::usage();
     }
-    return 0;
-  }
+    return GPKIH_OK;
+  }else if(action == "")
+
   // Check if action exists
   if (ACTION_PARSERS.find(action) == ACTION_PARSERS.end()) {
     PERROR("action '{}' doesn't exist\n", action);
-    return 0;
+    return -1;
   }
+
   args.erase(args.begin());
   return ACTION_PARSERS[action](std::move(args));
 }

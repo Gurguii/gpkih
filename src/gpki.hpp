@@ -1,3 +1,4 @@
+
 #pragma once
 #include <csignal>
 #include <future>
@@ -9,6 +10,7 @@
 #include <unordered_map>
 #include <fmt/format.h>
 #include "printing.hpp"
+
 // Custom typenames
 using str = std::string;
 using strview = std::string_view;
@@ -23,6 +25,7 @@ namespace fs = std::filesystem;
 
 #ifdef _WIN32
 /* WINDOWS STUFF */
+CURRENT_PATH = fs::current_path().string();
 static inline str CURRENT_PATH = fs::current_path().string();
 static inline str SLASH = "\\";
 static inline str BASEDIR = str(std::getenv("LOCALAPPDATA")) + "\\gpkih\\";
@@ -46,6 +49,29 @@ static inline str CONF_DIRPATH = BASEDIR + CONF_DIRNAME + SLASH;
 #define CSV_DELIMITER_s ","
 #define CSV_DELIMITER_c ','
 
+enum class GPKIH_RETURN_CODES {
+  /* ALL GOOD */
+  __we_good = 0,
+#define GPKIH_OK static_cast<int>(GPKIH_RETURN_CODES::__we_good)
+  __we_notgood = -1,
+  /* FAIL - call lasterror() for more info */
+#define GPKIH_FAIL static_cast<int>(GPKIH_RETURN_CODES::__we_notgood)
+  /* FILE RELATED CODES */
+  __doesnt_exist = 2,
+#define F_NOEXIST static_cast<int>(GPKIH_RETURN_CODES::__doesnt_exist)
+  __no_read = 4,
+#define F_NOREAD static_cast<int>(GPKIH_RETURN_CODES::__no_read)
+  __no_write = 8,
+#define F_NOWRITE static_cast<int>(GPKIH_RETURN_CODES::__no_write)
+  __cant_open = 16,
+#define F_NOOPEN static_cast<int>(GPKIH_RETURN_CODES::__cant_open)
+  __cant_create = 32,
+#define F_NOCREATE static_cast<int>(GPKIH_RETURN_CODES::__cant_create)
+  
+  /* */
+};
+
+// TODO - split error management to its own file + static class
 static inline str last_gpki_error = "no error";
 template<typename ...Args>
 static inline void seterror(std::string fmt, Args&&... args){
