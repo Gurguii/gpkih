@@ -43,14 +43,6 @@ Generate crl
 [ remove ]
 Remove profile files and database entry
   ./gpki remove [profile/s]
-
-[ set ]
-Change profile's vpn configuration
-  ./gpki set [profile] prop1=val1 prop2=val2 ... propN=valN
-
-[ get ]
-Get profile vpn configuration
-  ./gpki get [profile] prop1 prop2 ... propN
 )";
 }
 

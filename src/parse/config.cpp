@@ -43,12 +43,11 @@ int parsers::config(std::vector<str> opts){
   opts.erase(opts.begin());
   if(subaction == "set"){
     auto params = subopts::set{.profile{std::move(profile)}};
-    parse_set(opts,params);
-    return actions::set(params);
+    std::cout << "calling gpki config SET\n";
   }else if(subaction == "get"){
     auto params = subopts::get{.profile{std::move(profile)}};
     // TODO - add get action into actions/config.cpp
-    return parse_get(opts,params);
+    std::cout << "calling gpki config GET\n";
   }else{
     PERROR("subaction '{}' doesn't exist\n", subaction);
     return -1;

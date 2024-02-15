@@ -2,28 +2,23 @@
 #include "gpki.hpp"
 #include "parse/parser.hpp"
 #include "structs.hpp"
+#include <cmath>
+#include <cstring>
 #include <unordered_map>
 #include <future>
-
-static inline str vpn_conf_filename = "openvpn.conf";
-static inline str pki_conf_filename = "pki.conf";
-static inline str gpkih_conf_filename = "gpkih.conf";
 
 using ConfigMap = std::unordered_map<str,std::unordered_map<str,str>>;
 
 enum class CONFIG_FILE
 {
-	_all = 15,
+	_all = 7,
 	#define CONFIG_ALL CONFIG_FILE::_all
 	_vpn = 2,
 	#define CONFIG_VPN CONFIG_FILE::_vpn
 	_pki = 4,
 	#define CONFIG_PKI CONFIG_FILE::_pki
-	_gpkih = 8,
-	#define CONFIG_GPKIH CONFIG_FILE::_gpkih
 };
 
-static inline std::vector<CONFIG_FILE> _CONFIG_FILE_files{CONFIG_VPN,CONFIG_PKI};
 static inline CONFIG_FILE operator|(CONFIG_FILE lo, CONFIG_FILE ro){
 	return static_cast<CONFIG_FILE>(static_cast<uint8_t>(lo) | static_cast<uint8_t>(ro));
 }
@@ -31,15 +26,39 @@ static inline bool operator&(CONFIG_FILE lo, CONFIG_FILE ro){
 	return static_cast<bool>(static_cast<uint8_t>(lo) & static_cast<uint8_t>(ro));
 }
 
+static inline str skip_chars = "#\n ";
+static inline char section_delim_open = '[';
+static inline char section_delim_close = ']';
+static inline str empty_chars = fmt::format("{}{} ",section_delim_open,section_delim_close);
 
-// Static class to manage stuff related with
-// configuration files such as loading
-// or editing them
-
+// Static class to manage gpkih.conf
 class Config
 {
 private:
-	Profile *profile;
+	static inline ConfigMap _conf_gpkih{
+		{"metadata",{}},
+		{"behaviour",{}}
+	};
+protected:
+	static int load_file(strview path, ConfigMap &buff);
+public:
+	static inline int load(){
+		return load_file(CONF_GPKIH,_conf_gpkih);
+	}
+	static inline void print(){
+		for(auto &kv : _conf_gpkih){
+			std::cout << "== " << kv.first << " ==\n";
+			for(auto &kvv : kv.second){
+				std::cout << kvv.first << " " << kvv.second << "\n";
+			}
+		}
+	}
+};
+
+// Class to manage profile specific configuration - pki.conf vpn.conf
+class ProfileConfig : public Config
+{
+private:
 	// When loaded, config mappings will look like
 	// e.g _conf_vpn[client][key] = val
 	//     _conf_vpn[server][key] = val
@@ -47,31 +66,42 @@ private:
 	// the adecuate ConfigMap will be populated with
 	// each config section, with each section being 
 	// loaded in a map key
-	ConfigMap _conf_gpkih; // gpkih.conf
-	ConfigMap _conf_vpn;   // openvpn.conf
-	ConfigMap _conf_pki;   // pki.conf
-	// Loads sections from file into given buff
-	// like explained just above 
-	int load_file(str &&file, ConfigMap& buff);
+	ConfigMap _conf_vpn{
+		{"common",{}}, // common vpn config will be mapped here as key-value strings
+		{"client",{}}, // * * client
+		{"server",{}}, // * * server
+	};    
+	ConfigMap _conf_pki{
+		{"key",{}},    // pki key config will be mapped here
+		{"crt",{}},	   // * * certificate
+		{"csr",{}},	   // * * certificate requests
+		{"crl",{}},    // * * certificate revocation list
+		{"subject",{}} // * * subject defaults (country, state, location, organisation, common name, email)
+	};
 public:
-	// UNUSED
-	static inline str VPN_SECTION_COMMON = "common";
-	static inline str VPN_SECTION_SERVER = "server";
-	static inline str VPN_SECTION_CLIENT = "client";
-	
-	Config(Profile &profile, CONFIG_FILE file_to_load = CONFIG_ALL);
-
-	ConfigMap *get(CONFIG_FILE sections);
-	bool exists(strview key, CONFIG_FILE sections);
-
+	inline void print(){
+		for(auto &haha : {_conf_vpn,_conf_pki}){
+			for(auto &kv : haha){
+				std::cout << "== " << kv.first << " ==\n";
+				for(auto &kvv : kv.second){
+					fmt::print("{} {}\n", kvv.first, kvv.second); 
+				}
+			}
+		}
+	}
+	// Set to true by ProfileConfig() constructor if files are sucesfully loaded
+	bool succesfully_loaded = false;
+	// Constructor
+	ProfileConfig(Profile &profile, CONFIG_FILE file_to_load = CONFIG_ALL);
 	// Dumps vpn configuration (key-map values) to outpath
 	// it does file checks and dumps appropiate configuration
 	// based on given ENTITY_TYPE (only client|server are valid)
 	bool dump_vpn_conf(strview outpath, ENTITY_TYPE type);
-	// Will this be useful at all??
-	// bool dump_pki_conf(strview outpath);
-	// bool dump_gpkih_conf(strview outpath);
 	bool dump(strview outpath, CONFIG_FILE files);
+
+	ConfigMap *get(CONFIG_FILE sections);
+	bool exists(strview key, CONFIG_FILE sections);
+
 	// Sets the contents on config files to the ones 
 	// in the ConfigMap mapped values, effectively updating
 	// the configuration file in case the map got edited

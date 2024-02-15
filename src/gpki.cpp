@@ -34,7 +34,7 @@ class Signals
 {
 private:
   static inline void ctrl_c_handler(int sig){
-    PINFO("caught ctrl+c signal, cleaning up before exiting ...\n\n");
+    PINFO("\ncaught ctrl+c signal, cleaning up before exiting ...");
     cleanup();
   }
 public:
@@ -72,19 +72,27 @@ int main(int argc, const char **args) {
   // Register signal handlers
   Signals::register_signals();
   
-  // TODO - Add PROPER checks for openssl - openvpn existence
-  PROGRAMSTARTING();
-
   // Check if gpkih base dir is created, else try to create it
   if(check_gpkih_install_dir() != GPKIH_OK){
     cleanup();
   }
+  // TODO - Add PROPER checks for openssl - openvpn existence
+  PROGRAMSTARTING();
+
+  // Launch task to load gpkih config
+  auto load_gpkih_config = std::async(std::launch::async,Config::load);
 
   // Map profiles' csv to db::profiles::existing_profiles{}
-  int profile_count = 0;
+  int profile_count = -1;
   if((profile_count = db::profiles::initialize()) == -1){
     cleanup();
   };
+
+  // wait for task 
+  if(load_gpkih_config.get() != GPKIH_OK){
+    PERROR(lasterror());
+    return -1;
+  }
 
   PINFO("Loaded [{}] profiles\n",profile_count,DB_DIRPATH,SLASH);
   

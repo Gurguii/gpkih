@@ -16,14 +16,8 @@ int parsers::parse(int argc, const char **_args) {
     return -1;
   }
   std::vector<str> args(_args, _args + argc);
-
-  // Action must be given
-  if (args.size() == 0) {
-    help::usage();
-    return -1;
-  }
-
-  // Check global sub-options 
+  
+  // Check global config options 
   for (int i = 0; i < argc; ++i) {
     strview op = args[i];
     if (op == "-y") {
@@ -37,16 +31,22 @@ int parsers::parse(int argc, const char **_args) {
     }
   }
 
+  // Action must be given
+  if (args.size() == 0) {
+    help::usage();
+    return -1;
+  }
+
   str action = args[0];
 
-  if (action == "help") {
+  if (action == "help" || action == "--help" || action == "-help" || action == "-h") {
     if (args.size() > 1) {
       call_helper(args[1]);
     } else {
       help::usage();
     }
     return GPKIH_OK;
-  }else if(action == "")
+  }
 
   // Check if action exists
   if (ACTION_PARSERS.find(action) == ACTION_PARSERS.end()) {

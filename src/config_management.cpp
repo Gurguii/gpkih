@@ -1,79 +1,91 @@
 #include "config_management.hpp"
+#include "gpki.hpp"
 #include <exception>
 #include <filesystem>
+#include <system_error>
 
 
-static inline str skip_chars = "# ";
-
-int Config::load_file(str &&path, ConfigMap& buff){
-	std::cout << "loading file " << path << "\n";
-	if(!fs::exists(path)){
-		return F_NOEXIST;
-	}
-	std::ifstream file(path);
+int Config::load_file(strview path, ConfigMap &buff){
+	std::ifstream file(path.data());
 	if(!file.is_open()){
+		seterror("couldn't open gpkih.conf '{}'",path);
 		return F_NOOPEN;
 	}
-	str line,key,val;
-	auto prev_line = file.tellg();
+	str line;
+	int next_section;
 	while(getline(file,line)){
 		char first = line[0];
-		if(skip_chars.find(first) != -1){
-			continue;
-		}
-		char last = line[line.size()-1];
-		// valid line
-		if(first == '[' && last == ']'){
+		if(first == section_delim_open){
 			// got a section
-			line.erase(line.begin());
-      		line.erase(line.begin()+line.size()-1);
-      		line.erase(std::remove(line.begin(),line.end(),' '),line.end());
-      		// line.erase(std::remove_if(line.begin(),line.end(),[](char c){return skip_chars.find(c) != -1;}),line.end());
-			// removed whitespaces and brackets from line,
-			// only section name left
-			str section = line;
+			// remove section delimiters and spaces from line to have the section name only 
+			line.erase(std::remove_if(line.begin(),line.end(),[](char c){return empty_chars.find(c) != -1;}),line.end());
+			if(buff.find(line) == buff.end()){
+				PWARN("skipping unknown section '{}'\n", line);
+				continue;
+			}
+			// got a valid section, load it
+			str section_name = line;
 			while(getline(file,line)){
 				first = line[0];
-				if(skip_chars.find(first) != -1){
-					continue;
-				}
-				if(first == '['){
-					// got next section
-					file.seekg(prev_line);
+				if(first == section_delim_open){
+					file.seekg(next_section);
 					break;
 				}
+				if(skip_chars.find(first) != -1 || line.empty()){
+					continue;
+				}
 				sstream ss(line);
+				str key,val; 
 				ss >> key;
 				getline(ss,val);
-				buff[section][key] = val;
-				prev_line = file.tellg();
+				val.erase(std::remove_if(val.begin(),val.end(),[](char c){return empty_chars.find(c) != -1;}),val.end());
+				next_section = file.tellg();
+				// got a key - value pair
+				buff[section_name].emplace(key,val);
 			}
-			continue;
 		}
 	}
-	return 0;
+	return GPKIH_OK;
 };
 
-/* Config constructor */
-Config::Config(Profile &profile, CONFIG_FILE files_to_load){
-	int rcode = -1;
-	std::vector<std::future<int>> _tasks{};
+/* ProfileConfig constructor */
+ProfileConfig::ProfileConfig(Profile &profile, CONFIG_FILE files_to_load){
 	if(files_to_load & CONFIG_PKI){
-		rcode = load_file(fmt::format("{}{}{}",profile.source,SLASH,pki_conf_filename), Config::_conf_pki);
+		// Load pki.conf
+		auto path = fmt::format("{}{}{}",profile.source,SLASH,pki_conf_filename);
+		succesfully_loaded = load_file(path,this->_conf_pki);
+		try{
+			// override subopts::build default params
+			subopts::build::algorithm = _conf_pki["key"]["algorithm"];
+			subopts::build::key_size = _conf_pki["key"]["size"];
+			subopts::build::key_format = _conf_pki["key"]["creation_format"];
+			subopts::build::csr_crt_format = _conf_pki["csr"]["creation_format"];
+			subopts::build::days = _conf_pki["crt"]["days"];
+			// override subopts::build default params
+			Subject::country = _conf_pki["subject"]["country"];
+			Subject::cn = _conf_pki["subject"]["common_name"];
+			Subject::email = _conf_pki["subject"]["email"];
+			Subject::organisation = _conf_pki["subject"]["organisation"];
+			Subject::state = _conf_pki["subject"]["state"];
+			Subject::location = _conf_pki["subject"]["location"];
+		}catch(std::exception ex){
+			PERROR("exception - {}\n", ex.what());
+		}
 	}
 	if(files_to_load & CONFIG_VPN){
-		rcode = load_file(fmt::format("{}{}{}",profile.source,SLASH,vpn_conf_filename), Config::_conf_vpn);
+		// Load openvpn.conf
+		auto path = fmt::format("{}{}{}",profile.source,SLASH,vpn_conf_filename);
+		succesfully_loaded = load_file(path,this->_conf_vpn);
+		// add any default param overriding required here
+		try{
+
+		}catch(std::exception ex){
+			PERROR("exception - {}\n", ex.what());
+		}
 	}
-	if(files_to_load & CONFIG_GPKIH){
-		rcode = load_file(fmt::format("{}{}{}",profile.source,SLASH,gpkih_conf_filename), Config::_conf_gpkih);
-	}
-	if(rcode == -1){
-		throw std::exception();
-	}
-	this->profile = &profile;
 }
 
-ConfigMap* Config::get(CONFIG_FILE file){
+ConfigMap* ProfileConfig::get(CONFIG_FILE file){
 	switch(file){
 		case CONFIG_VPN:
 			return &this->_conf_vpn;
@@ -81,16 +93,13 @@ ConfigMap* Config::get(CONFIG_FILE file){
 		case CONFIG_PKI:
 			return &this->_conf_pki;
 			break;
-		case CONFIG_GPKIH:
-			return &this->_conf_gpkih;
-			break;
 		default:
 			return nullptr;
 			break;
 	}
 }
 
-bool Config::exists(strview key, CONFIG_FILE file){
+bool ProfileConfig::exists(strview key, CONFIG_FILE file){
 	auto ptr = get(file);
 	if(ptr == nullptr){
 		return false;
@@ -105,7 +114,7 @@ bool Config::exists(strview key, CONFIG_FILE file){
 }
 
 static inline str skipchars = "#\n ";
-bool Config::dump_vpn_conf(strview outpath, ENTITY_TYPE type){
+bool ProfileConfig::dump_vpn_conf(strview outpath, ENTITY_TYPE type){
 	if(fs::exists(outpath)){
 		return -1;
 	}
@@ -119,8 +128,8 @@ bool Config::dump_vpn_conf(strview outpath, ENTITY_TYPE type){
 	// entity specific options
 	switch(type){
 		case ET_SV:
-			if(_conf_vpn.find("server") != _conf_vpn.end()){
-				for(auto &kv : _conf_vpn["server"]){
+			if(this->_conf_vpn.find("server") != this->_conf_vpn.end()){
+				for(auto &kv : this->_conf_vpn["server"]){
 					if(kv.second == "UNSET"){
 						file << "# ";
 					}
@@ -129,7 +138,7 @@ bool Config::dump_vpn_conf(strview outpath, ENTITY_TYPE type){
 			}
 			break;
 		case ET_CL:
-			if(_conf_vpn.find("client") != _conf_vpn.end()){
+			if(this->_conf_vpn.find("client") !=  this->_conf_vpn.end()){
 				for(auto &kv : _conf_vpn["client"]){
 					if(kv.second == "UNSET"){
 						file << "# ";	
@@ -143,11 +152,11 @@ bool Config::dump_vpn_conf(strview outpath, ENTITY_TYPE type){
 			break;
 	}
 	// common options
-	if(_conf_vpn.find("common") == _conf_vpn.end()){
+	if(this->_conf_vpn.find("common") == this->_conf_vpn.end()){
 		seterror("couldn't find 'common' section in vpn mapped values");
 		return GPKIH_FAIL;
 	}
-	for(auto &kv : _conf_vpn["common"]){
+	for(auto &kv : this->_conf_vpn["common"]){
 		if(kv.second == "UNSET"){
 			file << "# ";
 		}

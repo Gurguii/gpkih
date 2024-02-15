@@ -48,13 +48,13 @@ static inline int _create_config(Profile &profile, std::vector<Entity> &entities
       fs::copy(entity.cert_path,outpath);
       fs::copy(ca_crt_path,outpath);
       // Dump config file
-      GpkihConfig::dump(fmt::format("{}{}{}.{}",outpath,SLASH,entity.subject.cn,VPN_CONFIG_EXTENSION),entity.type);
+      //GpkihConfig::dump(fmt::format("{}{}{}.{}",outpath,SLASH,entity.subject.cn,VPN_CONFIG_EXTENSION),entity.type);
       return 0;
     }
-    if(GpkihConfig::dump(outpath,entity.type)){
-      PWARN("couldn't create config file for entity with CN '{}'\n", entity.subject.cn);
-      return -1;
-    }
+    //if(GpkihConfig::dump(outpath,entity.type)){
+    //  PWARN("couldn't create config file for entity with CN '{}'\n", entity.subject.cn);
+    //  return -1;
+    //}
     /* At this point the common & (client|server) config has already been added to the file
      * so just check if */ 
     int _e_crt = fs::file_size(entity.cert_path);
@@ -107,7 +107,6 @@ int actions::build(gpki::subopts::build &params){
   Entity entity;
   entity.type = params.type;
   entity.profile_name = profile.name;
-
   std::string input;
   // Set country name
   PROMPT( "Country Name (2 letter code) [" + entity.subject.country + "]: ");
@@ -143,9 +142,14 @@ int actions::build(gpki::subopts::build &params){
     return -1;
   }
 
+  // TEST
+  std::cout << "ONELINER: " << entity.subject.oneliner() << "\n";
+  std::cout << Subject::country << "\n";
+  std::cout << entity.subject.country << "\n";
+  // TEST
   std::string gopenssl = profile.source + SLASH + "gopenssl.conf";
   // Load serial number
-  str fpath = profile.source + SLASH + "pki" + SLASH + "serial" + SLASH + "serial";
+  str fpath = fmt::format("{}{}pki{}serial{}serial",profile.source,SLASH,SLASH,SLASH);
   std::fstream file(fpath,std::ios::in | std::ios::out);  
   if(!file.is_open()){  
     PERROR("couldn't open serial file '{}'\n",fpath);
@@ -201,7 +205,7 @@ int actions::build(gpki::subopts::build &params){
   
   //
   if(entity.type & ET_SV || entity.type & ET_CL){
-    GpkihConfig::load(profile); // Load profile's gpkih.conf file
+    //GpkihConfig::load(profile); // Load profile's gpkih.conf file
     std::vector<Entity> ents{entity};
     if(_create_config(profile, ents)){
       return -1;

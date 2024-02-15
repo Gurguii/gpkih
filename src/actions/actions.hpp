@@ -24,11 +24,11 @@ struct init : params {
 };
 
 struct build : params {
-  static inline std::string key_size = "2048";
-  static inline std::string algorithm = "rsa";
-  static inline std::string key_format = "pem";
-  static inline std::string csr_crt_format = "pem";
-  static inline std::string days = "60";
+  static inline str key_size = "2048";
+  static inline str algorithm = "rsa";
+  static inline str key_format = "pem";
+  static inline str csr_crt_format = "pem";
+  static inline str days = "60";
   ENTITY_TYPE type;
   Profile* profile = nullptr;
 };
@@ -78,7 +78,4 @@ int revoke(subopts::revoke &params);
 int gencrl(subopts::gencrl &params);
 int list(subopts::list &params);
 int remove(subopts::remove &params);
-/* Getting/setting vpn|pki config properties from profile*/
-int get(subopts::get &params);
-int set(subopts::set &params);
 } // namespace gpki::actions

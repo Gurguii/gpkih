@@ -122,32 +122,34 @@ struct Subject {
   static inline str organisation = "MARIWANOS";
   static inline str cn;
   static inline str email = "NONE";
-  inline str oneliner(){
-    return fmt::format("/C={}/ST={}/L={}/O={}/CN={}/emailAddress={}",country,state,location,organisation,cn,email);
+  static inline str oneliner(){
+    return "/C=" + Subject::country + "/ST=" + Subject::state + "/L=" + Subject::location + "/O=" + Subject::organisation + "/CN=" + Subject::cn + "/emailAddress=" + Subject::email;
   }
 };
 
 static inline str str_conversion(PROFILE_FIELDS field) {
   return (field & P_NAME ? "name" : "source");
 }
+
 static inline str str_conversion(ENTITY_TYPE type) {
   return (type & ET_CA
               ? "ca"
               : (type & ET_SV ? "server" : (type & ET_CL ? "client" : "none")));
 };
+
 template <typename T> str to_str(T enumclass) {
   return str_conversion(enumclass);
 };
 
 struct Entity {
   Subject subject;
-  std::string key_path;
-  std::string req_path;
-  std::string cert_path;
-  std::string profile_name;
+  str key_path;
+  str req_path;
+  str cert_path;
+  str profile_name;
   ENTITY_TYPE type; // ca-sv-cl
-  std::string serial;
-  inline std::string csv_entry() {
+  str serial;
+  inline str csv_entry() {
     return profile_name + "," + subject.cn + "," + to_str(type) + "," + serial +
            "," + subject.country + "," + subject.state + "," +
            subject.location + "," + subject.organisation + "," + subject.email +

@@ -46,6 +46,12 @@ static inline str CONF_DIRNAME = "config";
 static inline str DB_DIRPATH = BASEDIR + DB_DIRNAME + SLASH;
 static inline str CONF_DIRPATH = BASEDIR + CONF_DIRNAME + SLASH;
 
+static inline str vpn_conf_filename = "openvpn.conf";
+static inline str pki_conf_filename = "pki.conf";
+static inline str gpkih_conf_filename = "gpkih.conf";
+
+static inline str CONF_GPKIH = BASEDIR + CONF_DIRNAME + SLASH + gpkih_conf_filename;
+
 #define CSV_DELIMITER_s ","
 #define CSV_DELIMITER_c ','
 

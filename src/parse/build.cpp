@@ -1,14 +1,6 @@
 #include "parser.hpp"
 
 
-int load_profile_config(Profile *profile, Config &profile_conf){
-  if(!fs::exists(profile->source)){
-    return F_NOEXIST;
-    return -1;
-  }
-  Config _profile_conf();
-  return 0;
-}
 
 // SYNTAX : ./gpki build <profile> [subopts]
 using namespace gpki;
@@ -18,42 +10,28 @@ int parsers::build(std::vector<std::string> opts) {
     PHINT("try 'gpki help build' for extra help\n");
     return 0;
   }
-   
-  subopts::build params;
+  
   strview profilename = opts[0];
-  params.profile = db::profiles::load(profilename);
-  if(params.profile == nullptr){
+  Profile *profile;
+  
+  if((profile = db::profiles::load(profilename)) == nullptr){
     PERROR("profile '{}' doesn't exist\n", profilename);
     return -1;
   }
-  std::cout << "LOADING PROFILE CONFIGURATION - line 29 parse/build.cpp\n";
-  // Load profile config
-  Config::load(*params.profile);
-  auto vpn_conf = *Config::get(CONFIG_VPN);
-  auto pki_conf = *Config::get(CONFIG_PKI);
-  auto gpkih_conf = *Config::get(CONFIG_GPKIH);
-  for(auto item : {vpn_conf,pki_conf,gpkih_conf}){
-    // config file
-    for(auto kv : item){
-      // section
-      std::cout << kv.first << "\n";
-      for(auto keyval : kv.second){
-        // key - value 
-        std::cout << "key: " << keyval.first << " val: " << keyval.second << "\n";
-      }
-    }
-  }
-  return -1;
-  //load_profile_config(params.profile);
-  //if(db::profiles::load(profilename,profile)){
-  //  PERROR("profile '{}' doesn't exist\n",profilename);
-  //  return 0;
-  //}
+
+  // Load profile configuration
+  ProfileConfig _conf(*profile);
+
+  subopts::build params{
+    .type = ET_NONE,
+    .profile = profile
+  };
 
   auto &type = params.type;
-  type = ENTITY_TYPE::none;
+
   opts.erase(opts.begin());
   opts.push_back("\0");
+
   // override default build params with user arguments and set
   for(int i = 0; i < opts.size(); ++i){
     std::string_view opt = opts[i];

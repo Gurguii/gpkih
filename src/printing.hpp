@@ -97,11 +97,11 @@ static inline void PROMPT(std::string msg, std::string ans) {
   fmt::print(" {} {} {}", PROMPT_icon(), PROMPT_body(msg), PROMPT_answers(ans));
 }
 static inline void PROGRAMSTARTING() {
-  PINFO("Starting gpki - {:%d %h %Y @ %H:%M}\n",
+  PINFO("Starting gpkih - {:%d %h %Y @ %H:%M}\n",
         std::chrono::system_clock::now());
 };
 static inline void PROGRAMEXITING() {
-  PINFO("Starting gpki - {:%d %h %Y @ %H:%M}\n",
+  PINFO("Exiting gpkih - {:%d %h %Y @ %H:%M}\n",
         std::chrono::system_clock::now());
 };
 static inline void UNKNOWN_OPTION_MSG(std::string_view opt) {
