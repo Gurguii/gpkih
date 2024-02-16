@@ -1,5 +1,4 @@
 #pragma once
-#include "config_management.hpp"
 #include "gpki.hpp"
 #include <cstdint>
 #include <string>
@@ -116,14 +115,14 @@ struct Profile {
 
 // #define SUBJECT_TEMPLATE "/C=%s/ST=%s/L=%s/O=%s/CN=%s/emailAddress=%s"
 struct Subject {
-  static inline str country = "ES";
-  static inline str state = "GRAN CANARIAS";
-  static inline str location = "LAS PALMAS";
-  static inline str organisation = "MARIWANOS";
-  static inline str cn;
-  static inline str email = "NONE";
-  static inline str oneliner(){
-    return "/C=" + Subject::country + "/ST=" + Subject::state + "/L=" + Subject::location + "/O=" + Subject::organisation + "/CN=" + Subject::cn + "/emailAddress=" + Subject::email;
+  str country;
+  str state;
+  str location;
+  str organisation;
+  str cn;
+  str email;
+  str oneliner(){
+    return "/C=" + country + "/ST=" + state + "/L=" + location + "/O=" + organisation + "/CN=" + cn + "/emailAddress=" + email;
   }
 };
 

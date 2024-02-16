@@ -81,8 +81,8 @@ static inline void PHINT(std::string hint) {
 }
 
 /* PROMPT PRINTING */
-static inline std::string PROMPT_icon() {
-  return fmt::format(fg(GREEN), "➜ ");
+static inline std::string PROMPT_icon(COLOR icon_color = GREEN) {
+  return fmt::format(fg(icon_color), "➜ ");
 };
 static inline std::string PROMPT_body(std::string &body) {
   return fmt::format(fg(WHITE), "{}", body);
@@ -90,11 +90,11 @@ static inline std::string PROMPT_body(std::string &body) {
 static inline std::string PROMPT_answers(std::string &ans) {
   return fmt::format(fg(WHITE) | EMPHASIS::italic | EMPHASIS::bold, "{}", ans);
 };
-static inline void PROMPT(std::string msg) {
-  fmt::print(" {} {}", PROMPT_icon(), PROMPT_body(msg));
+static inline void PROMPT(std::string msg, COLOR icon_color = GREEN) {
+  fmt::print(" {} {}", PROMPT_icon(icon_color), PROMPT_body(msg));
 }
-static inline void PROMPT(std::string msg, std::string ans) {
-  fmt::print(" {} {} {}", PROMPT_icon(), PROMPT_body(msg), PROMPT_answers(ans));
+static inline void PROMPT(std::string msg, std::string ans, COLOR icon_color = GREEN) {
+  fmt::print(" {} {} {}", PROMPT_icon(icon_color), PROMPT_body(msg), PROMPT_answers(ans));
 }
 static inline void PROGRAMSTARTING() {
   PINFO("Starting gpkih - {:%d %h %Y @ %H:%M}\n",

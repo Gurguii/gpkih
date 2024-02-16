@@ -19,12 +19,25 @@ int parsers::build(std::vector<std::string> opts) {
     return -1;
   }
 
-  // Load profile configuration
-  ProfileConfig _conf(*profile);
+  //std::cout << "Before loading configuration\n";
+  //Subject _s{};
+  //std::cout << _s.state << " " << _s.country << " " << _s.email << " "<< _s.location << " "<< _s.organisation << "\n";
+  //// Load profile configuration
+  //ProfileConfig _conf(*profile);
+  //Subject _defaults = _conf.default_subject(_conf);
+  //std::cout << "After loading configuration\n";
+  //std::cout << _defaults.state << " " << _defaults.country << " " << _defaults.email << " "<< _defaults.location << " "<< _defaults.organisation << "\n";
 
+  ProfileConfig configuration(*profile);
+  if(configuration.succesfully_loaded == false){
+    seterror("couldn't load configuration files from profile '{}'",profile->name);
+    return GPKIH_FAIL;
+  }
+  ConfigMap &pkiconf = *configuration.get(CONFIG_PKI);
   subopts::build params{
     .type = ET_NONE,
-    .profile = profile
+    .profile = profile,
+    .config = &configuration,
   };
 
   auto &type = params.type;
@@ -34,7 +47,7 @@ int parsers::build(std::vector<std::string> opts) {
 
   // override default build params with user arguments and set
   for(int i = 0; i < opts.size(); ++i){
-    std::string_view opt = opts[i];
+    strview opt = opts[i];
     if(opt == "-ca" || opt == "--ca"){
       type = ENTITY_TYPE::ca;
     }else if(opt == "-cl" || opt == "--client"){
@@ -42,11 +55,11 @@ int parsers::build(std::vector<std::string> opts) {
     }else if(opt == "-sv" || opt == "--server"){
       type = ENTITY_TYPE::server;
     }else if(opt == "-keysize" || opt == "--keysize"){
-      params.key_size = opts[++i];
+      pkiconf["key"]["size"] = opts[++i];
     }else if(opt == "-keyformat"){
-      params.key_format = opts[++i];
+      pkiconf["key"]["creation_format"] = opts[++i];
     }else if(opt == "-outformat"){
-      params.csr_crt_format = opts[++i];
+      pkiconf["csr"]["creation_format"] = opts[++i];
     }else if(opt == "\0"){
       continue;
     }else{
@@ -54,8 +67,8 @@ int parsers::build(std::vector<std::string> opts) {
     }
   }
   if(type == ENTITY_TYPE::none){
-    PERROR("please specify an entity type -[ca|sv|cl]\n");
-    return -1;
+    seterror("please specify an entity type -[ca|sv|cl]\n");
+    return GPKIH_FAIL;
   }
   return actions::build(params);
 }

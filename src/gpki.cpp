@@ -97,7 +97,7 @@ int main(int argc, const char **args) {
   PINFO("Loaded [{}] profiles\n",profile_count,DB_DIRPATH,SLASH);
   
   // Parse options
-  if (gpki::parsers::parse(argc - 1, args + 1)) {
+  if (gpki::parsers::parse(argc - 1, args + 1 ) != GPKIH_OK) {
     PERROR(lasterror());
     cleanup();
   }

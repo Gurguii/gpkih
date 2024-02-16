@@ -10,7 +10,7 @@
 #include "../gpki.hpp"
 #include "../printing.hpp"
 #include "../utils/gpkih_util_funcs.hpp"
-
+#include "../config_management.hpp"
 namespace gpki::subopts {
 // Generic params not related with any particular action
 struct params {
@@ -19,23 +19,19 @@ struct params {
 };
 
 struct init : params {
-  std::string profile_name;
-  std::string profile_source;
+  str profile_name;
+  str profile_source;
 };
 
 struct build : params {
-  static inline str key_size = "2048";
-  static inline str algorithm = "rsa";
-  static inline str key_format = "pem";
-  static inline str csr_crt_format = "pem";
-  static inline str days = "60";
-  ENTITY_TYPE type;
-  Profile* profile = nullptr;
+  ENTITY_TYPE type; // entity type to create - ET_CA|ET_SV|ET_CL
+  Profile* profile = nullptr; // info about target profile
+  ProfileConfig* config; // used to retrieve default pki building params (keysize, days etc.) + 
 };
 
 struct revoke : params {
   std::vector<str> common_name;
-  std::string reason = "not specified";
+  str reason = "not specified";
   Profile profile;
 };
 
@@ -45,8 +41,8 @@ struct gencrl : params {
 };
 
 struct list : params {
-  std::vector<std::string> profiles;
-  std::vector<std::string> entities;
+  std::vector<str> profiles;
+  std::vector<str> entities;
 
   PROFILE_FIELDS pfields = P_ALL;
   ENTITY_FIELDS efields = E_ALL;
@@ -57,18 +53,6 @@ struct remove : params {
   int all = 0;
 };
 
-// ./gpki set <profile> <prop>=<val> <prop>=<val>
-struct get : params {
-  ui64 properties;
-  std::vector<str> cl_properties;
-  std::vector<str> sv_properties;
-  std::vector<str> common_properties;
-  Profile profile;
-};
-
-struct set : params {
-  Profile profile;
-};
 } // namespace gpki::subopts
 
 namespace gpki::actions {

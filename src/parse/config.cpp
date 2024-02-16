@@ -42,10 +42,8 @@ int parsers::config(std::vector<str> opts){
   str subaction = opts[0];
   opts.erase(opts.begin());
   if(subaction == "set"){
-    auto params = subopts::set{.profile{std::move(profile)}};
     std::cout << "calling gpki config SET\n";
   }else if(subaction == "get"){
-    auto params = subopts::get{.profile{std::move(profile)}};
     // TODO - add get action into actions/config.cpp
     std::cout << "calling gpki config GET\n";
   }else{

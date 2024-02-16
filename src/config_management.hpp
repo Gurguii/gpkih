@@ -6,6 +6,8 @@
 #include <cstring>
 #include <unordered_map>
 #include <future>
+#include <exception>
+#include <filesystem>
 
 using ConfigMap = std::unordered_map<str,std::unordered_map<str,str>>;
 
@@ -93,6 +95,8 @@ public:
 	bool succesfully_loaded = false;
 	// Constructor
 	ProfileConfig(Profile &profile, CONFIG_FILE file_to_load = CONFIG_ALL);
+	static inline subopts::build default_build(ProfileConfig &config);
+	static inline Subject default_subject(ProfileConfig &config);
 	// Dumps vpn configuration (key-map values) to outpath
 	// it does file checks and dumps appropiate configuration
 	// based on given ENTITY_TYPE (only client|server are valid)

@@ -13,7 +13,7 @@ using namespace gpki;
 int parsers::parse(int argc, const char **_args) {
   if (argc == 0) {
     help::usage();
-    return -1;
+    return GPKIH_OK;
   }
   std::vector<str> args(_args, _args + argc);
   
@@ -34,7 +34,7 @@ int parsers::parse(int argc, const char **_args) {
   // Action must be given
   if (args.size() == 0) {
     help::usage();
-    return -1;
+    return GPKIH_OK;
   }
 
   str action = args[0];
