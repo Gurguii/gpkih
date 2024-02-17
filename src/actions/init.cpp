@@ -164,7 +164,7 @@ int actions::init(strview profile_name, strview profile_source) {
   // Extra questions
   if (Config::get("behaviour", "prompt") == "yes") {
     // QUESTION 1
-    if (Config::get("behaviour","autoanswer") == "yes") {
+    if (Config::get("behaviour","autoanswer") == "no") {
       PROMPT("Create dhparam? " + fmt::format(fg(COLOR::lime) |
                                                   EMPHASIS::underline,
                                               "(highly recommended)"),
@@ -172,8 +172,6 @@ int actions::init(strview profile_name, strview profile_source) {
       str ans;
       getline(std::cin, ans);
       if (ans == "y" || ans == "Y") {
-        create_openvpn_static_key(profile.source + SLASH + "tls" + SLASH +
-                                  "ta.key");
         create_dhparam(profile.source + SLASH + "tls" + SLASH + "dhparam2048");
       }
       ans.assign("");
@@ -190,7 +188,7 @@ int actions::init(strview profile_name, strview profile_source) {
         };
       }
     } else {
-      // autoanswer set to 'no'
+      // autoanswer set to 'yes'
       ProfileConfig config(profile);
       create_dhparam(
           fmt::format("{}{}tls{}dhparam2048", profile.source, SLASH, SLASH));

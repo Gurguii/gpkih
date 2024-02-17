@@ -112,6 +112,15 @@ struct Profile {
   inline str dir_crl() {
     return fmt::format("{}{}pki{}crl", source, SLASH, SLASH);
   }
+  inline str dir_crt(){
+    return fmt::format("{}{}pki{}certs",source, SLASH, SLASH);
+  }
+  inline str dir_key(){
+    return fmt::format("{}{}pki{}keys");
+  }
+  inline str dir_req(){
+    return fmt::format("{}{}pki{}reqs");
+  }
   inline str csv_entry() {
     return fmt::format("{},{},{},{},{}", name, source, ca_created, sv_count,
                        cl_count);
@@ -154,17 +163,13 @@ struct Subject {
 };
 struct Entity {
   Subject subject;
-  str key_path;
-  str req_path;
-  str cert_path;
   str profile_name;
   ENTITY_TYPE type; // ca-sv-cl
   str serial;
   inline str csv_entry() {
     return profile_name + "," + subject.cn + "," + to_str(type) + "," + serial +
            "," + subject.country + "," + subject.state + "," +
-           subject.location + "," + subject.organisation + "," + subject.email +
-           "," + key_path + "," + req_path + "," + cert_path;
+           subject.location + "," + subject.organisation + "," + subject.email + ",";
   };
 };
 

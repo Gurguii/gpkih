@@ -36,7 +36,6 @@ static inline int _prompt_for_subject(strview profile_name, Subject &buffer)
     PROMPT("Common Name: ", RED);
     std::getline(std::cin, input);
     if (input.empty()) {
-      PROMPT("please introduce a common name: ", RED);
       PWARN("common name can't be empty\n");
       continue;
     } else {
@@ -73,27 +72,28 @@ static inline int _prompt_for_subject(strview profile_name, Subject &buffer)
   return GPKIH_OK;
 }
 
-static inline str _server_client_csr_command(str &gopenssl, ConfigMap &pkiconf,
-                                             Entity &entity) {
-  return fmt::format(
-      "openssl req -newkey {}:{} -out {} -keyout {} -subj '{}' -outform {} "
-      "-keyform {} -noenc",
-      pkiconf["key"]["size"], pkiconf["key"]["algorithm"], entity.req_path,
-      entity.key_path, entity.subject.oneliner(),
-      pkiconf["csr"]["creation_format"], pkiconf["key"]["format"]);
-}
-static inline str _server_client_crt_command(str &gopenssl, ConfigMap &pkiconf,
-                                             Entity &entity) {
-  return fmt::format("openssl ca -config {} -in {} -out {} -subj '{}' -extfile "
-                     "{}x509{}{} -notext -days +{}",
-                     gopenssl, entity.req_path, entity.cert_path,
-                     entity.subject.oneliner(), CONF_DIRPATH, SLASH,
-                     to_str(entity.type), pkiconf["crt"]["days"]);
-}
+//static inline str _server_client_csr_command(str &gopenssl, ConfigMap &pkiconf,
+//                                             Entity &entity) {
+//  return fmt::format(
+//      "openssl req -newkey {}:{} -out {} -keyout {} -subj '{}' -outform {} "
+//      "-keyform {} -noenc",
+//      pkiconf["key"]["size"], pkiconf["key"]["algorithm"], entity.req_path,
+//      entity.key_path, entity.subject.oneliner(),
+//      pkiconf["csr"]["creation_format"], pkiconf["key"]["format"]);
+//}
+//static inline str _server_client_crt_command(str &gopenssl, ConfigMap &pkiconf,
+//                                             Entity &entity) {
+//  return fmt::format("openssl ca -config {} -in {} -out {} -subj '{}' -extfile "
+//                     "{}x509{}{} -notext -days +{}",
+//                     gopenssl, entity.req_path, entity.cert_path,
+//                     entity.subject.oneliner(), CONF_DIRPATH, SLASH,
+//                     to_str(entity.type), pkiconf["crt"]["days"]);
+//}
 static inline int _create_config(Profile &profile,
                                  std::vector<Entity> &entities,
                                  int _inline = 1) {
   str ca_crt_path = profile.ca_crt();
+
   if (!fs::exists(ca_crt_path)) {
     seterror("ca cert path '{}' doesn't exist\n", ca_crt_path);
     return GPKIH_FAIL;
@@ -106,7 +106,14 @@ static inline int _create_config(Profile &profile,
     seterror("couldn't load CA certificate '{}'\n", ca_crt_path);
     return GPKIH_FAIL;
   }
+
+  str profile_dir_key = std::move(profile.dir_key());
+  str profile_dir_crt = std::move(profile.dir_crt());
+  
+  // CA certificate loaded
   for (auto &entity : entities) {
+    str entity_key_path = profile_dir_key + entity.subject.cn;
+    str entity_crt_path = profile_dir_crt + entity.subject.cn;
     auto outdir = fmt::format("{}{}packs{}{}", profile.source, SLASH, SLASH,
                               entity.subject.cn);
     if (create_output_path(outdir)) {
@@ -122,8 +129,8 @@ static inline int _create_config(Profile &profile,
         return GPKIH_FAIL;
       };
       // Copy files to pack dir
-      fs::copy(entity.key_path, outpath);
-      fs::copy(entity.cert_path, outpath);
+      fs::copy(entity_key_path, outpath);
+      fs::copy(entity_crt_path, outpath);
       fs::copy(ca_crt_path, outpath);
       // Dump config file
       // GpkihConfig::dump(fmt::format("{}{}{}.{}",outpath,SLASH,entity.subject.cn,VPN_CONFIG_EXTENSION),entity.type);
@@ -135,20 +142,20 @@ static inline int _create_config(Profile &profile,
     // }
     /* At this point the common & (client|server) config has already been added
      * to the file so just check if */
-    int _e_crt = fs::file_size(entity.cert_path);
-    int _e_key = fs::file_size(entity.key_path);
+    int _e_crt = fs::file_size(entity_crt_path);
+    int _e_key = fs::file_size(entity_key_path);
     str entity_crt_str("\0", _e_crt);
     str entity_key_str("\0", _e_key);
-    std::ifstream(entity.cert_path)
+    std::ifstream(entity_crt_path)
         .read(&entity_crt_str[0], entity_crt_str.size());
-    std::ifstream(entity.key_path)
+    std::ifstream(entity_key_path)
         .read(&entity_key_str[0], entity_key_str.size());
     if (entity_crt_str.empty()) {
-      seterror("couldn't load entity certificate '{}'\n", entity.cert_path);
+      seterror("couldn't load entity certificate '{}'\n", entity_crt_path);
       return GPKIH_FAIL;
     }
     if (entity_key_str.empty()) {
-      seterror("couldn't load entity key '{}'\n", entity.key_path);
+      seterror("couldn't load entity key '{}'\n", entity_key_path);
       return GPKIH_FAIL;
     }
     std::ofstream file(outpath, std::ios::app);
@@ -187,8 +194,18 @@ static inline int _create_config(str &profile_name,
 /* BUILD CA-SERVER-CLIENT CERTIFICATES */
 
 int actions::build(Profile &profile, ProfileConfig &config, Entity &entity){
-  // implement
+  
   PINFO("CALLING actions::build(Profile, ProfileConfig, Entity)\n");
+  if(entity.subject.cn.empty()){
+    // User didn't give common_name with cli opts
+    // set default values loaded from pki.conf
+    entity.subject = ProfileConfig::default_subject(config);  
+    // prompt the user for subject info
+    _prompt_for_subject(profile.name, entity.subject);
+  }
+
+  // [rem] entity already has a type and filled subject info
+
   return GPKIH_OK;
 }
 

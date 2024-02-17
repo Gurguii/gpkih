@@ -41,9 +41,7 @@ static inline str _dbpath(str &profile) {
 
 static inline str dbheaders =
     "profile_name,common_name,type,serial,country,state,"
-    "location,organisation,email,key_"
-    "path,req_path,"
-    "cert_path";
+    "location,organisation,email,";
 
 static inline int initialized = 0;
 /*  */

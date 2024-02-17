@@ -34,12 +34,6 @@ void print_entity(Entity entity, ENTITY_FIELDS &fields) {
                            << "\n";
   fields &E_COUNTRY &&label << S_ELABEL("Country: ") << S_ELABEL_V(subj.country)
                             << "\n";
-  fields &E_KEYPATH &&label << S_ELABEL("Key: ") << S_ELABEL_V(entity.key_path)
-                            << "\n";
-  fields &E_REQPATH &&label << S_ELABEL("Request: ")
-                            << S_ELABEL_V(entity.req_path) << "\n";
-  fields &E_CRTPATH &&label << S_ELABEL("Certificate: ")
-                            << S_ELABEL_V(entity.cert_path) << "\n";
   fields &E_ORG &&label << S_ELABEL("Organisation: ")
                         << S_ELABEL_V(subj.organisation) << "\n";
   fields &E_LOCATION &&label << S_ELABEL("Location: ")

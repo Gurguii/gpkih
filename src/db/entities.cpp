@@ -37,9 +37,6 @@ int db::entities::populate_from_entry(str &entry, Entity &entity) {
   getline(ss, entity.subject.location, CSV_DELIMITER_c);
   getline(ss, entity.subject.organisation, CSV_DELIMITER_c);
   getline(ss, entity.subject.email, CSV_DELIMITER_c);
-  getline(ss, entity.key_path, CSV_DELIMITER_c);
-  getline(ss, entity.req_path, CSV_DELIMITER_c);
-  getline(ss, entity.cert_path, CSV_DELIMITER_c);
   return 0;
 }
 
