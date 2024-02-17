@@ -8,7 +8,7 @@ enum class PRINT_MODE {
 #define PRINT_CSV PRINT_MODE::csv
 };
 
-using namespace gpki;
+using namespace gpkih;
 
 void print_profile(str profile, PROFILE_FIELDS fields, COLOR color = CYAN) {
   sstream label;
@@ -60,7 +60,7 @@ void print_profile_entities(str profile, ENTITY_FIELDS &fields) {
 }
 
 int actions::list(subopts::list &params) {
-  if(db::profiles::existing_profiles.empty()){
+  if (db::profiles::existing_profiles.empty()) {
     PINFO("No profiles added yet\n");
     return -1;
   }
@@ -81,11 +81,11 @@ int actions::list(subopts::list &params) {
       for (auto p : db::profiles::existing_profiles) {
         std::vector<Entity> entities;
         print_profile(p.first, params.pfields);
-        if(db::profiles::get_entities(p.first, entities)){
+        if (db::profiles::get_entities(p.first, entities)) {
           return -1;
         };
-        for(auto &e : entities){
-          print_entity(e,params.efields);
+        for (auto &e : entities) {
+          print_entity(e, params.efields);
         }
       }
       return 0;

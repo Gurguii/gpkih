@@ -1,17 +1,17 @@
 #include "parser.hpp"
 
-using namespace gpki;
+using namespace gpkih;
 
-int parsers::init(std::vector<std::string> opts){
+int parsers::init(std::vector<std::string> opts) {
   opts.push_back("\0");
   subopts::init params;
-  for(int i = 0; i < opts.size() -1 ; ++i){
-    std::string_view opt = opts[i]; 
-    if(opt == "-n" || opt == "--name"){
+  for (int i = 0; i < opts.size() - 1; ++i) {
+    std::string_view opt = opts[i];
+    if (opt == "-n" || opt == "--name") {
       params.profile_name = opts[++i];
-    }else if(opt == "-s" || opt == "--source"){
+    } else if (opt == "-s" || opt == "--source") {
       params.profile_source = opts[++i];
-    }else{
+    } else {
       UNKNOWN_OPTION_MSG(opt);
     }
   }

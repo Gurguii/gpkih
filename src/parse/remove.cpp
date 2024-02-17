@@ -1,6 +1,6 @@
 #include "parser.hpp"
 
-using namespace gpki;
+using namespace gpkih;
 
 int parsers::remove(std::vector<std::string> opts) {
   /* Parse subopts */

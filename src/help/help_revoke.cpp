@@ -1,7 +1,7 @@
 #include "help.hpp"
 
-using namespace gpki;
-void help::revoke::usage(){
+using namespace gpkih;
+void help::revoke::usage() {
   std::cout << R"(
 == revoke ==
   

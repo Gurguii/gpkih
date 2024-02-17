@@ -1,9 +1,9 @@
 #include "help.hpp"
 
-using namespace gpki;
+using namespace gpkih;
 
-void help::create_pack::usage(){
-    std::cout << R"(
+void help::create_pack::usage() {
+  std::cout << R"(
 == create_pack ==
 
 [ syntax ]

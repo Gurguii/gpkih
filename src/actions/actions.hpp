@@ -6,12 +6,12 @@
 #include <string>
 #include <vector>
 
+#include "../config_management.hpp"
 #include "../db/database.hpp"
 #include "../gpki.hpp"
 #include "../printing.hpp"
 #include "../utils/gpkih_util_funcs.hpp"
-#include "../config_management.hpp"
-namespace gpki::subopts {
+namespace gpkih::subopts {
 // Generic params not related with any particular action
 struct params {
   static inline int prompt = 1;
@@ -24,9 +24,10 @@ struct init : params {
 };
 
 struct build : params {
-  ENTITY_TYPE type; // entity type to create - ET_CA|ET_SV|ET_CL
-  Profile* profile = nullptr; // info about target profile
-  ProfileConfig* config; // used to retrieve default pki building params (keysize, days etc.) + 
+  ENTITY_TYPE type;             // entity type to create - ET_CA|ET_SV|ET_CL
+  Profile *profile = nullptr;   // info about target profile
+  gpkih::ProfileConfig *config; // used to retrieve default pki building params
+                                // (keysize, days etc.) +
 };
 
 struct revoke : params {
@@ -53,13 +54,13 @@ struct remove : params {
   int all = 0;
 };
 
-} // namespace gpki::subopts
+} // namespace gpkih::subopts
 
-namespace gpki::actions {
+namespace gpkih::actions {
 int init(subopts::init &params);
 int build(subopts::build &params);
 int revoke(subopts::revoke &params);
 int gencrl(subopts::gencrl &params);
 int list(subopts::list &params);
 int remove(subopts::remove &params);
-} // namespace gpki::actions
+} // namespace gpkih::actions

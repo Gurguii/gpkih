@@ -1,7 +1,7 @@
 #include "help.hpp"
 
-using namespace gpki;
-void help::init::usage(){
+using namespace gpkih;
+void help::init::usage() {
   std::cout << R"(
 == init ==
 

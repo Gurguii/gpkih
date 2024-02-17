@@ -1,8 +1,8 @@
 #include "help.hpp"
 
-using namespace gpki;
-void help::set::usage(){
-    std::cout << R"(
+using namespace gpkih;
+void help::set::usage() {
+  std::cout << R"(
 == set ==
 
 [ syntax ]

@@ -1,14 +1,14 @@
 #include "parser.hpp"
 #include "build.cpp"
+#include "config.cpp"
 #include "gencrl.cpp"
+#include "genkey.cpp"
 #include "init.cpp"
 #include "list.cpp"
 #include "remove.cpp"
 #include "revoke.cpp"
-#include "genkey.cpp"
-#include "config.cpp"
 
-using namespace gpki;
+using namespace gpkih;
 // [!] parse() does not expect to receive program name in args
 int parsers::parse(int argc, const char **_args) {
   if (argc == 0) {
@@ -16,15 +16,15 @@ int parsers::parse(int argc, const char **_args) {
     return GPKIH_OK;
   }
   std::vector<str> args(_args, _args + argc);
-  
-  // Check global config options 
+
+  // Check global config options
   for (int i = 0; i < argc; ++i) {
     strview op = args[i];
     if (op == "-y") {
       subopts::params::autoanswer_yes = 1;
       args.erase(args.begin() + i);
       --argc;
-    }else if(op == "--noprompt"){
+    } else if (op == "--noprompt") {
       subopts::params::prompt = 0;
       args.erase(args.begin() + i);
       --argc;
@@ -39,7 +39,8 @@ int parsers::parse(int argc, const char **_args) {
 
   str action = args[0];
 
-  if (action == "help" || action == "--help" || action == "-help" || action == "-h") {
+  if (action == "help" || action == "--help" || action == "-help" ||
+      action == "-h") {
     if (args.size() > 1) {
       call_helper(args[1]);
     } else {

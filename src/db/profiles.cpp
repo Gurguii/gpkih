@@ -1,5 +1,5 @@
 #include "database.hpp"
-using namespace gpki;
+using namespace gpkih;
 
 int db::profiles::populate_from_entry(str &entry, Profile *profile) {
   sstream ss(entry);
@@ -47,7 +47,7 @@ int db::profiles::initialize() {
     // Create
     std::ofstream db(dbpath);
     if (!db.is_open()) {
-      PERROR("couldn't create file '{}'\n",dbpath);
+      PERROR("couldn't create file '{}'\n", dbpath);
       return -1;
     }
     db << dbheaders << std::endl;
@@ -58,13 +58,14 @@ int db::profiles::initialize() {
   str headers;
   getline(file, headers);
   if (headers != dbheaders) {
-    PERROR("profile headers do not match - original: '{}' current: '{}'",dbheaders,headers);
+    PERROR("profile headers do not match - original: '{}' current: '{}'",
+           dbheaders, headers);
     return -1;
   }
   // Load profiles into existing_profiles
   std::vector<str> remove_profiles;
   str line;
-    int lines = 0;
+  int lines = 0;
   while (getline(file, line)) {
     Profile pinfo;
     ++lines;
@@ -83,7 +84,7 @@ int db::profiles::initialize() {
       return -1;
     };
   }
-  db::profiles::remove(remove_profiles,1);
+  db::profiles::remove(remove_profiles, 1);
   return existing_profiles.size();
 }
 
@@ -98,14 +99,14 @@ int db::profiles::add(Profile *profile) {
   int bsize = fs::file_size(dbpath);
   std::ofstream db(dbpath, std::ios::app);
   db << profile->csv_entry() << std::endl;
-  if(fs::file_size(dbpath) > bsize){
+  if (fs::file_size(dbpath) > bsize) {
     // profile succesfully added
     existing_profiles.emplace(profile->name, *profile);
   };
   return 0;
 }
 
-int db::profiles::remove(std::vector<str> &profiles,int autoanswer_yes) {
+int db::profiles::remove(std::vector<str> &profiles, int autoanswer_yes) {
   for (auto &profile : profiles) {
     auto iter = existing_profiles.find(profile);
     if (iter == existing_profiles.end()) {
@@ -125,9 +126,10 @@ int db::profiles::remove(std::vector<str> &profiles,int autoanswer_yes) {
       }
     }
     // remove profile files
-    if(fs::exists(target.source)){
+    if (fs::exists(target.source)) {
       if (!std::filesystem::remove_all(target.source)) {
-        seterror("couldn't remove source dir for profile '" + target.name + "'");
+        seterror("couldn't remove source dir for profile '" + target.name +
+                 "'");
         return -1;
       };
     }
@@ -135,7 +137,7 @@ int db::profiles::remove(std::vector<str> &profiles,int autoanswer_yes) {
     existing_profiles.erase(iter);
     // remove profile entities db
     str db = DB_DIRPATH + target.name + "_entities.csv";
-    if(fs::exists(db)){
+    if (fs::exists(db)) {
       if (!fs::remove(db)) {
         seterror(fmt::format("couldn't remove entities' csv '{}'", db));
         return -1;
@@ -157,7 +159,7 @@ int db::profiles::remove_all(int autoanswer_yes) {
   return 0;
 }
 
-// Returns pointer to profile in existing_profiles 
+// Returns pointer to profile in existing_profiles
 // or nullptr if it doesn't exist
 int db::profiles::load(strview profile_name, Profile &pinfo) {
   if (!exists(profile_name)) {
@@ -167,8 +169,8 @@ int db::profiles::load(strview profile_name, Profile &pinfo) {
   return 0;
 }
 
-Profile* db::profiles::load(strview profile_name){
-  if(!exists(profile_name)){
+Profile *db::profiles::load(strview profile_name) {
+  if (!exists(profile_name)) {
     return nullptr;
   }
   return &existing_profiles[profile_name.data()];

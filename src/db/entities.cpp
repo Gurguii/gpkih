@@ -1,5 +1,5 @@
 #include "database.hpp"
-using namespace gpki;
+using namespace gpkih;
 
 /* Requires a call whenever we change the profile context */
 int db::entities::initialize(str profile) {
@@ -29,9 +29,9 @@ int db::entities::populate_from_entry(str &entry, Entity &entity) {
   str buff;
   getline(ss, entity.profile_name, CSV_DELIMITER_c);
   getline(ss, entity.subject.cn, CSV_DELIMITER_c);
-  getline(ss, buff, CSV_DELIMITER_c); 
+  getline(ss, buff, CSV_DELIMITER_c);
   entity.type = entity_type_map[buff];
-  getline(ss,entity.serial, CSV_DELIMITER_c);
+  getline(ss, entity.serial, CSV_DELIMITER_c);
   getline(ss, entity.subject.country, CSV_DELIMITER_c);
   getline(ss, entity.subject.state, CSV_DELIMITER_c);
   getline(ss, entity.subject.location, CSV_DELIMITER_c);
@@ -53,23 +53,24 @@ int db::entities::populate_from_entry(str &entry,
   return 0;
 }
 
-int db::entities::populate_from_entry(str &profile, str &entry,str &cn,Entity &buff){
+int db::entities::populate_from_entry(str &profile, str &entry, str &cn,
+                                      Entity &buff) {
   std::ifstream file(DB_DIRPATH + profile + "_entities.csv");
-  if(!file.is_open()){
-    seterror(fmt::format("couldn't entities database for '{}'",profile));
+  if (!file.is_open()) {
+    seterror(fmt::format("couldn't entities database for '{}'", profile));
     return -1;
   }
   sstream ss(entry);
   std::string _cn;
-  getline(ss,_cn,CSV_DELIMITER_c);
-  if(_cn == cn){
-    return populate_from_entry(entry,buff);
+  getline(ss, _cn, CSV_DELIMITER_c);
+  if (_cn == cn) {
+    return populate_from_entry(entry, buff);
   }
   return 1;
 }
 
 int db::entities::exists(str &profile, strview common_name) {
-  std::ifstream file(DB_DIRPATH +  profile + "_entities.csv");
+  std::ifstream file(DB_DIRPATH + profile + "_entities.csv");
   if (!file.is_open()) {
     return -1;
   }
@@ -84,8 +85,7 @@ int db::entities::exists(str &profile, strview common_name) {
   return 0;
 }
 
-int db::entities::load(str &profile,
-                       strview common_name, Entity &entity_buff) {
+int db::entities::load(str &profile, strview common_name, Entity &entity_buff) {
   std::ifstream file(DB_DIRPATH + profile + "_entities.csv");
   if (!file.is_open()) {
     return -1;

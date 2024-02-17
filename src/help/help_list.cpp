@@ -1,6 +1,6 @@
 #include "help.hpp"
-using namespace gpki;
-void help::list::usage(){
+using namespace gpkih;
+void help::list::usage() {
   std::cout << R"(
 == list ==
 

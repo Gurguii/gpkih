@@ -4,35 +4,35 @@
 #include <iostream>
 #include <unordered_map>
 
-namespace gpki::help {
+namespace gpkih::help {
 void usage();
 }
-namespace gpki::help::build {
+namespace gpkih::help::build {
 void usage();
 }
-namespace gpki::help::revoke {
+namespace gpkih::help::revoke {
 void usage();
 }
-namespace gpki::help::gencrl {
+namespace gpkih::help::gencrl {
 void usage();
 }
-namespace gpki::help::list {
+namespace gpkih::help::list {
 void usage();
 }
-namespace gpki::help::init {
+namespace gpkih::help::init {
 void usage();
 }
-namespace gpki::help::remove {
+namespace gpkih::help::remove {
 void usage();
 }
-namespace gpki::help::create_pack {
+namespace gpkih::help::create_pack {
 void usage();
 }
-namespace gpki::help::get {
+namespace gpkih::help::get {
 void usage();
 }
-namespace gpki::help::set {
+namespace gpkih::help::set {
 void usage();
 }
-using namespace gpki;
+using namespace gpkih;
 void call_helper(strview action);

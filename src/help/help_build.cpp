@@ -1,8 +1,8 @@
 #include "help.hpp"
 
-using namespace gpki;
+using namespace gpkih;
 
-void help::build::usage(){
+void help::build::usage() {
   std::cout << R"(
 == build ==
   

@@ -4,7 +4,7 @@
 #include <string>
 #include <unordered_map>
 
-namespace gpki {
+namespace gpkih {
 enum class PROFILE_FIELDS : uint16_t {
   all = 6,
 #define P_ALL PROFILE_FIELDS::all
@@ -106,11 +106,22 @@ struct Profile {
   ui16 sv_count = 0;
   ui16 cl_count = 0;
 
-  inline str gopenssl() { return fmt::format("{}{}{}",source,SLASH,"gopenssl.conf"); }
-  inline str dir_crl() { return fmt::format("{}{}pki{}crl",source,SLASH,SLASH); }
-  inline str csv_entry() { return fmt::format("{},{},{},{},{}",name,source,ca_created,sv_count,cl_count); }
-  inline str ca_crt(){ return fmt::format("{}{}pki{}ca{}crt",source,SLASH,SLASH,SLASH); }
-  inline str ca_key(){ return fmt::format("{}{}pki{}ca{}key",source,SLASH,SLASH,SLASH);}
+  inline str gopenssl() {
+    return fmt::format("{}{}{}", source, SLASH, "gopenssl.conf");
+  }
+  inline str dir_crl() {
+    return fmt::format("{}{}pki{}crl", source, SLASH, SLASH);
+  }
+  inline str csv_entry() {
+    return fmt::format("{},{},{},{},{}", name, source, ca_created, sv_count,
+                       cl_count);
+  }
+  inline str ca_crt() {
+    return fmt::format("{}{}pki{}ca{}crt", source, SLASH, SLASH, SLASH);
+  }
+  inline str ca_key() {
+    return fmt::format("{}{}pki{}ca{}key", source, SLASH, SLASH, SLASH);
+  }
 };
 
 // #define SUBJECT_TEMPLATE "/C=%s/ST=%s/L=%s/O=%s/CN=%s/emailAddress=%s"
@@ -121,8 +132,9 @@ struct Subject {
   str organisation;
   str cn;
   str email;
-  str oneliner(){
-    return "/C=" + country + "/ST=" + state + "/L=" + location + "/O=" + organisation + "/CN=" + cn + "/emailAddress=" + email;
+  str oneliner() {
+    return "/C=" + country + "/ST=" + state + "/L=" + location +
+           "/O=" + organisation + "/CN=" + cn + "/emailAddress=" + email;
   }
 };
 
@@ -158,9 +170,10 @@ struct Entity {
 
 /* UNUSED */
 // this would allow having the whole vpn configuration file in a ui64
-// with just the ca cert and entity key|cert left in order to check 
+// with just the ca cert and entity key|cert left in order to check
 // which properties the user wants to get/set so that we can
-// create labels like vpnconf & CONF_CLIENT_REMOTE && label << key << separator << value;
+// create labels like vpnconf & CONF_CLIENT_REMOTE && label << key << separator
+// << value;
 enum class vpn_cl_conf : ui64 {
   remote = 2,
   remote_cert_tls = 4,
@@ -207,4 +220,4 @@ std::unordered_map<str, ui64> vpn_conf_map{
      static_cast<ui64>(vpn_sv_conf_opt::ifconfig_pool_persist)},
     {"push", static_cast<ui64>(vpn_sv_conf_opt::push)},
     {"server.verbose", static_cast<ui64>(vpn_sv_conf_opt::verb)}};
-}; // namespace gpki
+}; // namespace gpkih

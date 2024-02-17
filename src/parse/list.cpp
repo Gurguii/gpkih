@@ -1,6 +1,6 @@
 #include "parser.hpp"
 
-using namespace gpki;
+using namespace gpkih;
 int parsers::list(std::vector<str> opts) {
   subopts::list params;
   if (opts.empty()) {
@@ -10,8 +10,8 @@ int parsers::list(std::vector<str> opts) {
     sstream _profiles(opts[0]);
     str profile;
     while (getline(_profiles, profile, CSV_DELIMITER_c)) {
-      if(!db::profiles::exists(profile)){
-        PERROR("profile '{}' doesn't exist, omitting...\n",profile);
+      if (!db::profiles::exists(profile)) {
+        PERROR("profile '{}' doesn't exist, omitting...\n", profile);
         continue;
       }
       params.profiles.push_back(profile);
@@ -30,11 +30,11 @@ int parsers::list(std::vector<str> opts) {
         while (getline(ss, entity, CSV_DELIMITER_c)) {
           params.entities.push_back(entity);
         }
-      } 
+      }
     } else if (opt == "-ef" || opt == "--entity-fields") {
-      if(opts[i+1][0] == '-' || opts[i+1] == "\0"){
+      if (opts[i + 1][0] == '-' || opts[i + 1] == "\0") {
         PWARN("entitiy fields is empty, could have been omitted\n");
-      }else{
+      } else {
         params.efields = E_NONE;
         sstream ss(opts[++i]);
         str field;
@@ -44,14 +44,14 @@ int parsers::list(std::vector<str> opts) {
             ENTITY_FIELDS f = emap[field];
             params.efields = params.efields | f;
           } else {
-            PWARN("field '{}' doesn't exist\n",field);
+            PWARN("field '{}' doesn't exist\n", field);
           }
         }
       }
     } else if (opt == "-pf" || opt == "--profile-fields") {
-      if(opts[i+1][0] == '-' || opts[i+1] == "\0"){
+      if (opts[i + 1][0] == '-' || opts[i + 1] == "\0") {
         PWARN("profile fields is empty, could have been omitted\n");
-      }else{
+      } else {
         params.pfields = P_NONE;
         sstream ss(opts[++i]);
         str field;

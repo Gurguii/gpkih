@@ -1,34 +1,31 @@
-#include "../utils/gpkih_util_funcs.hpp"
 #include "../config_management.hpp"
+#include "../utils/gpkih_util_funcs.hpp"
 #include "actions.hpp"
 #include <exception>
 static inline str openssl_conf_filename = "gopenssl.conf";
 #define RELATIVE_DIRECTORY_PATHS                                               \
-  std::vector<str> \
-  {                                                   \
-    "tls",\
-    "pki" + SLASH + "ca", "pki" + SLASH + "keys",\
-    "pki" + SLASH + "crl", "pki" + SLASH + "serial", "packs",\
-    "pki" + SLASH + "certs", "pki" + SLASH + "reqs",\
-    "pki" + SLASH + "database", "logs"\
+  std::vector<str> {                                                           \
+    "tls", "pki" + SLASH + "ca", "pki" + SLASH + "keys",                       \
+        "pki" + SLASH + "crl", "pki" + SLASH + "serial", "packs",              \
+        "pki" + SLASH + "certs", "pki" + SLASH + "reqs",                       \
+        "pki" + SLASH + "database", "logs"                                     \
   }
 #define RELATIVE_FILE_PATHS                                                    \
-  std::unordered_map<str, str>  \
-  {                             \
+  std::unordered_map<str, str> {                                               \
     {"pki" + SLASH + "crl" + SLASH + "crlnumber", "1000"},                     \
-    {"pki" + SLASH + "serial" + SLASH + "serial", "01"},                            \
-    {"pki" + SLASH + "database" + SLASH + "index.txt", ""},                                                                          \
+        {"pki" + SLASH + "serial" + SLASH + "serial", "01"},                   \
+        {"pki" + SLASH + "database" + SLASH + "index.txt", ""},                \
   }
 
 int create_dhparam(strview outpath) {
-  str command = fmt::format("openssl dhparam -out {} 2048",outpath);
+  str command = fmt::format("openssl dhparam -out {} 2048", outpath);
   if (system(command.c_str())) {
     return -1;
   }
   return 0;
 }
 int create_openvpn_static_key(std::string_view outpath) {
-  str command = fmt::format("openvpn --genkey tls-crypt {}",outpath);
+  str command = fmt::format("openvpn --genkey tls-crypt {}", outpath);
   if (system(command.c_str())) {
     return -1;
   }
@@ -48,27 +45,28 @@ template <typename T> int IS_VALID_PATH(T path) {
   };
   try {
     if (fs::exists(path)) {
-    str ans;
-    PROMPT("file or directory already exists, remove?","[y/n]");
-    getline(std::cin, ans);
-    if (ans == "y" || ans == "Y") {
-      return fs::remove_all(
-          path); // true if file got deleted - valid path (its free)
-    }
-    return 0;
-  };
-  }catch (std::exception ex) {
-    PERROR("permission denied in '{}'\n",path);
+      str ans;
+      PROMPT("file or directory already exists, remove?", "[y/n]");
+      getline(std::cin, ans);
+      if (ans == "y" || ans == "Y") {
+        return fs::remove_all(
+            path); // true if file got deleted - valid path (its free)
+      }
+      return 0;
+    };
+  } catch (std::exception ex) {
+    PERROR("permission denied in '{}'\n", path);
     return 0;
   }
 
   return 1;
 }
 
-using namespace gpki;
+using namespace gpkih;
 int actions::init(subopts::init &params) {
   Profile profile;
-  if(!params.profile_name.empty() && db::profiles::exists(params.profile_name)){
+  if (!params.profile_name.empty() &&
+      db::profiles::exists(params.profile_name)) {
     PWARN("profile '{}' already exists\n", params.profile_name);
   }
   if (params.profile_name.empty() ||
@@ -76,10 +74,10 @@ int actions::init(subopts::init &params) {
     do {
       PROMPT("Desired profile name: ");
       std::getline(std::cin, profile.name);
-      if(db::profiles::exists(profile.name)){
-        PWARN("profile '{}' already exists\n",profile.name);
+      if (db::profiles::exists(profile.name)) {
+        PWARN("profile '{}' already exists\n", profile.name);
         continue;
-      }else if(profile.name.empty()){
+      } else if (profile.name.empty()) {
         PWARN("profile name can't be empty\n");
         continue;
       }
@@ -89,8 +87,7 @@ int actions::init(subopts::init &params) {
     profile.name = std::move(params.profile_name);
   }
 
-  if (params.profile_source.empty() ||
-      !IS_VALID_PATH(params.profile_source)) {
+  if (params.profile_source.empty() || !IS_VALID_PATH(params.profile_source)) {
     do {
       PROMPT("Profile source dir (absolute path): ");
       std::getline(std::cin, profile.source);
@@ -101,7 +98,7 @@ int actions::init(subopts::init &params) {
 
   // Check that we have write permissions in such path
   if (!hasWritePermissions(profile.source)) {
-    PERROR("no write permissions in '{}'",profile.source);
+    PERROR("no write permissions in '{}'", profile.source);
     return -1;
   };
 
@@ -109,7 +106,7 @@ int actions::init(subopts::init &params) {
   for (const str &relative : RELATIVE_DIRECTORY_PATHS) {
     str path = profile.source + SLASH + relative;
     if (!fs::create_directories(path)) {
-      PERROR("couldn't create directory '{}'",path);
+      PERROR("couldn't create directory '{}'", path);
       // Remove the profile source dir
       fs::remove_all(profile.source);
       return -1;
@@ -127,11 +124,12 @@ int actions::init(subopts::init &params) {
     }
   }
   // Copy required config files to profile
-  for(auto &filenames : {gpkih_conf_filename,vpn_conf_filename,pki_conf_filename}){
-    str src = fmt::format("{}{}",CONF_DIRPATH, filenames);
-    str dst = fmt::format("{}{}{}",profile.source,SLASH,filenames);
-    fs::copy(src,dst);
-    if(!fs::exists(dst)){
+  for (auto &filenames :
+       {gpkih_conf_filename, vpn_conf_filename, pki_conf_filename}) {
+    str src = fmt::format("{}{}", CONF_DIRPATH, filenames);
+    str dst = fmt::format("{}{}{}", profile.source, SLASH, filenames);
+    fs::copy(src, dst);
+    if (!fs::exists(dst)) {
       PERROR("couldn't copy '{}' to '{}'\n", src, dst);
       return -1;
     }
@@ -166,8 +164,12 @@ int actions::init(subopts::init &params) {
   // Extra questions
   if (params.prompt) {
     // QUESTION 1
-    if(!params.autoanswer_yes){
-      PROMPT("Create dhparam? " + fmt::format(fg(COLOR::lime) | EMPHASIS::underline | EMPHASIS::italic, "(highly recommended)"),"[y/n]");
+    if (!params.autoanswer_yes) {
+      PROMPT("Create dhparam? " + fmt::format(fg(COLOR::lime) |
+                                                  EMPHASIS::underline |
+                                                  EMPHASIS::italic,
+                                              "(highly recommended)"),
+             "[y/n]");
       str ans;
       getline(std::cin, ans);
       if (ans == "y" || ans == "Y") {
@@ -177,13 +179,10 @@ int actions::init(subopts::init &params) {
       }
       ans.assign("");
       // QUESTION 2
-      PROMPT("Create the CA now?","[y/n]");
+      PROMPT("Create the CA now?", "[y/n]");
       getline(std::cin, ans);
       if (ans == "y" || ans == "Y") {
-        subopts::build default_params{
-          .type = ET_CA,
-          .profile = &profile
-        };
+        subopts::build default_params{.type = ET_CA, .profile = &profile};
         if (actions::build(default_params)) {
           return -1;
         } else {
@@ -191,19 +190,18 @@ int actions::init(subopts::init &params) {
           return -1;
         };
       }
-    }else{
-      create_openvpn_static_key(fmt::format("{}{}tls{}ta.key",profile.source,SLASH,SLASH));
-      create_dhparam(fmt::format("{}{}tls{}dhparam2048",profile.source,SLASH,SLASH));
-      subopts::build default_params{
-          .type = ET_CA,
-          .profile = &profile
-        };
-        if (actions::build(default_params)) {
-          return -1;
-        } 
-        PINFO("CA succesfully created\n");
+    } else {
+      create_openvpn_static_key(
+          fmt::format("{}{}tls{}ta.key", profile.source, SLASH, SLASH));
+      create_dhparam(
+          fmt::format("{}{}tls{}dhparam2048", profile.source, SLASH, SLASH));
+      subopts::build default_params{.type = ET_CA, .profile = &profile};
+      if (actions::build(default_params)) {
+        return -1;
+      }
+      PINFO("CA succesfully created\n");
       return 0;
-    } 
+    }
   }
   return 0;
 }

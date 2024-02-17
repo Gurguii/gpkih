@@ -1,7 +1,7 @@
 #include "help.hpp"
 
-using namespace gpki;
-void help::gencrl::usage(){
+using namespace gpkih;
+void help::gencrl::usage() {
   std::cout << R"(
 == gencrl ==
 

@@ -11,26 +11,27 @@
 #include "../printing.hpp"
 #include "../structs.hpp"
 
-namespace gpki::db::profiles {
+namespace gpkih::db::profiles {
 static inline std::map<std::string, Profile> existing_profiles{};
 static inline str dbheaders = "name,source,ca,total_servers,total_clients";
 static inline str dbpath = DB_DIRPATH + "profiles.csv";
 static inline int initialized = 0;
-static int sync(); // overwrites profiles.csv with the profiles in existing_profiles while
+static int
+sync(); // overwrites profiles.csv with the profiles in existing_profiles while
 static int initialize();
 static int populate_from_entry(str &entry, Profile *profile);
 static int populate_from_entry(str &entry, std::vector<str> &fields);
 static int exists(strview profile_name);
 static int add(Profile *profile);
-static int remove(std::vector<str> &profiles,int prompt);
+static int remove(std::vector<str> &profiles, int prompt);
 static int remove_all(int prompt);
 static int load(strview profile_name, Profile &pinfo);
 static int get_entities(str profile, std::vector<Entity> &buff);
 /* TESTING */
-static Profile* load(strview profile_name);
-} // namespace gpki::db::profiles
+static Profile *load(strview profile_name);
+} // namespace gpkih::db::profiles
 
-namespace gpki::db::entities {
+namespace gpkih::db::entities {
 static inline str suffix = "_entities";
 static inline str ext = ".csv";
 static inline str _dbpath(str &profile) {
@@ -38,10 +39,10 @@ static inline str _dbpath(str &profile) {
 }
 
 static inline str dbheaders =
-  "profile_name,common_name,type,serial,country,state,"
-  "location,organisation,email,key_"
-  "path,req_path,"
-  "cert_path";
+    "profile_name,common_name,type,serial,country,state,"
+    "location,organisation,email,key_"
+    "path,req_path,"
+    "cert_path";
 
 static inline int initialized = 0;
 /*  */
@@ -54,4 +55,4 @@ static int exists(str &profile, strview common_name);
 static int add(Entity &entity);
 static int del(str &profile, strview cn);
 static int load(str &profile, strview common_name, Entity &entity_buff);
-} // namespace gpki::db::entities
+} // namespace gpkih::db::entities

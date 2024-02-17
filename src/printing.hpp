@@ -93,8 +93,10 @@ static inline std::string PROMPT_answers(std::string &ans) {
 static inline void PROMPT(std::string msg, COLOR icon_color = GREEN) {
   fmt::print(" {} {}", PROMPT_icon(icon_color), PROMPT_body(msg));
 }
-static inline void PROMPT(std::string msg, std::string ans, COLOR icon_color = GREEN) {
-  fmt::print(" {} {} {}", PROMPT_icon(icon_color), PROMPT_body(msg), PROMPT_answers(ans));
+static inline void PROMPT(std::string msg, std::string ans,
+                          COLOR icon_color = GREEN) {
+  fmt::print(" {} {} {}", PROMPT_icon(icon_color), PROMPT_body(msg),
+             PROMPT_answers(ans));
 }
 static inline void PROGRAMSTARTING() {
   PINFO("Starting gpkih - {:%d %h %Y @ %H:%M}\n",

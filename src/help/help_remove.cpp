@@ -1,6 +1,6 @@
 #include "help.hpp"
 
-using namespace gpki;
+using namespace gpkih;
 
 void help::remove::usage() {
   std::cout << R"(
