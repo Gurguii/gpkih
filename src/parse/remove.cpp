@@ -10,20 +10,22 @@ int parsers::remove(std::vector<std::string> opts) {
     return -1;
   }
   auto iter = std::find(opts.begin(), opts.end(), "-all");
-  subopts::remove params;
+  std::vector<str> profiles_to_remove{};
   if (iter != opts.end()) {
     // There is a -all param in the arguments
-    params.all = 1;
-    return actions::remove(params);
+    return actions::remove(profiles_to_remove,1);
   }
-  sstream names(opts[0]);
+  
+  sstream profiles(opts[0]);
   str profile;
-  while (getline(names, profile, CSV_DELIMITER_c)) {
-    if (!db::profiles::exists(profile)) {
+  
+  while(getline(profiles,profile,',')){
+    if(db::profiles::exists(profile)){
+      profiles_to_remove.emplace_back(profile);
+    }else{
       PWARN("Profile '{}' doesn't exist, omitting\n", profile);
-      continue;
     }
-    params.profiles.emplace_back(profile);
   }
-  return actions::remove(params);
+  
+  return actions::remove(profiles_to_remove,0);
 }

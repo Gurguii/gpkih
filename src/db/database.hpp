@@ -10,6 +10,7 @@
 #include "../gpki.hpp"
 #include "../printing.hpp"
 #include "../structs.hpp"
+#include "../config_management.hpp"
 
 namespace gpkih::db::profiles {
 static inline std::map<std::string, Profile> existing_profiles{};
@@ -23,8 +24,8 @@ static int populate_from_entry(str &entry, Profile *profile);
 static int populate_from_entry(str &entry, std::vector<str> &fields);
 static int exists(strview profile_name);
 static int add(Profile *profile);
-static int remove(std::vector<str> &profiles, int prompt);
-static int remove_all(int prompt);
+static int remove(std::vector<str> &profiles);
+static int remove_all();
 static int load(strview profile_name, Profile &pinfo);
 static int get_entities(str profile, std::vector<Entity> &buff);
 /* TESTING */
@@ -51,7 +52,7 @@ static int populate_from_entry(str &entry, std::vector<str> &fields);
 static int populate_from_entry(str &profile, str &entry, str &cn, Entity &buff);
 
 static int initialize(str profile);
-static int exists(str &profile, strview common_name);
+static int exists(strview profile, strview common_name);
 static int add(Entity &entity);
 static int del(str &profile, strview cn);
 static int load(str &profile, strview common_name, Entity &entity_buff);

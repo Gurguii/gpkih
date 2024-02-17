@@ -63,14 +63,14 @@ template <typename T> int IS_VALID_PATH(T path) {
 }
 
 using namespace gpkih;
-int actions::init(subopts::init &params) {
+int actions::init(strview profile_name, strview profile_source) {
   Profile profile;
-  if (!params.profile_name.empty() &&
-      db::profiles::exists(params.profile_name)) {
-    PWARN("profile '{}' already exists\n", params.profile_name);
+  if (!profile_name.empty() &&
+      db::profiles::exists(profile_name)) {
+    PWARN("profile '{}' already exists\n", profile_name);
   }
-  if (params.profile_name.empty() ||
-      db::profiles::exists(params.profile_name)) {
+  if (profile_name.empty() ||
+      db::profiles::exists(profile_name)) {
     do {
       PROMPT("Desired profile name: ");
       std::getline(std::cin, profile.name);
@@ -84,16 +84,16 @@ int actions::init(subopts::init &params) {
       break;
     } while (db::profiles::exists(profile.name) || profile.name.empty());
   } else {
-    profile.name = std::move(params.profile_name);
+    profile.name = std::move(profile_name);
   }
 
-  if (params.profile_source.empty() || !IS_VALID_PATH(params.profile_source)) {
+  if (profile_source.empty() || !IS_VALID_PATH(profile_source)) {
     do {
       PROMPT("Profile source dir (absolute path): ");
       std::getline(std::cin, profile.source);
     } while (!IS_VALID_PATH(profile.source));
   } else {
-    profile.source = std::move(params.profile_source);
+    profile.source = std::move(profile_source);
   }
 
   // Check that we have write permissions in such path
@@ -162,12 +162,11 @@ int actions::init(subopts::init &params) {
   // Initialize entities db
   db::entities::initialize(profile.name);
   // Extra questions
-  if (params.prompt) {
+  if (Config::get("behaviour", "prompt") == "yes") {
     // QUESTION 1
-    if (!params.autoanswer_yes) {
+    if (Config::get("behaviour","autoanswer") == "yes") {
       PROMPT("Create dhparam? " + fmt::format(fg(COLOR::lime) |
-                                                  EMPHASIS::underline |
-                                                  EMPHASIS::italic,
+                                                  EMPHASIS::underline,
                                               "(highly recommended)"),
              "[y/n]");
       str ans;
@@ -182,8 +181,8 @@ int actions::init(subopts::init &params) {
       PROMPT("Create the CA now?", "[y/n]");
       getline(std::cin, ans);
       if (ans == "y" || ans == "Y") {
-        subopts::build default_params{.type = ET_CA, .profile = &profile};
-        if (actions::build(default_params)) {
+        ProfileConfig config(profile);
+        if (actions::build(profile,config,Entity{.profile_name = profile.name,.type = ET_CA})) {
           return -1;
         } else {
           PINFO("CA succesfully created\n");
@@ -191,12 +190,11 @@ int actions::init(subopts::init &params) {
         };
       }
     } else {
-      create_openvpn_static_key(
-          fmt::format("{}{}tls{}ta.key", profile.source, SLASH, SLASH));
+      // autoanswer set to 'no'
+      ProfileConfig config(profile);
       create_dhparam(
           fmt::format("{}{}tls{}dhparam2048", profile.source, SLASH, SLASH));
-      subopts::build default_params{.type = ET_CA, .profile = &profile};
-      if (actions::build(default_params)) {
+      if (actions::build(profile,config,Entity{.profile_name = profile.name,.type = ET_CA})) {
         return -1;
       }
       PINFO("CA succesfully created\n");

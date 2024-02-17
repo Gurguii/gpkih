@@ -17,7 +17,7 @@ struct gpkih_opt
 static inline std::unordered_map<std::string,gpkih_opt> gpkih_opts
 {
 	/* gpkih.conf */
-	{"-y",{CONFIG_GPKIH,"behaviour","autoanswer_yes"}},
+	{"-y",{CONFIG_PKI,"behaviour","autoanswer_yes"}},
 	/* pki.conf */
 	{"-keysize",{CONFIG_PKI,"key","size"}},
 	/* openvpn.conf */

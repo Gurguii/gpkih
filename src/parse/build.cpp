@@ -1,8 +1,8 @@
 #include "parser.hpp"
 
-// SYNTAX : ./gpki build <profile> [subopts]
 using namespace gpkih;
 int parsers::build(std::vector<std::string> opts) {
+  // ./gpki build <profile> <ca|sv|cl> [subopts]
   if (opts.empty()) {
     PERROR("profile must be given\n");
     PHINT("try 'gpki help build' for extra help\n");
@@ -10,66 +10,53 @@ int parsers::build(std::vector<std::string> opts) {
   }
 
   strview profilename = opts[0];
-  Profile *profile;
+  
+  Profile profile; // profile to build entity for
+  Entity entity;  // entity info
 
-  if ((profile = db::profiles::load(profilename)) == nullptr) {
-    PERROR("profile '{}' doesn't exist\n", profilename);
-    return -1;
+  if(db::profiles::load(profilename, profile)){
+    return GPKIH_FAIL;
+  };
+
+  if(opts.size() == 1){
+    PERROR("entity type must be specified - ca|sv|cl\n");
+    return GPKIH_OK;
   }
 
-  // std::cout << "Before loading configuration\n";
-  // Subject _s{};
-  // std::cout << _s.state << " " << _s.country << " " << _s.email << " "<<
-  // _s.location << " "<< _s.organisation << "\n";
-  //// Load profile configuration
-  // ProfileConfig _conf(*profile);
-  // Subject _defaults = _conf.default_subject(_conf);
-  // std::cout << "After loading configuration\n";
-  // std::cout << _defaults.state << " " << _defaults.country << " " <<
-  // _defaults.email << " "<< _defaults.location << " "<< _defaults.organisation
-  // << "\n";
-
-  ProfileConfig configuration(*profile);
-  if (configuration.succesfully_loaded == false) {
-    seterror("couldn't load configuration files from profile '{}'",
-             profile->name);
+  strview etype = opts[1];
+  if(etype == "ca"){
+    entity.type = ET_CA;
+  }else if(etype == "client" || etype == "cl"){
+    entity.type = ET_CL;
+  }else if(etype == "server" || etype == "sv"){
+    entity.type = ET_SV;
+  }else{
+    PERROR("unknown entity type '{}'\n", etype);
     return GPKIH_FAIL;
   }
-  ConfigMap &pkiconf = *configuration.get(CONFIG_PKI);
-  subopts::build params{
-      .type = ET_NONE,
-      .profile = profile,
-  };
-  params.config = &configuration;
-  auto &type = params.type;
 
-  opts.erase(opts.begin());
-  opts.push_back("\0");
+  opts.erase(opts.begin(),opts.begin()+2);
+
+  ProfileConfig config(profile);
+  if(!config.succesfully_loaded){
+    return GPKIH_FAIL;
+  }
 
   // override default build params with user arguments and set
   for (int i = 0; i < opts.size(); ++i) {
     strview opt = opts[i];
-    if (opt == "-ca" || opt == "--ca") {
-      type = ENTITY_TYPE::ca;
-    } else if (opt == "-cl" || opt == "--client") {
-      type = ENTITY_TYPE::client;
-    } else if (opt == "-sv" || opt == "--server") {
-      type = ENTITY_TYPE::server;
-    } else if (opt == "-keysize" || opt == "--keysize") {
-      pkiconf["key"]["size"] = opts[++i];
+    if(opt == "-keysize" || opt == "--keysize") {
+      config.set(CONFIG_PKI,"key","size",opts[++i]);
     } else if (opt == "-keyformat") {
-      pkiconf["key"]["creation_format"] = opts[++i];
+      config.set(CONFIG_PKI,"key","creation_format",opts[++i]);
     } else if (opt == "-outformat") {
-      pkiconf["csr"]["creation_format"] = opts[++i];
+      config.set(CONFIG_PKI,"csr","creation_format",opts[++i]);
     } else if (opt == "\0") {
       continue;
     } else {
       UNKNOWN_OPTION_MSG(opt);
     }
   }
-  if (type == ENTITY_TYPE::none) {
-    seterror("please specify an entity type -[ca|sv|cl]\n");
-    return GPKIH_FAIL;
-  }
-  return actions::build(params);
+  
+  return actions::build(profile,config,entity);
 }

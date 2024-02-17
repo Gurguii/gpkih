@@ -1,9 +1,9 @@
 #include "actions.hpp"
 using namespace gpkih;
 
-int actions::remove(subopts::remove &params) {
-  if (params.all) {
-    return db::profiles::remove_all(params.autoanswer_yes);
+int actions::remove(std::vector<str> &profiles_to_remove, int remove_all) {
+  if (remove_all) {
+    return db::profiles::remove_all();
   }
-  return db::profiles::remove(params.profiles, params.autoanswer_yes);
+  return db::profiles::remove(profiles_to_remove);
 }

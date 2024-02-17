@@ -7,12 +7,14 @@ void help::build::usage() {
 == build ==
   
 [ syntax ]
-  ./gpki build <profile> [subopts]
+  ./gpki build *<profile> *<entity_type> [subopts]
   
+[ entity types ]
+  ca : ca
+  sv : server
+  cl : client
+
 [ subopts ]
-  -ca : build certificate with ca extensions
-  -sv : build certificate with sv extensions
-  -cl : build certificate with cl extensions
   -keysize <int> : key size to use
   -outformat <pem|der> : output format
 )";

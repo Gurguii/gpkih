@@ -59,19 +59,17 @@ void print_profile_entities(str profile, ENTITY_FIELDS &fields) {
   }
 }
 
-int actions::list(subopts::list &params) {
+int actions::list(std::vector<str> &profiles, std::vector<str> &entities, PROFILE_FIELDS pfields, ENTITY_FIELDS efields) {
   if (db::profiles::existing_profiles.empty()) {
     PINFO("No profiles added yet\n");
     return -1;
   }
-  auto &profiles = params.profiles;
-  auto &entities = params.entities;
   if (profiles.empty()) {
     if (entities.empty()) {
       /* OPTION 1 */
       // all profiles
       for (auto p : db::profiles::existing_profiles) {
-        print_profile(p.first, params.pfields);
+        print_profile(p.first, pfields);
         std::cout << EOL;
       }
       return 0;
@@ -80,12 +78,12 @@ int actions::list(subopts::list &params) {
       // all profiles certain entities
       for (auto p : db::profiles::existing_profiles) {
         std::vector<Entity> entities;
-        print_profile(p.first, params.pfields);
+        print_profile(p.first, pfields);
         if (db::profiles::get_entities(p.first, entities)) {
           return -1;
         };
         for (auto &e : entities) {
-          print_entity(e, params.efields);
+          print_entity(e, efields);
         }
       }
       return 0;
@@ -95,8 +93,8 @@ int actions::list(subopts::list &params) {
     /* OPTION 3 */
     // certain profiles all entities
     for (auto p : profiles) {
-      print_profile(p, params.pfields);
-      print_profile_entities(p, params.efields);
+      print_profile(p, pfields);
+      print_profile_entities(p, efields);
     }
     return 0;
   } else {

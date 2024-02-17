@@ -69,8 +69,8 @@ int db::entities::populate_from_entry(str &profile, str &entry, str &cn,
   return 1;
 }
 
-int db::entities::exists(str &profile, strview common_name) {
-  std::ifstream file(DB_DIRPATH + profile + "_entities.csv");
+int db::entities::exists(strview profile, strview common_name) {
+  std::ifstream file(DB_DIRPATH + profile.data() + "_entities.csv");
   if (!file.is_open()) {
     return -1;
   }

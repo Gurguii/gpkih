@@ -80,8 +80,6 @@ Subject ProfileConfig::default_subject(ProfileConfig &config) {
                  .email = pki["subject"]["email"]};
 };
 
-subopts::build ProfileConfig::default_build(ProfileConfig &config) {}
-
 ConfigMap *ProfileConfig::get(CONFIG_FILE file) {
   switch (file) {
   case CONFIG_VPN:
@@ -93,6 +91,18 @@ ConfigMap *ProfileConfig::get(CONFIG_FILE file) {
   default:
     return nullptr;
     break;
+  }
+}
+
+void ProfileConfig::set(CONFIG_FILE file, strview section, strview key, strview val){
+  switch(file){
+    case CONFIG_PKI:
+      _conf_pki[section.data()][key.data()] = val;
+      break;
+    case CONFIG_VPN:
+      _conf_pki[section.data()][key.data()] = val;
+    default:
+      break;
   }
 }
 

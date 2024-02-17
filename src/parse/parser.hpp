@@ -12,6 +12,18 @@
 #include <string>
 #include <vector>
 
+static inline int check_and_populate_profile(strview profilename, Profile &buffer,
+                               std::vector<str> &opts) {
+  if (db::profiles::load(profilename, buffer)) {
+    // profile does not exist
+    seterror("Profile '{}' doesn't exist\n", profilename);
+    return GPKIH_FAIL;
+  }
+  // delete profile name from vector
+  opts.erase(opts.begin());
+  return GPKIH_OK;
+};
+
 namespace gpkih::parsers {
 // main parser
 static int parse(int argc, const char **_args);

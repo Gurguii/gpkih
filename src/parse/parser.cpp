@@ -13,6 +13,8 @@ using namespace gpkih;
 int parsers::parse(int argc, const char **_args) {
   if (argc == 0) {
     help::usage();
+    // TODO - add a gpkih cli mode where the call to gpkih 
+    // can be omitted, something like 'virsh'
     return GPKIH_OK;
   }
   std::vector<str> args(_args, _args + argc);
@@ -21,17 +23,17 @@ int parsers::parse(int argc, const char **_args) {
   for (int i = 0; i < argc; ++i) {
     strview op = args[i];
     if (op == "-y") {
-      subopts::params::autoanswer_yes = 1;
+      Config::set("behaviour","autoanswer","yes");
       args.erase(args.begin() + i);
       --argc;
     } else if (op == "--noprompt") {
-      subopts::params::prompt = 0;
+      Config::set("behaviour","prompt","no");
       args.erase(args.begin() + i);
       --argc;
     }
   }
 
-  // Action must be given
+  // At this point action is mandatory
   if (args.size() == 0) {
     help::usage();
     return GPKIH_OK;
@@ -54,7 +56,7 @@ int parsers::parse(int argc, const char **_args) {
     PERROR("action '{}' doesn't exist\n", action);
     return -1;
   }
-
+  
   args.erase(args.begin());
   return ACTION_PARSERS[action](std::move(args));
 }

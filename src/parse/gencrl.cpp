@@ -8,10 +8,9 @@ int parsers::gencrl(std::vector<std::string> opts) {
     return -1;
   }
   strview profilename = opts[0];
-  subopts::gencrl params;
-  if (db::profiles::load(profilename, params.profile)) {
-    PERROR("profile '{}' doesn't exist\n");
-    return -1;
+  Profile profile;
+  if (db::profiles::load(profilename, profile)) {
+    return GPKIH_FAIL;
   }
-  return actions::gencrl(params);
+  return actions::gencrl(profile);
 }

@@ -11,56 +11,18 @@
 #include "../gpki.hpp"
 #include "../printing.hpp"
 #include "../utils/gpkih_util_funcs.hpp"
-namespace gpkih::subopts {
-// Generic params not related with any particular action
-struct params {
-  static inline int prompt = 1;
-  static inline int autoanswer_yes = 0;
-};
-
-struct init : params {
-  str profile_name;
-  str profile_source;
-};
-
-struct build : params {
-  ENTITY_TYPE type;             // entity type to create - ET_CA|ET_SV|ET_CL
-  Profile *profile = nullptr;   // info about target profile
-  gpkih::ProfileConfig *config; // used to retrieve default pki building params
-                                // (keysize, days etc.) +
-};
-
-struct revoke : params {
-  std::vector<str> common_name;
-  str reason = "not specified";
-  Profile profile;
-};
-
-struct gencrl : params {
-  /* No subopts */
-  Profile profile;
-};
-
-struct list : params {
-  std::vector<str> profiles;
-  std::vector<str> entities;
-
-  PROFILE_FIELDS pfields = P_ALL;
-  ENTITY_FIELDS efields = E_ALL;
-};
-
-struct remove : params {
-  std::vector<str> profiles;
-  int all = 0;
-};
-
-} // namespace gpkih::subopts
 
 namespace gpkih::actions {
-int init(subopts::init &params);
-int build(subopts::build &params);
-int revoke(subopts::revoke &params);
-int gencrl(subopts::gencrl &params);
-int list(subopts::list &params);
-int remove(subopts::remove &params);
+int init(strview profile_name, strview profile_source);
+
+int revoke(Profile &profile, std::vector<str> &common_names, std::vector<str> &serials);
+
+int gencrl(Profile &profile);
+
+int list(std::vector<str> &profiles, std::vector<str> &entities, PROFILE_FIELDS pfields = P_ALL, ENTITY_FIELDS efields = E_ALL);
+
+int remove(std::vector<str> &profiles_to_remove, int remove_all = 0);
+
+int build(Profile &profile, ProfileConfig &config, Entity &entity);
+template <typename ...T> int build(T&& ...args); // build forwarder
 } // namespace gpkih::actions

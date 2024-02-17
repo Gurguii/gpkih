@@ -84,7 +84,7 @@ int db::profiles::initialize() {
       return -1;
     };
   }
-  db::profiles::remove(remove_profiles, 1);
+  db::profiles::remove(remove_profiles);
   return existing_profiles.size();
 }
 
@@ -106,14 +106,14 @@ int db::profiles::add(Profile *profile) {
   return 0;
 }
 
-int db::profiles::remove(std::vector<str> &profiles, int autoanswer_yes) {
+int db::profiles::remove(std::vector<str> &profiles) {
   for (auto &profile : profiles) {
     auto iter = existing_profiles.find(profile);
     if (iter == existing_profiles.end()) {
       return -1;
     }
     Profile target = iter->second;
-    if (!autoanswer_yes) {
+    if (Config::get("behaviour","autoanswer") == "no") {
       // ask before removing
       str ans;
       PROMPT("Files from profile '" + profile +
@@ -148,29 +148,29 @@ int db::profiles::remove(std::vector<str> &profiles, int autoanswer_yes) {
   return sync();
 }
 
-int db::profiles::remove_all(int autoanswer_yes) {
+int db::profiles::remove_all() {
   // Using the map itself would cause in segmentation fault since
   // remove() calls existing_profiles.erase()
   std::vector<str> profiles;
   for (auto kv : existing_profiles) {
     profiles.emplace_back(kv.first);
   }
-  remove(profiles, autoanswer_yes);
+  remove(profiles);
   return 0;
 }
 
-// Returns pointer to profile in existing_profiles
-// or nullptr if it doesn't exist
 int db::profiles::load(strview profile_name, Profile &pinfo) {
   if (!exists(profile_name)) {
-    return -1;
+    seterror("profile '{}' doesn't exist\n",profile_name);
+    return GPKIH_FAIL;
   }
   pinfo = existing_profiles[profile_name.data()];
-  return 0;
+  return GPKIH_OK;
 }
 
 Profile *db::profiles::load(strview profile_name) {
   if (!exists(profile_name)) {
+    seterror("profile '{}' doesn't exist\n",profile_name);
     return nullptr;
   }
   return &existing_profiles[profile_name.data()];

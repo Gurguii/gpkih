@@ -8,36 +8,53 @@ int parsers::revoke(std::vector<std::string> opts) {
     PHINT("try gpki help revoke\n");
     return -1;
   }
-  subopts::revoke params;
+  
   strview profilename = opts[0];
-  if (db::profiles::load(profilename, params.profile)) {
-    PERROR("profile '{}' doesn't exist\n", profilename);
-    return -1;
+  Profile profile;
+  std::vector<str> common_names_to_revoke;
+  std::vector<str> serials_to_revoke;
+  str extra_reason;
+
+  if (db::profiles::load(profilename, profile)) {
+    return GPKIH_FAIL;
   };
+  
+  opts.erase(opts.begin());
+  opts.push_back("\0");
+
   if (opts.size() == 1) {
     PERROR("missing common name\n");
     PHINT("try gpki help revoke\n");
     return -1;
   }
-  sstream ss(opts[1]);
-  str cn;
-  while (getline(ss, cn, ',')) {
-    params.common_name.emplace_back(cn);
+
+  for(int i = 0; i < opts.size(); ++i){
+    strview opt = opts[i];
+    if(opt == "-cn"){
+      str cn;
+      sstream ss(opts[++i]);
+      while(getline(ss,cn,',')){
+        common_names_to_revoke.emplace_back(cn);
+      }  
+    }else if(opt == "-serial"){
+      str serial;
+      sstream ss(opts[++i]);
+      while(getline(ss,serial,',')){
+        serials_to_revoke.emplace_back(serial);
+      }
+    }
   }
+
   opts.erase(opts.begin(), opts.begin() + 2);
   opts.push_back("\0");
   for (int i = 0; i < opts.size() - 1; ++i) {
     std::string_view opt = opts[i];
     if (opt == "--reason") {
-      params.reason = opts[++i];
+      extra_reason = opts[++i];
     } else {
       UNKNOWN_OPTION_MSG(opt);
     }
   }
-  if (params.common_name.empty()) {
-    PWARN("common name required\n");
-    PHINT("try gpki help revoke");
-    return -1;
-  }
-  return actions::revoke(params);
+
+  return actions::revoke(profile, common_names_to_revoke, serials_to_revoke);
 }

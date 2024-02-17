@@ -1,7 +1,4 @@
-#include "gpki.hpp"
 #include "config_management.cpp"
-#include "printing.hpp"
-#include "structs.hpp"
 /* Parser & subparsers */
 #include "parse/parser.cpp"
 /* Database (csv) manipulation */
@@ -75,7 +72,6 @@ int main(int argc, const char **args) {
     cleanup();
   }
   // TODO - Add PROPER checks for openssl - openvpn existence
-  PROGRAMSTARTING();
 
   // Launch task to load gpkih config
   auto load_gpkih_config = std::async(std::launch::async, gpkih::Config::load);
@@ -92,6 +88,8 @@ int main(int argc, const char **args) {
     return -1;
   }
 
+  PROGRAMSTARTING();
+  
   PINFO("Loaded [{}] profiles\n", profile_count, DB_DIRPATH, SLASH);
 
   // Parse options

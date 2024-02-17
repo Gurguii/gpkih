@@ -1,6 +1,4 @@
 #pragma once
-#include "gpki.hpp"
-#include "parse/parser.hpp"
 #include "structs.hpp"
 #include <cmath>
 #include <cstring>
@@ -8,7 +6,10 @@
 #include <filesystem>
 #include <future>
 #include <unordered_map>
+#include <fstream>
 
+
+namespace gpkih {
 using ConfigMap = std::unordered_map<str, std::unordered_map<str, str>>;
 
 enum class CONFIG_FILE {
@@ -34,12 +35,30 @@ static inline char section_delim_close = ']';
 static inline str empty_chars =
     fmt::format("{}{} ", section_delim_open, section_delim_close);
 
-namespace gpkih {
-struct build {
-  ENTITY_TYPE type;           // entity type to create - ET_CA|ET_SV|ET_CL
-  Profile *profile = nullptr; // info about target profile
-  ProfileConfig *config;      // used to retrieve default pki building params
+namespace config::gpkih::sections
+{
+  static inline str metadata = "metadata";
+  static inline str behaviour = "behaviour";
+}
+namespace config::pki::sections
+{
+  static inline str key = "key";
+  static inline str crl = "crl";
+  static inline str crt = "crt";
+  static inline str subject = "subject";
+}
+namespace config::openvpn::sections
+{
+  static inline str common = "common";
+  static inline str client = "client";
+  static inline str server = "server";
+}
+
+struct pki_building_params
+{
+  str key_size;
 };
+
 // Static class to manage gpkih.conf
 class Config {
 private:
@@ -50,6 +69,10 @@ protected:
 
 public:
   static inline int load() { return load_file(CONF_GPKIH, _conf_gpkih); }
+  static inline strview get(strview section, strview key){return _conf_gpkih[section.data()][key.data()]; }
+  static inline void set(strview section, strview key, strview val){
+    _conf_gpkih[section.data()][key.data()] =  val.data();
+  }
   static inline void print() {
     for (auto &kv : _conf_gpkih) {
       std::cout << "== " << kv.first << " ==\n";
@@ -100,15 +123,14 @@ public:
   bool succesfully_loaded = false;
   // Constructor
   ProfileConfig(Profile &profile, CONFIG_FILE file_to_load = CONFIG_ALL);
-  static inline subopts::build default_build(ProfileConfig &config);
   static inline Subject default_subject(ProfileConfig &config);
-  // Dumps vpn configuration (key-map values) to outpath
-  // it does file checks and dumps appropiate configuration
-  // based on given ENTITY_TYPE (only client|server are valid)
+
   bool dump_vpn_conf(strview outpath, ENTITY_TYPE type);
   bool dump(strview outpath, CONFIG_FILE files);
 
   ConfigMap *get(CONFIG_FILE sections);
+  void set(CONFIG_FILE file, strview section, strview key, strview val);
+  
   bool exists(strview key, CONFIG_FILE sections);
 
   // Sets the contents on config files to the ones
@@ -118,4 +140,3 @@ public:
   bool sync(CONFIG_FILE files);
 };
 } // namespace gpkih
-} // namespace gpkih::subopts

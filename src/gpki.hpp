@@ -8,7 +8,6 @@
 #include <sstream>
 #include <map>
 #include <unordered_map>
-#include <fmt/format.h>
 #include "printing.hpp"
 
 // Custom typenames

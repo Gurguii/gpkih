@@ -10,17 +10,7 @@ using namespace gpkih;
 // Checks if the profile exists, if it does it populates the
 // Profile structure and removes the first element from the vector
 // which should be the profile name, else it sets the last error and returns
-int check_and_populate_profile(strview profilename, Profile &buffer,
-                               std::vector<str> &opts) {
-  if (db::profiles::load(profilename, buffer)) {
-    // profile does not exist
-    seterror("Profile '{}' doesn't exist\n", profilename);
-    return -1;
-  }
-  // delete profile name from vector
-  opts.erase(opts.begin());
-  return 0;
-};
+
 
 // Does generic checks and calls appropiate
 // sub_sub_parser

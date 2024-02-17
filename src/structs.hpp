@@ -124,19 +124,6 @@ struct Profile {
   }
 };
 
-// #define SUBJECT_TEMPLATE "/C=%s/ST=%s/L=%s/O=%s/CN=%s/emailAddress=%s"
-struct Subject {
-  str country;
-  str state;
-  str location;
-  str organisation;
-  str cn;
-  str email;
-  str oneliner() {
-    return "/C=" + country + "/ST=" + state + "/L=" + location +
-           "/O=" + organisation + "/CN=" + cn + "/emailAddress=" + email;
-  }
-};
 
 static inline str str_conversion(PROFILE_FIELDS field) {
   return (field & P_NAME ? "name" : "source");
@@ -152,6 +139,19 @@ template <typename T> str to_str(T enumclass) {
   return str_conversion(enumclass);
 };
 
+// #define SUBJECT_TEMPLATE "/C=%s/ST=%s/L=%s/O=%s/CN=%s/emailAddress=%s"
+struct Subject {
+  str country;
+  str state;
+  str location;
+  str organisation;
+  str cn;
+  str email;
+  inline str oneliner() {
+    return "/C=" + country + "/ST=" + state + "/L=" + location +
+           "/O=" + organisation + "/CN=" + cn + "/emailAddress=" + email;
+  }
+};
 struct Entity {
   Subject subject;
   str key_path;
@@ -165,7 +165,7 @@ struct Entity {
            "," + subject.country + "," + subject.state + "," +
            subject.location + "," + subject.organisation + "," + subject.email +
            "," + key_path + "," + req_path + "," + cert_path;
-  }
+  };
 };
 
 /* UNUSED */
