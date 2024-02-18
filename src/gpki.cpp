@@ -49,7 +49,7 @@ int check_gpkih_install_dir() {
       PERROR("Couldn't create directory '{}'", BASEDIR);
       return F_NOEXIST;
     };
-    str configdir = CURRENT_PATH + SLASH + ".." + SLASH + "config";
+    str configdir = CURRENT_PATH + SLASH + "config";
     fs::copy(configdir, CONF_DIRPATH, fs::copy_options::recursive);
     if (!fs::exists(CONF_DIRPATH) || !fs::is_directory(CONF_DIRPATH)) {
       PERROR("couldn't create gpkih source dir '{}'\n", CONF_DIRPATH);
@@ -87,7 +87,7 @@ int main(int argc, const char **args) {
     PERROR(lasterror());
     return -1;
   }
-
+  
   PROGRAMSTARTING();
   
   PINFO("Loaded [{}] profiles\n", profile_count, DB_DIRPATH, SLASH);

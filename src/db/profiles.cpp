@@ -99,11 +99,14 @@ int db::profiles::add(Profile *profile) {
   int bsize = fs::file_size(dbpath);
   std::ofstream db(dbpath, std::ios::app);
   db << profile->csv_entry() << std::endl;
-  if (fs::file_size(dbpath) > bsize) {
+  if (fs::file_size(dbpath) <= bsize) {
     // profile succesfully added
-    existing_profiles.emplace(profile->name, *profile);
+    seterror("couldn't add profile '{}' to database\n", profile->name);
+    return GPKIH_FAIL;
   };
-  return 0;
+  return (existing_profiles.emplace(profile->name, *profile).second) 
+          ? GPKIH_OK 
+          : GPKIH_FAIL;
 }
 
 int db::profiles::remove(std::vector<str> &profiles) {
@@ -168,7 +171,7 @@ int db::profiles::load(strview profile_name, Profile &pinfo) {
   return GPKIH_OK;
 }
 
-Profile *db::profiles::load(strview profile_name) {
+Profile *const db::profiles::load(strview profile_name) {
   if (!exists(profile_name)) {
     seterror("profile '{}' doesn't exist\n",profile_name);
     return nullptr;

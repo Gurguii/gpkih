@@ -1,6 +1,77 @@
 #include "parser.hpp"
+str badchars = "~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?\t\n\r";
+
+static inline void _get_and_set_prop(std::string &st) {
+  std::string input;
+  std::getline(std::cin, input);
+  if (!input.empty()) {
+    st = std::move(input);
+  }
+}
+static inline int _prompt_for_subject(strview profile_name, Subject &buffer)
+{
+  str input{};
+  PROMPT("Country Name (2 letter code) [" + buffer.country + "]: ");
+  std::getline(std::cin, input);
+  if (!input.empty() && input.size() == 2) {
+    buffer.country = input;
+  }
+  // Set state name
+  PROMPT("State or Province Name (full name) [" + buffer.state + "]: ");
+  _get_and_set_prop(buffer.state);
+  // Set location
+  PROMPT("Locality Name [" + buffer.location + "]: ");
+  _get_and_set_prop(buffer.location);
+  // Set organisation
+  PROMPT("Organisation Name [" + buffer.organisation + "]: ");
+  _get_and_set_prop(buffer.organisation);
+  // *MANDATORY Set common name
+  input.assign("");
+  // PROMPT("Common Name: ");
+  // std::getline(std::cin, input);
+  int keepgoing = 1;
+  while (keepgoing) {
+    PROMPT("Common Name: ", RED);
+    std::getline(std::cin, input);
+    if (input.empty()) {
+      PWARN("common name can't be empty\n");
+      continue;
+    } else {
+      keepgoing = 0;
+      for (const char &c : input) {
+        if (badchars.find(c) != -1) {
+          // found bad char
+          PWARN("found unaccepted char '{}'\nplease avoid using any of these "
+                "'{}'\n",
+                c, badchars);
+          keepgoing = 1;
+          break;
+        }
+      }
+    }
+  }
+  buffer.cn = input;
+  // Set email
+  PROMPT("Email Address: ");
+  _get_and_set_prop(buffer.email);
+
+  if (db::entities::exists(profile_name, buffer.cn)) {
+    seterror("Entity with CN '{}' already exists in profile '{}'\n",
+             buffer.cn, profile_name);
+    return GPKIH_FAIL;
+  }
+  return GPKIH_OK;
+}
+
+static inline std::unordered_map<ENTITY_TYPE,int(*)(Profile&,ProfileConfig&,Entity&)> build_functions
+{
+  {ET_CA,actions::build_ca},
+  {ET_CL,actions::build},
+  {ET_SV,actions::build}
+};
 
 using namespace gpkih;
+
 int parsers::build(std::vector<std::string> opts) {
   // ./gpki build <profile> <ca|sv|cl> [subopts]
   if (opts.empty()) {
@@ -24,26 +95,22 @@ int parsers::build(std::vector<std::string> opts) {
   }
 
   strview etype = opts[1];
-  if(etype == "ca"){
-    entity.type = ET_CA;
-  }else if(etype == "client" || etype == "cl"){
-    entity.type = ET_CL;
-  }else if(etype == "server" || etype == "sv"){
-    entity.type = ET_SV;
-  }else{
-    PERROR("unknown entity type '{}'\n", etype);
+  if(entity_type_map.find(etype.data()) == entity_type_map.end()){
+    seterror("invalid entity type '{}'",etype);
     return GPKIH_FAIL;
   }
+  entity.type = entity_type_map[etype.data()];
 
   opts.erase(opts.begin(),opts.begin()+2);
 
   ProfileConfig config(profile);
+  entity.subject = std::move(config.default_subject());
+
   if(!config.succesfully_loaded){
     return GPKIH_FAIL;
   }
 
   // e.g /profiles/pki/serial/serial
-  
   // Load next serial
   str serial_path = profile.source + SLASH + "pki" + SLASH + "serial" + SLASH + "serial";
   if(!fs::exists(serial_path)){
@@ -55,7 +122,6 @@ int parsers::build(std::vector<std::string> opts) {
     seterror("couldn't open file '{}'\n",serial_path);
     return F_NOOPEN;
   }
-  str serial;
   file >> entity.serial;
 
   // override default build params with user arguments
@@ -67,8 +133,6 @@ int parsers::build(std::vector<std::string> opts) {
       config.set(CONFIG_PKI,"key","creation_format",std::move(opts[++i]));
     } else if (opt == "-outformat") {
       config.set(CONFIG_PKI,"csr","creation_format",std::move(opts[++i]));
-    } else if (opt == "\0") {
-      continue;
     } else if(opt == "-cn" || opt == "--common-name"){
       entity.subject.cn = std::move(opts[++i]);
     } else if(opt == "-serial" || opt == "--serial"){
@@ -83,11 +147,18 @@ int parsers::build(std::vector<std::string> opts) {
       entity.subject.country = std::move(opts[++i]);
     }else if(opt == "-st" || opt == "--state"){
       entity.subject.state = std::move(opts[++i]);
+    }else if(opt == "\0"){
+      continue;
     }
     else {
       UNKNOWN_OPTION_MSG(opt);
     }
   }
-  
-  return actions::build(profile,config,entity);
+  if(entity.subject.cn.empty()){
+    // User didn't give common_name (mandatory) with cli opts  
+    // prompt the user for subject info
+    _prompt_for_subject(profile.name, entity.subject);
+  }
+
+  return build_functions[entity.type](profile,config,entity);
 }

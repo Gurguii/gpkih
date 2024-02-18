@@ -23,8 +23,7 @@ openssl req \
 -noenc
 ```
 
-*Sign request with CA and create signed certificate*
-openssl ca -in .\client.req -out .\client-crt -extfile .\x509\client -subj '/CN=gurguiCLIENT' -config .\gopenssl.cnf
+*Sign request with CA and create signed certificate*  
 ```bash
 openssl ca \
 -config gopenssl.cnf \

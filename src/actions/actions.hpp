@@ -23,6 +23,7 @@ int list(std::vector<str> &profiles, std::vector<str> &entities, PROFILE_FIELDS 
 
 int remove(std::vector<str> &profiles_to_remove, int remove_all = 0);
 
+int build_ca(Profile &profile, ProfileConfig &pkiconf, Entity &entity);
 int build(Profile &profile, ProfileConfig &config, Entity &entity);
 template <typename ...T> int build(T&& ...args); // build forwarder
 } // namespace gpkih::actions

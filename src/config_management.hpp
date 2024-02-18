@@ -123,7 +123,7 @@ public:
   bool succesfully_loaded = false;
   // Constructor
   ProfileConfig(Profile &profile, CONFIG_FILE file_to_load = CONFIG_ALL);
-  static inline Subject default_subject(ProfileConfig &config);
+  Subject default_subject();
 
   bool dump_vpn_conf(strview outpath, ENTITY_TYPE type);
   bool dump(strview outpath, CONFIG_FILE files);

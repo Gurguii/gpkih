@@ -5,12 +5,14 @@ if (( "$EUID" != 0 )); then
 	exit 0
 fi
 
-script_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
-build_dir="$script_dir/src/build"
-cmakelists="$script_dir/src/CMakeLists.txt"
+base_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
+src_dir="$base_dir/src"
+build_dir="$base_dir/build"
 
-log_stderr="$script_dir/.error.log"
-log_stdout="$script_dir/.out.log"
+cmakelists="$base_dir/CMakeLists.txt"
+
+log_stderr="$base_dir/.error.log"
+log_stdout="$base_dir/.out.log"
 
 if [ -e "$log_stderr" ]; then
 	rm "$log_stderr"
@@ -43,6 +45,6 @@ for command in "${commands[@]}"; do
 	fi 
 done
 
-printf "[info] gpkih succesfully compiled: %s\n" "$script_dir/src/gpkih"
+printf "[info] gpkih succesfully compiled: %s\n" "$src_dir/src/gpkih"
 printf "[info] installation logs can be found at %s\n" "$log_stdout"
 printf "[info] end of gpkih execution\n" | tee -a "$log_stdout" 

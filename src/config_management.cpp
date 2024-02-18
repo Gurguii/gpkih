@@ -66,18 +66,13 @@ ProfileConfig::ProfileConfig(Profile &profile, CONFIG_FILE files_to_load) {
   }
 }
 
-Subject ProfileConfig::default_subject(ProfileConfig &config) {
-  ConfigMap *ptr = config.get(CONFIG_PKI);
-  if (ptr == nullptr) {
-    return {};
-  }
-  ConfigMap &pki = *ptr;
-  return Subject{.country = pki["subject"]["country"],
-                 .state = pki["subject"]["state"],
-                 .location = pki["subject"]["location"],
-                 .organisation = pki["subject"]["organisation"],
+Subject ProfileConfig::default_subject() {
+  return Subject{.country = _conf_pki["subject"]["country"],
+                 .state = _conf_pki["subject"]["state"],
+                 .location = _conf_pki["subject"]["location"],
+                 .organisation = _conf_pki["subject"]["organisation"],
                  .cn = "",
-                 .email = pki["subject"]["email"]};
+                 .email = _conf_pki["subject"]["email"]};
 };
 
 ConfigMap* const ProfileConfig::get(CONFIG_FILE file) {

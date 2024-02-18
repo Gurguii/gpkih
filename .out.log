@@ -1,4 +1,4 @@
-[info] starting gpkih setup script - 18-02-2024 at 11:44
+[info] starting gpkih setup script - 18-02-2024 at 20:09
 -- The C compiler identification is GNU 13.2.1
 -- The CXX compiler identification is GNU 13.2.1
 -- Detecting C compiler ABI info
@@ -13,8 +13,8 @@
 -- Detecting CXX compile features - done
 -- Configuring done (0.3s)
 -- Generating done (0.0s)
--- Build files have been written to: /home/gurgui/github/gpkih/src/build
-[ 50%] Building CXX object CMakeFiles/gpkih.dir/gpki.cpp.o
+-- Build files have been written to: /home/gurgui/github/gpkih/build
+[ 50%] Building CXX object CMakeFiles/gpkih.dir/src/gpki.cpp.o
 [100%] Linking CXX executable gpkih
 [100%] Built target gpkih
 [info] end of gpkih execution

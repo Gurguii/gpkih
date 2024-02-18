@@ -7,27 +7,25 @@ int db::entities::initialize(str profile) {
   if (!fs::exists(dbpath)) {
     std::ofstream db(dbpath);
     if (!db.is_open()) {
-      std::cout << "couldn't create file '" << dbpath << "'\n";
-      return -1;
+      seterror("couldn't create file '{}'",dbpath);
+      return GPKIH_FAIL;
     }
     db << dbheaders << std::endl;
     db.close();
-    return 0;
+    return GPKIH_OK;
   }
   str headers(dbheaders.size(), '\x00');
   std::ifstream(dbpath).read(&headers[0], headers.size());
   if (headers != dbheaders) {
-    PERROR("entity headers do not match\n");
-    std::cout << "entity headers do not match\n";
-    return -1;
+    seterror("entity headers do not match\n");
+    return GPKIH_FAIL;
   }
-  return 0;
+  return GPKIH_OK;
 }
 
 int db::entities::populate_from_entry(str &entry, Entity &entity) {
   std::stringstream ss(entry);
   str buff;
-  getline(ss, entity.profile_name, CSV_DELIMITER_c);
   getline(ss, entity.subject.cn, CSV_DELIMITER_c);
   getline(ss, buff, CSV_DELIMITER_c);
   entity.type = entity_type_map[buff];
@@ -37,7 +35,10 @@ int db::entities::populate_from_entry(str &entry, Entity &entity) {
   getline(ss, entity.subject.location, CSV_DELIMITER_c);
   getline(ss, entity.subject.organisation, CSV_DELIMITER_c);
   getline(ss, entity.subject.email, CSV_DELIMITER_c);
-  return 0;
+  getline(ss, entity.key_path, CSV_DELIMITER_c);
+  getline(ss, entity.csr_path, CSV_DELIMITER_c);
+  getline(ss, entity.crt_path, CSV_DELIMITER_c);
+  return GPKIH_OK;
 }
 
 int db::entities::populate_from_entry(str &entry,
@@ -47,7 +48,7 @@ int db::entities::populate_from_entry(str &entry,
   while (getline(ss, field, CSV_DELIMITER_c)) {
     entity_fields.push_back(field);
   }
-  return 0;
+  return GPKIH_OK;
 }
 
 int db::entities::populate_from_entry(str &profile, str &entry, str &cn,
@@ -55,7 +56,7 @@ int db::entities::populate_from_entry(str &profile, str &entry, str &cn,
   std::ifstream file(DB_DIRPATH + profile + "_entities.csv");
   if (!file.is_open()) {
     seterror(fmt::format("couldn't entities database for '{}'", profile));
-    return -1;
+    return GPKIH_FAIL;
   }
   sstream ss(entry);
   std::string _cn;
@@ -69,7 +70,7 @@ int db::entities::populate_from_entry(str &profile, str &entry, str &cn,
 int db::entities::exists(strview profile, strview common_name) {
   std::ifstream file(DB_DIRPATH + profile.data() + "_entities.csv");
   if (!file.is_open()) {
-    return -1;
+    return GPKIH_FAIL;
   }
   str line;
   Entity info;
@@ -79,13 +80,13 @@ int db::entities::exists(strview profile, strview common_name) {
       return 1;
     }
   }
-  return 0;
+  return GPKIH_FAIL;
 }
 
 int db::entities::load(str &profile, strview common_name, Entity &entity_buff) {
   std::ifstream file(DB_DIRPATH + profile + "_entities.csv");
   if (!file.is_open()) {
-    return -1;
+    return GPKIH_FAIL;
   }
   str line;
   Entity info;
@@ -93,43 +94,44 @@ int db::entities::load(str &profile, strview common_name, Entity &entity_buff) {
     populate_from_entry(line, info);
     if (info.subject.cn == common_name) {
       entity_buff = std::move(info);
-      return 0;
+      return GPKIH_OK;
     }
   }
-  return -1;
+  return GPKIH_FAIL;
 }
 
-int db::entities::add(Entity &entity) {
+int db::entities::add(str &profile_name, Entity &entity) {
+  std::cout << "adding entry: " << entity.csv_entry() << "\n";
   Entity &e = entity;
-  str dbpath = _dbpath(entity.profile_name);
+  str dbpath = std::move(_dbpath(profile_name));
   std::ofstream file(dbpath, std::ios::app);
   if (!file.is_open()) {
-    return -1;
+    return GPKIH_FAIL;
   }
   uint64_t bsize = fs::file_size(dbpath);
-  file << e.csv_entry() << std::endl;
-  return !(fs::file_size(dbpath) > bsize);
+  file << e.csv_entry() << EOL;
+  return GPKIH_OK;
 }
 
 int db::entities::del(str &profile, strview cn) {
   str dbpath = _dbpath(profile);
   if (exists(profile, cn)) {
-    return -1;
+    return GPKIH_FAIL;
   }
   std::ifstream file(dbpath);
   if (!file.is_open()) {
-    return -1;
+    return GPKIH_FAIL;
   }
   str line;
   Entity buff;
   fs::path tmpfilename = dbpath + ".tmp";
   std::ofstream tmpfile(tmpfilename);
   if (!tmpfile.is_open()) {
-    return -1;
+    return GPKIH_FAIL;
   }
   while (getline(file, line)) {
     populate_from_entry(line, buff);
-    if (buff.profile_name != profile) {
+    if (buff.subject.cn != cn) {
       tmpfile << line << std::endl;
     }
   }

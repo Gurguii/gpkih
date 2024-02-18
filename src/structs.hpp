@@ -40,9 +40,9 @@ enum class ENTITY_TYPE {
   server = 8,
 #define ET_SV ENTITY_TYPE::server
 };
-std::unordered_map<str, ENTITY_TYPE> entity_type_map{
-    {"ca", ET_CA}, {"server", ET_SV}, {"client", ET_CL}};
-int operator&(ENTITY_TYPE lo, ENTITY_TYPE ro) { return (ui16)lo & (ui16)ro; }
+static inline std::unordered_map<str, ENTITY_TYPE> entity_type_map{
+    {"ca", ET_CA}, {"server", ET_SV}, {"client", ET_CL}, {"sv",ET_SV}, {"cl",ET_CL}};
+static inline int operator&(ENTITY_TYPE lo, ENTITY_TYPE ro) { return (ui16)lo & (ui16)ro; }
 
 enum class ENTITY_FIELDS : uint16_t {
   all = 8191,
@@ -116,10 +116,10 @@ struct Profile {
     return fmt::format("{}{}pki{}certs{}",source, SLASH, SLASH, SLASH);
   }
   inline str dir_key(){
-    return fmt::format("{}{}pki{}keys{}", SLASH);
+    return fmt::format("{}{}pki{}keys{}", source, SLASH, SLASH, SLASH);
   }
   inline str dir_req(){
-    return fmt::format("{}{}pki{}reqs{}", SLASH);
+    return fmt::format("{}{}pki{}reqs{}", source, SLASH, SLASH, SLASH);
   }
   inline str csv_entry() {
     return fmt::format("{},{},{},{},{}", name, source, ca_created, sv_count,
@@ -131,6 +131,7 @@ struct Profile {
   inline str ca_key() {
     return fmt::format("{}{}pki{}ca{}key", source, SLASH, SLASH, SLASH);
   }
+
 };
 
 
@@ -157,8 +158,14 @@ struct Subject {
   str cn;
   str email;
   inline str oneliner() {
-    return "/C=" + country + "/ST=" + state + "/L=" + location +
-           "/O=" + organisation + "/CN=" + cn + "/emailAddress=" + email;
+    str _subj;
+    if(!country.empty()){_subj+="/C="+country;};
+    if(!state.empty()){_subj+="/ST="+state;};
+    if(!location.empty()){_subj+="/L="+location;};
+    if(!organisation.empty()){_subj+="/O="+organisation;};
+    if(!cn.empty()){_subj+="/CN="+cn;};
+    if(!email.empty()){_subj+="/emailAddress="+email;};
+    return std::move(_subj);
   }
   inline void print(){
     fmt::print(fg(LGREEN), "common name: {}\ncountry: {}\nstate: {}\nlocation: {}\norganisation: {}\nemail: {}\n",cn,country,state,location,organisation,email);
@@ -166,15 +173,18 @@ struct Subject {
 };
 struct Entity {
   Subject subject;
-  str profile_name;
   ENTITY_TYPE type; // ca-sv-cl
   str serial;
+  str key_path;
+  str csr_path;
+  str crt_path;
   inline str csv_entry() {
-    return profile_name + "," + subject.cn + "," + to_str(type) + "," + serial +
+    return subject.cn + "," + to_str(type) + "," + serial +
            "," + subject.country + "," + subject.state + "," +
-           subject.location + "," + subject.organisation + "," + subject.email + ",";
+           subject.location + "," + subject.organisation + "," + subject.email + "," + key_path + "," + csr_path + "," + crt_path + ",";
   };
 };
+
 
 /* UNUSED */
 // this would allow having the whole vpn configuration file in a ui64

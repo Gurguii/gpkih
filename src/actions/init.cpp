@@ -1,21 +1,23 @@
-#include "../config_management.hpp"
-#include "../utils/gpkih_util_funcs.hpp"
 #include "actions.hpp"
-#include <exception>
 static inline str openssl_conf_filename = "gopenssl.conf";
-#define RELATIVE_DIRECTORY_PATHS                                               \
-  std::vector<str> {                                                           \
-    "tls", "pki" + SLASH + "ca", "pki" + SLASH + "keys",                       \
-        "pki" + SLASH + "crl", "pki" + SLASH + "serial", "packs",              \
-        "pki" + SLASH + "certs", "pki" + SLASH + "reqs",                       \
-        "pki" + SLASH + "database", "logs"                                     \
-  }
-#define RELATIVE_FILE_PATHS                                                    \
-  std::unordered_map<str, str> {                                               \
-    {"pki" + SLASH + "crl" + SLASH + "crlnumber", "1000"},                     \
-        {"pki" + SLASH + "serial" + SLASH + "serial", "01"},                   \
-        {"pki" + SLASH + "database" + SLASH + "index.txt", ""},                \
-  }
+
+static inline std::vector<str> RELATIVE_DIRECTORY_PATHS(){
+  return 
+  {                                                           
+    "tls", "pki" + SLASH + "ca", "pki" + SLASH + "keys",                       
+    "pki" + SLASH + "crl", "pki" + SLASH + "serial", "packs",              
+    "pki" + SLASH + "certs", "pki" + SLASH + "reqs",                       
+    "pki" + SLASH + "database", "logs"                                     
+  };
+};                                               
+static inline std::unordered_map<str,str> RELATIVE_FILE_PATHS(){
+  return 
+  {                                               
+    {"pki" + SLASH + "crl" + SLASH + "crlnumber", "1000"},                     
+    {"pki" + SLASH + "serial" + SLASH + "serial", "01"},                   
+    {"pki" + SLASH + "database" + SLASH + "index.txt", ""},                
+  };
+}                                                    
 
 int create_dhparam(strview outpath) {
   str command = fmt::format("openssl dhparam -out {} 2048", outpath);
@@ -103,7 +105,7 @@ int actions::init(strview profile_name, strview profile_source) {
   };
 
   // Create directories
-  for (const str &relative : RELATIVE_DIRECTORY_PATHS) {
+  for (const str &relative : RELATIVE_DIRECTORY_PATHS()) {
     str path = profile.source + SLASH + relative;
     if (!fs::create_directories(path)) {
       PERROR("couldn't create directory '{}'", path);
@@ -113,7 +115,7 @@ int actions::init(strview profile_name, strview profile_source) {
     }
   }
   // Create files
-  for (const std::pair<str, str> &p : RELATIVE_FILE_PATHS) {
+  for (const std::pair<str, str> &p : RELATIVE_FILE_PATHS()) {
     // p.first -> path
     // p.second -> default file contents
     str path = profile.source + SLASH + p.first;
@@ -155,16 +157,18 @@ int actions::init(strview profile_name, strview profile_source) {
 #endif
 
   // Add profile to database
-  auto entry = profile.csv_entry();
   if (db::profiles::add(&profile)) {
     return -1;
   }
   // Initialize entities db
   db::entities::initialize(profile.name);
+  if(!db::entities::initialized){
+    return GPKIH_FAIL;
+  }
   // Extra questions
   if (Config::get("behaviour", "prompt") == "yes") {
     // QUESTION 1
-    if (Config::get("behaviour","autoanswer") == "no") {
+    if (Config::get("behaviour", "autoanswer") == "no") {
       PROMPT("Create dhparam? " + fmt::format(fg(COLOR::lime) |
                                                   EMPHASIS::underline,
                                               "(highly recommended)"),
@@ -174,29 +178,8 @@ int actions::init(strview profile_name, strview profile_source) {
       if (ans == "y" || ans == "Y") {
         create_dhparam(profile.source + SLASH + "tls" + SLASH + "dhparam2048");
       }
-      ans.assign("");
-      // QUESTION 2
-      PROMPT("Create the CA now?", "[y/n]");
-      getline(std::cin, ans);
-      if (ans == "y" || ans == "Y") {
-        ProfileConfig config(profile);
-        if (actions::build(profile,config,Entity{.profile_name = profile.name,.type = ET_CA})) {
-          return -1;
-        } else {
-          PINFO("CA succesfully created\n");
-          return -1;
-        };
-      }
-    } else {
-      // autoanswer set to 'yes'
-      ProfileConfig config(profile);
-      create_dhparam(
-          fmt::format("{}{}tls{}dhparam2048", profile.source, SLASH, SLASH));
-      if (actions::build(profile,config,Entity{.profile_name = profile.name,.type = ET_CA})) {
-        return -1;
-      }
-      PINFO("CA succesfully created\n");
-      return 0;
+    }else{
+      create_dhparam(profile.source + SLASH + "tls" + SLASH + "dhparam2048");
     }
   }
   return 0;
