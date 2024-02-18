@@ -128,7 +128,8 @@ public:
   bool dump_vpn_conf(strview outpath, ENTITY_TYPE type);
   bool dump(strview outpath, CONFIG_FILE files);
 
-  ConfigMap *get(CONFIG_FILE sections);
+  ConfigMap* const get(CONFIG_FILE sections);
+  ConfigMap& _get(CONFIG_FILE file);
   void set(CONFIG_FILE file, strview section, strview key, strview val);
   
   bool exists(strview key, CONFIG_FILE sections);

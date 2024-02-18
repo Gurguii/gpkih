@@ -1,7 +1,9 @@
 #include "actions.hpp"
 using namespace gpkih;
 
-str badchars = "~_\"·/\\- ";
+// Not allowed in common_names
+str badchars = "~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?\t\n\r";
+
 static inline void _get_and_set_prop(std::string &st) {
   std::string input;
   std::getline(std::cin, input);
@@ -51,14 +53,7 @@ static inline int _prompt_for_subject(strview profile_name, Subject &buffer)
         }
       }
     }
-    std::getline(std::cin, input);
   }
-
-  // while (input.empty()) {
-  //   PWARN("common name can't be empty\n");
-  //   PROMPT("please introduce a common name: ");
-  //   std::getline(std::cin, input);
-  // };
   buffer.cn = input;
   // Set email
   PROMPT("Email Address: ");
@@ -72,23 +67,24 @@ static inline int _prompt_for_subject(strview profile_name, Subject &buffer)
   return GPKIH_OK;
 }
 
-//static inline str _server_client_csr_command(str &gopenssl, ConfigMap &pkiconf,
-//                                             Entity &entity) {
-//  return fmt::format(
-//      "openssl req -newkey {}:{} -out {} -keyout {} -subj '{}' -outform {} "
-//      "-keyform {} -noenc",
-//      pkiconf["key"]["size"], pkiconf["key"]["algorithm"], entity.req_path,
-//      entity.key_path, entity.subject.oneliner(),
-//      pkiconf["csr"]["creation_format"], pkiconf["key"]["format"]);
-//}
-//static inline str _server_client_crt_command(str &gopenssl, ConfigMap &pkiconf,
-//                                             Entity &entity) {
-//  return fmt::format("openssl ca -config {} -in {} -out {} -subj '{}' -extfile "
-//                     "{}x509{}{} -notext -days +{}",
-//                     gopenssl, entity.req_path, entity.cert_path,
-//                     entity.subject.oneliner(), CONF_DIRPATH, SLASH,
-//                     to_str(entity.type), pkiconf["crt"]["days"]);
-//}
+static str _server_client_csr_command(Profile &profile, ConfigMap &pkiconf,
+                                             Subject &subject) {
+  // openssl req -newkey {}:{} -out {} -keyout {} -subj '{}' -outform {} -keyform {} -noenc
+    
+  return fmt::format(
+      "openssl req -newkey {}:{} -out {} -keyout {} -subj '{}' -outform {} "
+      "-keyform {} -noenc", pkiconf["key"]["algorithm"],
+      pkiconf["key"]["size"], profile.dir_req() + subject.cn + "-csr." + pkiconf["csr"]["creation_format"], profile.dir_key() + subject.cn + "-key." + pkiconf["key"]["creation_format"], subject.oneliner(),
+      pkiconf["csr"]["creation_format"], pkiconf["key"]["format"]);
+}
+static str _server_client_crt_command(Profile &profile, ConfigMap &pkiconf,
+                                             Entity &entity) {
+  return fmt::format("openssl ca -config {} -in {} -out {} -subj '{}' -extfile "
+                     "{}x509{}{} -notext -days +{}",
+                     profile.gopenssl(), profile.dir_req() + entity.subject.cn + "-csr." + pkiconf["csr"]["creation_format"], profile.dir_crt() + entity.subject.cn + "-crt." + pkiconf["crt"]["format"],
+                     entity.subject.oneliner(), CONF_DIRPATH, SLASH,
+                     to_str(entity.type), pkiconf["crt"]["days"]);
+}
 static inline int _create_config(Profile &profile,
                                  std::vector<Entity> &entities,
                                  int _inline = 1) {
@@ -197,7 +193,7 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity){
   
   PINFO("CALLING actions::build(Profile, ProfileConfig, Entity)\n");
   if(entity.subject.cn.empty()){
-    // User didn't give common_name with cli opts
+    // User didn't give common_name (mandatory) with cli opts
     // set default values loaded from pki.conf
     entity.subject = ProfileConfig::default_subject(config);  
     // prompt the user for subject info
@@ -205,7 +201,12 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity){
   }
 
   // [rem] entity already has a type and filled subject info
-
+  // entity.subject.print();
+  // std::cout << "oneliner: " << entity.subject.oneliner() << "\n";
+  ConfigMap &pkiconf = config._get(CONFIG_PKI);
+  str key_csr_command = _server_client_csr_command(profile, pkiconf, entity.subject); 
+  str crt_command = _server_client_crt_command(profile, pkiconf, entity);
+  fmt::print("== commands ==\nkey + csr -> {}\ncrt -> {}\n", key_csr_command, crt_command);
   return GPKIH_OK;
 }
 

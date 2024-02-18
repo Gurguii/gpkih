@@ -110,16 +110,16 @@ struct Profile {
     return fmt::format("{}{}{}", source, SLASH, "gopenssl.conf");
   }
   inline str dir_crl() {
-    return fmt::format("{}{}pki{}crl", source, SLASH, SLASH);
+    return fmt::format("{}{}pki{}crl{}", source, SLASH, SLASH, SLASH);
   }
   inline str dir_crt(){
-    return fmt::format("{}{}pki{}certs",source, SLASH, SLASH);
+    return fmt::format("{}{}pki{}certs{}",source, SLASH, SLASH, SLASH);
   }
   inline str dir_key(){
-    return fmt::format("{}{}pki{}keys");
+    return fmt::format("{}{}pki{}keys{}", SLASH);
   }
   inline str dir_req(){
-    return fmt::format("{}{}pki{}reqs");
+    return fmt::format("{}{}pki{}reqs{}", SLASH);
   }
   inline str csv_entry() {
     return fmt::format("{},{},{},{},{}", name, source, ca_created, sv_count,
@@ -159,6 +159,9 @@ struct Subject {
   inline str oneliner() {
     return "/C=" + country + "/ST=" + state + "/L=" + location +
            "/O=" + organisation + "/CN=" + cn + "/emailAddress=" + email;
+  }
+  inline void print(){
+    fmt::print(fg(LGREEN), "common name: {}\ncountry: {}\nstate: {}\nlocation: {}\norganisation: {}\nemail: {}\n",cn,country,state,location,organisation,email);
   }
 };
 struct Entity {

@@ -82,4 +82,4 @@ template<typename ...Args>
 static inline void seterror(std::string fmt, Args&&... args){
   last_gpki_error = fmt::format(fmt,std::forward<Args>(args)...);
 }
-static inline str lasterror() { return fmt::format(S_ERROR,last_gpki_error); }
+static inline str lasterror() { return last_gpki_error == "no error" ? "" : fmt::format(S_ERROR,last_gpki_error); }

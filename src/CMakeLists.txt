@@ -17,9 +17,21 @@ target_include_directories(gpkih PUBLIC
         ${INCLUDE_DIR}
 )
 
+set(FMT_LIBRARY_NAMES fmt)
+
+if(WIN32)
+        set(FMT_LIBRARY_PATH "C:/Program Files (x86)/FMT/lib")
+else()
+        set(FMT_LIBRARY_PATH "/usr/lib;/usr/local/lib")
+endif()
+
 # Busca dependencias externas
-find_library(FMT_LIBRARY NAMES fmt PATHS /usr/local/lib /usr/lib)
+find_library(FMT_LIBRARY NAMES ${FMT_LIBRARY_NAMES} PATHS ${FMT_LIBRARY_PATH})
 target_link_libraries(gpkih PRIVATE ${FMT_LIBRARY})
 
-# Compila con optimizaciones
-set(CMAKE_CXX_FLAGS "-O3")
+# Add compiling flags
+if(WIN32)
+        set(CMAKE_CXX_FLAGS "/O3")
+else()
+        set(CMAKE_CXX_FLAGS "-O3")
+endif()

@@ -80,7 +80,7 @@ Subject ProfileConfig::default_subject(ProfileConfig &config) {
                  .email = pki["subject"]["email"]};
 };
 
-ConfigMap *ProfileConfig::get(CONFIG_FILE file) {
+ConfigMap* const ProfileConfig::get(CONFIG_FILE file) {
   switch (file) {
   case CONFIG_VPN:
     return &this->_conf_vpn;
@@ -93,7 +93,14 @@ ConfigMap *ProfileConfig::get(CONFIG_FILE file) {
     break;
   }
 }
-
+ConfigMap& ProfileConfig::_get(CONFIG_FILE file){
+  switch(file){
+    case CONFIG_VPN:
+      return this->_conf_vpn;
+    default:
+      return this->_conf_pki;
+  }
+}
 void ProfileConfig::set(CONFIG_FILE file, strview section, strview key, strview val){
   switch(file){
     case CONFIG_PKI:
