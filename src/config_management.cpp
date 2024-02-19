@@ -1,4 +1,5 @@
 #include "config_management.hpp"
+#include <sstream>
 
 using namespace gpkih;
 int Config::load_file(strview path, ConfigMap &buff) {
@@ -67,12 +68,14 @@ ProfileConfig::ProfileConfig(Profile &profile, CONFIG_FILE files_to_load) {
 }
 
 Subject ProfileConfig::default_subject() {
-  return Subject{.country = _conf_pki["subject"]["country"],
-                 .state = _conf_pki["subject"]["state"],
-                 .location = _conf_pki["subject"]["location"],
-                 .organisation = _conf_pki["subject"]["organisation"],
-                 .cn = "",
-                 .email = _conf_pki["subject"]["email"]};
+    Subject subj;
+    subj.country = _conf_pki["subject"]["country"];
+    subj.state = _conf_pki["subject"]["state"];
+    subj.location = _conf_pki["subject"]["location"];
+    subj.organisation = _conf_pki["subject"]["organisation"];
+    subj.cn = "";
+    subj.email = _conf_pki["subject"]["email"];
+    return std::move(subj);
 };
 
 ConfigMap* const ProfileConfig::get(CONFIG_FILE file) {

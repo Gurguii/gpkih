@@ -1,4 +1,5 @@
 #include "database.hpp"
+#include <sstream>
 using namespace gpkih;
 
 /* Requires a call whenever we change the profile context */

@@ -70,7 +70,7 @@ static str _ca_build_command(Profile &profile, ConfigMap &pkiconf, Entity &entit
 
 static inline int _create_config(Profile &profile,
                                  std::vector<Entity> &entities,
-                                 int _inline = 1) {
+                                 int do_inline_file = 1) {
   str ca_crt_path = std::move(profile.ca_crt());
 
   if (!fs::exists(ca_crt_path)) {
@@ -99,7 +99,7 @@ static inline int _create_config(Profile &profile,
       return GPKIH_FAIL;
     };
     str outpath;
-    if (_inline) {
+    if (do_inline_file) {
       outpath = fmt::format("{}{}inline_{}.{}", outdir, SLASH,
                             entity.subject.cn, VPN_CONFIG_EXTENSION);
     } else {
@@ -152,7 +152,7 @@ static inline int _create_config(Profile &profile,
 }
 static inline int _create_config(str &profile_name,
                                  std::vector<str> &common_names,
-                                 int _inline = 1) {
+                                 int do_inline_file = 1) {
   Profile profile;
   if (db::profiles::load(profile_name, profile)) {
     seterror("couldn't load profile '{}'\n", profile_name);
@@ -168,7 +168,7 @@ static inline int _create_config(str &profile_name,
     };
     entities.emplace_back(e);
   }
-  return _create_config(profile, entities, _inline);
+  return _create_config(profile, entities, do_inline_file);
 }
 
 int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity){

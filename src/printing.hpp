@@ -19,15 +19,17 @@ static constexpr COLOR CYAN = COLOR::cyan;
 static constexpr COLOR BLACK = COLOR::black;
 static constexpr COLOR ALICIA = COLOR::alice_blue;
 static constexpr COLOR LGREEN = COLOR::light_green;
+static constexpr COLOR PALE_GOLDEN_ROD = COLOR::pale_golden_rod;
 
 static STYLE S_NONE = fg(BLACK);
 static STYLE S_WARNING = fg(ORANGE) | EMPHASIS::bold | EMPHASIS::italic;
-static STYLE S_INFO = fg(COLOR::pale_golden_rod) | EMPHASIS::italic;
+static STYLE S_INFO = fg(PALE_GOLDEN_ROD) | EMPHASIS::italic;
 static STYLE S_ERROR = fg(RED) | EMPHASIS::bold | EMPHASIS::italic;
+static STYLE S_SUCCESS = fg(LGREEN) | EMPHASIS::bold;
 
 // Styles for entity labels
 static inline std::string S_ELABEL(std::string st) {
-  return fmt::format(fg(COLOR::pale_golden_rod) | EMPHASIS::bold, st);
+  return fmt::format(fg(PALE_GOLDEN_ROD) | EMPHASIS::bold, st);
 }
 
 static inline std::string S_ELABEL_V(std::string st) {
@@ -59,6 +61,10 @@ void PRINTF(STYLE style, std::string fmt, T &&...args) {
 template <typename... T> void PRINTF(std::string fmt, T &&...args) {
   fmt::print(fmt, std::forward<T>(args)...);
 };
+/* SUCCESS PRINTING */
+template <typename ...T> void PSUCCESS(std::string fmt, T &&...args) {
+    fmt::print(S_SUCCESS, "[success] " + fmt, std::forward<T>(args)...);
+};
 
 /* ERROR PRINTING */
 template <typename... T> void PERROR(std::string fmt, T &&...args) {
@@ -74,7 +80,7 @@ template <typename... T> void PINFO(std::string fmt, T &&...args) {
 template <typename... T> void PWARN(std::string fmt, T &&...args) {
   fmt::print(S_WARNING, " [warning] " + fmt, std::forward<T>(args)...);
 };
-
+ 
 /* HINT PRINTING */
 static inline void PHINT(std::string hint) {
   std::cout << fmt::format(fg(YELLOW), "💡 {}\n", hint);

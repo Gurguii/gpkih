@@ -16,8 +16,8 @@ using ui64 = uint64_t;
 namespace fs = std::filesystem;
 
 #ifdef _WIN32
+#include <Windows.h>
 /* WINDOWS STUFF */
-CURRENT_PATH = fs::current_path().string();
 static inline str CURRENT_PATH = fs::current_path().string();
 static inline str SLASH = "\\";
 static inline str BASEDIR = str(std::getenv("LOCALAPPDATA")) + "\\gpkih\\";
@@ -76,4 +76,12 @@ template<typename ...Args>
 static inline void seterror(std::string fmt, Args&&... args){
   last_gpki_error = fmt::format(fmt,std::forward<Args>(args)...);
 }
-static inline str lasterror() { return last_gpki_error == "no error" ? "" : fmt::format(S_ERROR,last_gpki_error); }
+static inline str lasterror() { return last_gpki_error; }
+static inline void printlasterror() {
+	if (last_gpki_error == "no error" || last_gpki_error.empty()) {
+		fmt::print(fg(LGREEN) | EMPHASIS::bold, "no error");
+	}
+	else {
+		PERROR(lasterror());
+	}
+}

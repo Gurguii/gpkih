@@ -1,4 +1,5 @@
 #include "database.hpp"
+#include <sstream>
 using namespace gpkih;
 
 int db::profiles::populate_from_entry(str &entry, Profile *profile) {

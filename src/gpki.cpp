@@ -3,8 +3,6 @@
 #include "parse/parser.hpp"
 /* Database (csv) manipulation */
 #include "db/database.hpp"
-//#include "db/entities.hpp"
-//#include "db/profiles.hpp"
 /* Available actions */
 #include "actions/actions.hpp"
 /* Help functions */
@@ -12,7 +10,7 @@
 
 // Tasks launched by cleanup() before exiting the program
 static inline std::vector<int (*)()> cleanup_functions{db::profiles::sync};
-static inline void cleanup() {
+static inline int cleanup() {
   std::cout << "\n";
   std::vector<std::future<int>> tasks{};
   // launch every task asynchronously
@@ -29,15 +27,22 @@ static inline void cleanup() {
 
 class Signals {
 private:
-  static inline void ctrl_c_handler(int sig) {
-    PINFO("\ncaught ctrl+c signal, cleaning up before exiting ...");
-    cleanup();
-  }
-
+#ifdef _WIN32
+    static inline BOOL ctrl_c_handler(DWORD signal) {
+        PINFO("\ncaught ctrl+c signal, cleaning up before exiting ...");
+        cleanup();
+        return TRUE;
+    }
+#else
+    static inline void ctrl_c_handler(int sig) {
+        PINFO("\ncaught ctrl+c signal, cleaning up before exiting ...");
+        cleanup();
+    }
+#endif
 public:
   static inline void register_signals() {
-#ifdef __WIN32
-    SetConsoleCtrlHandler(ctrl_c_handler, TRUE);
+#ifdef _WIN32
+    SetConsoleCtrlHandler(ctrl_c_handler, true);
 #else
     signal(SIGINT, ctrl_c_handler);
 #endif
@@ -46,6 +51,7 @@ public:
 
 int check_gpkih_install_dir() {
   if (!fs::exists(BASEDIR)) {
+      PINFO("Creating gpkih source dir - '{}'", BASEDIR);
     if (!fs::create_directory(BASEDIR)) {
       PERROR("Couldn't create directory '{}'", BASEDIR);
       return F_NOEXIST;
@@ -53,13 +59,13 @@ int check_gpkih_install_dir() {
     str configdir = CURRENT_PATH + SLASH + "config";
     fs::copy(configdir, CONF_DIRPATH, fs::copy_options::recursive);
     if (!fs::exists(CONF_DIRPATH) || !fs::is_directory(CONF_DIRPATH)) {
-      PERROR("couldn't create gpkih source dir '{}'\n", CONF_DIRPATH);
+      PERROR("couldn't copy '{}' to '{}'\n", configdir, CONF_DIRPATH);
       return F_NOCREATE;
     }
     if (!fs::create_directory(DB_DIRPATH)) {
       PERROR("couldn't create gpkih source db dir '{}'\n", DB_DIRPATH);
       return F_NOCREATE;
-    };
+    }; 
   }
   return 0;
 }
@@ -85,7 +91,7 @@ int main(int argc, const char **args) {
 
   // wait for task
   if (load_gpkih_config.get() != GPKIH_OK) {
-    PERROR(lasterror());
+      printlasterror();
     return -1;
   }
   
@@ -95,7 +101,7 @@ int main(int argc, const char **args) {
 
   // Parse options
   if (gpkih::parsers::parse(argc - 1, args + 1) != GPKIH_OK) {
-    PERROR(lasterror());
+      printlasterror();
     cleanup();
   }
 

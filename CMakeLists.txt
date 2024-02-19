@@ -2,18 +2,22 @@ cmake_minimum_required(VERSION 3.10)
 
 project(gpkih VERSION 1.0)
 
+
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
 if(WIN32)
         set(FMT_LIBRARY_PATH "C:/Program Files (x86)/FMT/lib")
-        set(CMAKE_CXX_FLAGS "/O3")
+        set(FMT_LIBRARY_INCLUDE "C:/Program Files (x86)/FMT/include")
+        set(CMAKE_CXX_FLAGS "/O2 /EHsc")
         set(FMT_LIBRARY_NAMES "fmtd")
 else()
         set(FMT_LIBRARY_PATH "/usr/lib;/usr/local/lib")
         set(CMAKE_CXX_FLAGS "-O3")
         set(FMT_LIBRARY_NAMES "fmt")
 endif()
+
+
 
 set(GPKIH_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(GPKIH_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -28,6 +32,10 @@ set (gpkih_config_implementation
         "${GPKIH_SRC_DIR}/config_management.cpp"
 )
 add_library(gpkih_config_management_lib STATIC "${gpkih_config_implementation}")
+target_include_directories(gpkih_config_management_lib PUBLIC
+        "${INCLUDE_DIR}"
+        "${FMT_LIBRARY_INCLUDE}"
+)
 
 # Lib 2 - actions
 set(gpkih_actions_src "${GPKIH_SRC_DIR}/actions")
@@ -42,6 +50,10 @@ set (gpkih_actions_implementation
         "${gpkih_actions_src}/remove.cpp"
 )
 add_library(gpkih_actions_lib STATIC "${gpkih_actions_implementation}")
+target_include_directories(gpkih_actions_lib PUBLIC
+        "${INCLUDE_DIR}"
+        "${FMT_LIBRARY_INCLUDE}"
+)
 
 # Lib 3 - parse
 set(gpkih_parse_src "${GPKIH_SRC_DIR}/parse")
@@ -58,6 +70,10 @@ set(gpkih_parse_implementation
         "${gpkih_parse_src}/parser.cpp"
 )
 add_library(gpkih_parse_lib STATIC "${gpkih_parse_implementation}")
+target_include_directories(gpkih_parse_lib PUBLIC
+        "${INCLUDE_DIR}"
+        "${FMT_LIBRARY_INCLUDE}"
+)
 
 # Lib 4 - database
 set(gpkih_db_src "${GPKIH_SRC_DIR}/db")
@@ -67,6 +83,10 @@ set(gpkih_db_implementation
         "${gpkih_db_src}/entities.cpp"
 )
 add_library(gpkih_db_lib STATIC "${gpkih_db_implementation}")
+target_include_directories(gpkih_db_lib PUBLIC
+        "${INCLUDE_DIR}"
+        "${FMT_LIBRARY_INCLUDE}"
+)
 
 # Lib 5 - help
 set(gpkih_help_src "${GPKIH_SRC_DIR}/help")
@@ -82,6 +102,11 @@ set(gpkih_help_implementation
         "${gpkih_help_src}/help_revoke.cpp"
 )
 add_library(gpkih_help_lib STATIC "${gpkih_help_implementation}")
+target_include_directories(gpkih_help_lib PUBLIC
+        "${INCLUDE_DIR}"
+        "${FMT_LIBRARY_INCLUDE}"
+)
+
 # Add executable
 add_executable(gpkih
         ${GPKIH_SRC_DIR}/gpki.cpp
@@ -90,7 +115,8 @@ add_executable(gpkih
 
 # Especifica los encabezados a incluir
 target_include_directories(gpkih PUBLIC
-        ${INCLUDE_DIR}
+        "${INCLUDE_DIR}"
+        "${FMT_LIBRARY_INCLUDE}"
 )
 
 # Look for FMT
