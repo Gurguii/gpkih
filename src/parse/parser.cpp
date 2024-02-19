@@ -1,12 +1,4 @@
 #include "parser.hpp"
-#include "build.cpp"
-#include "config.cpp"
-#include "gencrl.cpp"
-#include "genkey.cpp"
-#include "init.cpp"
-#include "list.cpp"
-#include "remove.cpp"
-#include "revoke.cpp"
 
 using namespace gpkih;
 // [!] parse() does not expect to receive program name in args

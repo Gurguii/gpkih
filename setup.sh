@@ -34,7 +34,7 @@ mkdir "$build_dir"
 cd "$build_dir"
 
 printf "[info] starting gpkih setup script - %s\n" "$(date '+%d-%m-%Y at %H:%M')" | tee -a "$log_stdout"
-commands=("cmake .." "make" "cp gpkih ../gpkih")
+commands=("cmake .." "make" "make package" "make package_source" "cp gpkih ../gpkih")
 
 for command in "${commands[@]}"; do
 	printf "[running] %s\n" "$command" 

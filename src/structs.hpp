@@ -221,21 +221,22 @@ enum class vpn_common_conf : ui64 {
   tls = 262144,
 };
 
-std::unordered_map<str, ui64> vpn_conf_map{
-    {"remote", static_cast<ui64>(vpn_cl_conf::remote)},
-    {"remote-cert-tls", static_cast<ui64>(vpn_cl_conf::remote_cert_tls)},
-    {"installdir", static_cast<ui64>(vpn_cl_conf_opt::installdir)},
-    {"client.verbose", static_cast<ui64>(vpn_cl_conf_opt::verb)},
-    {"server", static_cast<ui64>(vpn_sv_conf::virtual_server)},
-    {"port", static_cast<ui64>(vpn_sv_conf::listen_port)},
-    {"status", static_cast<ui64>(vpn_sv_conf::status)},
-    {"explicit-exit-notify",
-     static_cast<ui64>(vpn_sv_conf::explicit_exit_notify)},
-    {"keepalive", static_cast<ui64>(vpn_sv_conf::keepalive)},
-    {"crl-verify", static_cast<ui64>(vpn_sv_conf::crl_verify)},
-    {"dh", static_cast<ui64>(vpn_sv_conf_opt::dh)},
-    {"ifconfig-pool-persist",
-     static_cast<ui64>(vpn_sv_conf_opt::ifconfig_pool_persist)},
-    {"push", static_cast<ui64>(vpn_sv_conf_opt::push)},
-    {"server.verbose", static_cast<ui64>(vpn_sv_conf_opt::verb)}};
+//std::unordered_map<str, ui64> vpn_conf_map{
+//    {"remote", static_cast<ui64>(vpn_cl_conf::remote)},
+//    {"remote-cert-tls", static_cast<ui64>(vpn_cl_conf::remote_cert_tls)},
+//    {"installdir", static_cast<ui64>(vpn_cl_conf_opt::installdir)},
+//    {"client.verbose", static_cast<ui64>(vpn_cl_conf_opt::verb)},
+//    {"server", static_cast<ui64>(vpn_sv_conf::virtual_server)},
+//    {"port", static_cast<ui64>(vpn_sv_conf::listen_port)},
+//    {"status", static_cast<ui64>(vpn_sv_conf::status)},
+//    {"explicit-exit-notify",
+//     static_cast<ui64>(vpn_sv_conf::explicit_exit_notify)},
+//    {"keepalive", static_cast<ui64>(vpn_sv_conf::keepalive)},
+//    {"crl-verify", static_cast<ui64>(vpn_sv_conf::crl_verify)},
+//    {"dh", static_cast<ui64>(vpn_sv_conf_opt::dh)},
+//    {"ifconfig-pool-persist",
+//     static_cast<ui64>(vpn_sv_conf_opt::ifconfig_pool_persist)},
+//    {"push", static_cast<ui64>(vpn_sv_conf_opt::push)},
+//    {"server.verbose", static_cast<ui64>(vpn_sv_conf_opt::verb)}};
+//}; // namespace gpkih
 }; // namespace gpkih

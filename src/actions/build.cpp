@@ -183,14 +183,17 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity){
   // increment serial and write it back to the serial file
   str nserial = fmt::format("{:x}",std::stoi(entity.serial)+1);
   str filepath = profile.source + SLASH + "pki" + SLASH + "serial" + SLASH + "serial";
-  std::ofstream serial_file(filepath);
+  std::fstream serial_file(filepath, std::ios::in | std::ios::out);
   if(!serial_file.is_open()){
     seterror("couldn't open serial file '{}' to update serial\n", filepath);
     return F_NOCREATE;
   }
+  serial_file.seekg(SEEK_SET);
   if(nserial.size() == 1){
     serial_file << "0";
   }
+  std::cout << "new serial: " << nserial << "\n";
+  std::cout << "adding it to '" << filepath << "'\n";
   serial_file << nserial;
 
   // Add to database
@@ -198,11 +201,6 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity){
     return GPKIH_FAIL;
   }
 
-  // create inline config file
-  std::vector<Entity> hahahah{entity};
-  if(_create_config(profile, hahahah)){
-    return GPKIH_FAIL;
-  }
   return GPKIH_OK;
 }
 

@@ -127,7 +127,7 @@ int actions::init(strview profile_name, strview profile_source) {
   }
   // Copy required config files to profile
   for (auto &filenames :
-       {gpkih_conf_filename, vpn_conf_filename, pki_conf_filename}) {
+       {vpn_conf_filename, pki_conf_filename}) {
     str src = fmt::format("{}{}", CONF_DIRPATH, filenames);
     str dst = fmt::format("{}{}{}", profile.source, SLASH, filenames);
     fs::copy(src, dst);

@@ -1,13 +1,6 @@
 
 #pragma once
-#include <csignal>
-#include <future>
-#include <cstdlib>
 #include <filesystem>
-#include <iostream>
-#include <sstream>
-#include <map>
-#include <unordered_map>
 #include "printing.hpp"
 
 // Custom typenames
@@ -31,6 +24,7 @@ static inline str BASEDIR = str(std::getenv("LOCALAPPDATA")) + "\\gpkih\\";
 static inline str EOL = "\r\n";
 static inline str VPN_CONFIG_EXTENSION = "ovpn";
 #else
+#include <sys/signal.h>
 /* LINUX STUFF */
 static inline str CURRENT_PATH = fs::current_path();
 static inline str SLASH = "/";

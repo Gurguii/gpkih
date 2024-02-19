@@ -1,13 +1,14 @@
-#include "config_management.cpp"
+#include "config_management.hpp"
 /* Parser & subparsers */
-#include "parse/parser.cpp"
+#include "parse/parser.hpp"
 /* Database (csv) manipulation */
-#include "db/entities.cpp"
-#include "db/profiles.cpp"
+#include "db/database.hpp"
+//#include "db/entities.hpp"
+//#include "db/profiles.hpp"
 /* Available actions */
-#include "actions/actions.cpp"
+#include "actions/actions.hpp"
 /* Help functions */
-#include "help/help.cpp"
+#include "help/help.hpp"
 
 // Tasks launched by cleanup() before exiting the program
 static inline std::vector<int (*)()> cleanup_functions{db::profiles::sync};

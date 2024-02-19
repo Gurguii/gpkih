@@ -13,43 +13,43 @@
 #include "../config_management.hpp"
 
 namespace gpkih::db::profiles {
-static inline std::map<std::string, Profile> existing_profiles{};
-static inline str dbheaders = "name,source,ca,total_servers,total_clients";
-static inline str dbpath = DB_DIRPATH + "profiles.csv";
-static inline int initialized = 0;
-static int sync(); // overwrites profiles.csv with the profiles in existing_profiles while
-static int initialize();
-static int populate_from_entry(str &entry, Profile *profile);
-static int populate_from_entry(str &entry, std::vector<str> &fields);
-static int exists(strview profile_name);
-static int add(Profile *profile);
-static int remove(std::vector<str> &profiles);
-static int remove_all();
-static int load(strview profile_name, Profile &pinfo);
-static int get_entities(str profile, std::vector<Entity> &buff);
-static Profile *const load(strview profile_name);
+  inline std::map<std::string, Profile> existing_profiles{};
+  inline str dbheaders = "name,source,ca,total_servers,total_clients";
+  inline str dbpath = DB_DIRPATH + "profiles.csv";
+  inline int initialized = 0;
+  int sync(); // overwrites profiles.csv with the profiles in existing_profiles while
+  int initialize();
+  int populate_from_entry(str &entry, Profile *profile);
+  int populate_from_entry(str &entry, std::vector<str> &fields);
+  int exists(strview profile_name);
+  int add(Profile *profile);
+  int remove(std::vector<str> &profiles);
+  int remove_all();
+  int load(strview profile_name, Profile &pinfo);
+  int get_entities(str profile, std::vector<Entity> &buff);
+  Profile *const load(strview profile_name);
 } // namespace gpkih::db::profiles
 
 namespace gpkih::db::entities {
-static inline str suffix = "_entities";
-static inline str ext = ".csv";
-static inline str _dbpath(str &profile) {
+  inline str suffix = "_entities";
+  inline str ext = ".csv";
+  inline str _dbpath(str &profile) {
   return DB_DIRPATH + profile + suffix + ext;
 }
 
-static inline str dbheaders =
+  inline str dbheaders =
     "common_name,type,serial,country,state,"
     "location,organisation,email,key_path,csr_path,crt_path";
 
-static inline int initialized = 0;
+  inline int initialized = 0;
 /*  */
-static int populate_from_entry(str &entry, Entity &entity);
-static int populate_from_entry(str &entry, std::vector<str> &fields);
-static int populate_from_entry(str &profile_name, str &entry, str &cn, Entity &buff);
+  int populate_from_entry(str &entry, Entity &entity);
+  int populate_from_entry(str &entry, std::vector<str> &fields);
+  int populate_from_entry(str &profile_name, str &entry, str &cn, Entity &buff);
 
-static int initialize(str profile);
-static int exists(strview profile_name, strview common_name);
-static int add(str &profile_name, Entity &entity);
-static int del(str &profile, strview cn);
-static int load(str &profile, strview common_name, Entity &entity_buff);
+  int initialize(str profile);
+  int exists(strview profile_name, strview common_name);
+  int add(str &profile_name, Entity &entity);
+  int del(str &profile, strview cn);
+  int load(str &profile, strview common_name, Entity &entity_buff);
 } // namespace gpkih::db::entities
