@@ -1,13 +1,4 @@
 #include "help.hpp"
-#include "get.cpp"
-#include "help_build.cpp"
-#include "help_create_pack.cpp"
-#include "help_gencrl.cpp"
-#include "help_init.cpp"
-#include "help_list.cpp"
-#include "help_remove.cpp"
-#include "help_revoke.cpp"
-#include "set.cpp"
 
 void help::usage() {
   std::cout << R"(
@@ -46,7 +37,7 @@ Remove profile files and database entry
 )";
 }
 
-void call_helper(strview action) {
+static inline void call_helper(strview action) {
   if (action == "build") {
     help::build::usage();
   } else if (action == "revoke") {

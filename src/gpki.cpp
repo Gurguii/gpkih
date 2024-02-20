@@ -51,50 +51,58 @@ public:
 
 int check_gpkih_install_dir() {
   if (!fs::exists(BASEDIR)) {
-      PINFO("Creating gpkih source dir - '{}'", BASEDIR);
+      PINFO("Creating gpkih source dir - '{}'\n", BASEDIR);
     if (!fs::create_directory(BASEDIR)) {
-      PERROR("Couldn't create directory '{}'", BASEDIR);
+      seterror("Couldn't create directory '{}'\n", BASEDIR);
       return F_NOEXIST;
     };
+    // This is the reason the program requires to be executed from the same dir than config/
+    // if the gpkih root dir:
+    //      [WINDOWS] $env:localappadata\gpkih 
+    //      [LINUX] ~/.config/gpkih 
+    // doesn't exist
     str configdir = CURRENT_PATH + SLASH + "config";
     fs::copy(configdir, CONF_DIRPATH, fs::copy_options::recursive);
     if (!fs::exists(CONF_DIRPATH) || !fs::is_directory(CONF_DIRPATH)) {
-      PERROR("couldn't copy '{}' to '{}'\n", configdir, CONF_DIRPATH);
+      seterror("couldn't copy '{}' to '{}'\n", configdir, CONF_DIRPATH);
       return F_NOCREATE;
     }
     if (!fs::create_directory(DB_DIRPATH)) {
-      PERROR("couldn't create gpkih source db dir '{}'\n", DB_DIRPATH);
+      seterror("couldn't create gpkih source db dir '{}'\n", DB_DIRPATH);
       return F_NOCREATE;
     }; 
   }
   return 0;
 }
 
+// PROGRAM ENTRY POINT
 int main(int argc, const char **args) {
   // Register signal handlers
   Signals::register_signals();
 
   // Check if gpkih base dir is created, else try to create it
   if (check_gpkih_install_dir() != GPKIH_OK) {
+    printlasterror();
     cleanup();
   }
+  
   // TODO - Add PROPER checks for openssl - openvpn existence
-
   // Launch task to load gpkih config
   auto load_gpkih_config = std::async(std::launch::async, gpkih::Config::load);
-
+  
   // Map profiles' csv to db::profiles::existing_profiles{}
   int profile_count = -1;
-  if ((profile_count = db::profiles::initialize()) == -1) {
+  if ((profile_count = db::profiles::initialize()) != GPKIH_OK) {
+    printlasterror();
     cleanup();
   };
-
+  std::cout << "4\n";
   // wait for task
   if (load_gpkih_config.get() != GPKIH_OK) {
       printlasterror();
     return -1;
   }
-  
+  std::cout << "5\n";
   PROGRAMSTARTING();
   
   PINFO("Loaded [{}] profiles\n", profile_count, DB_DIRPATH, SLASH);

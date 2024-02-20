@@ -18,32 +18,32 @@ namespace fs = std::filesystem;
 #ifdef _WIN32
 #include <Windows.h>
 /* WINDOWS STUFF */
-static inline str CURRENT_PATH = fs::current_path().string();
-static inline str SLASH = "\\";
-static inline str BASEDIR = str(std::getenv("LOCALAPPDATA")) + "\\gpkih\\";
-static inline str EOL = "\r\n";
-static inline str VPN_CONFIG_EXTENSION = "ovpn";
+inline str CURRENT_PATH = fs::current_path().string();
+inline str SLASH = "\\";
+inline str BASEDIR = str(std::getenv("LOCALAPPDATA")) + "\\gpkih\\";
+inline str EOL = "\r\n";
+inline str VPN_CONFIG_EXTENSION = "ovpn";
 #else
 #include <sys/signal.h>
 /* LINUX STUFF */
-static inline str CURRENT_PATH = fs::current_path();
-static inline str SLASH = "/";
-static inline str BASEDIR = str(std::getenv("HOME")) + "/.config/gpkih/";
-static inline str EOL = "\n";
-static inline str VPN_CONFIG_EXTENSION = "conf";
+inline str CURRENT_PATH = fs::current_path();
+inline str SLASH = "/";
+inline str BASEDIR = str(std::getenv("HOME")) + "/.config/gpkih/";
+inline str EOL = "\n";
+inline str VPN_CONFIG_EXTENSION = "conf";
 #endif
 
-static inline str DB_DIRNAME = "db";
-static inline str CONF_DIRNAME = "config";
+inline str DB_DIRNAME = "db";
+inline str CONF_DIRNAME = "config";
 
-static inline str DB_DIRPATH = BASEDIR + DB_DIRNAME + SLASH;
-static inline str CONF_DIRPATH = BASEDIR + CONF_DIRNAME + SLASH;
+inline str DB_DIRPATH = BASEDIR + DB_DIRNAME + SLASH;
+inline str CONF_DIRPATH = BASEDIR + CONF_DIRNAME + SLASH;
 
-static inline str vpn_conf_filename = "openvpn.conf";
-static inline str pki_conf_filename = "pki.conf";
-static inline str gpkih_conf_filename = "gpkih.conf";
+inline str vpn_conf_filename = "openvpn.conf";
+inline str pki_conf_filename = "pki.conf";
+inline str gpkih_conf_filename = "gpkih.conf";
 
-static inline str CONF_GPKIH = BASEDIR + CONF_DIRNAME + SLASH + gpkih_conf_filename;
+inline str CONF_GPKIH = BASEDIR + CONF_DIRNAME + SLASH + gpkih_conf_filename;
 
 #define CSV_DELIMITER_s ","
 #define CSV_DELIMITER_c ','
@@ -70,18 +70,19 @@ enum class GPKIH_RETURN_CODES {
   /* */
 };
 
-// TODO - split error management to its own file + static class
-static inline str last_gpki_error = "no error";
+// TODO - split error management to its own file + class
+inline str last_gpki_error = "no error";
+
 template<typename ...Args>
-static inline void seterror(std::string fmt, Args&&... args){
-  last_gpki_error = fmt::format(fmt,std::forward<Args>(args)...);
+inline void seterror(std::string fmt, Args&&... args){
+  last_gpki_error = std::move(fmt::format(fmt,std::forward<Args>(args)...));
 }
-static inline str lasterror() { return last_gpki_error; }
-static inline void printlasterror() {
+inline str lasterror() { return last_gpki_error; }
+inline void printlasterror() {
+  std::cout << "printlasterror() called - cuirrent last_gpki_error value = " << last_gpki_error << "\n";
 	if (last_gpki_error == "no error" || last_gpki_error.empty()) {
 		fmt::print(fg(LGREEN) | EMPHASIS::bold, "no error");
-	}
-	else {
-		PERROR(lasterror());
+	}else {
+		PERROR(last_gpki_error); 
 	}
 }

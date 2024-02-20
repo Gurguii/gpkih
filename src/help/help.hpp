@@ -35,4 +35,3 @@ namespace gpkih::help::set {
 void usage();
 }
 using namespace gpkih;
-void call_helper(strview action);

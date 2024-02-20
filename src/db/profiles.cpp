@@ -25,6 +25,7 @@ int db::profiles::sync() {
   std::ofstream tmp(tmpfile);
   if (!tmp.is_open()) {
     seterror("couldn't open tmpfile to synchronize database\n");
+    PERROR("couldn't open tmpfile to synchronize database\n");
     return -1;
   }
   tmp << dbheaders << EOL;
@@ -36,10 +37,11 @@ int db::profiles::sync() {
       tmp << (ref.csv_entry()) << EOL;
     }
   }
+  tmp.close();
   std::filesystem::remove(dbpath);
   std::filesystem::rename(tmpfile, dbpath);
   // PINFO("Database synchronized\n");
-  return 0;
+  return GPKIH_OK;
 }
 /* Requires only 1 call since the profiles
  * are all in the same csv */
@@ -51,7 +53,7 @@ int db::profiles::initialize() {
       PERROR("couldn't create file '{}'\n", dbpath);
       return -1;
     }
-    db << dbheaders << std::endl;
+    db << dbheaders;
     db.close();
     return 0;
   }
@@ -59,9 +61,10 @@ int db::profiles::initialize() {
   str headers;
   getline(file, headers);
   if (headers != dbheaders) {
-    PERROR("profile headers do not match - original: '{}' current: '{}'",
-           dbheaders, headers);
-    return -1;
+    std::cout << "headers error...\n";
+      seterror("profile headers do not match - original: '{}' size: '{}' current: '{}' size: '{}'",
+          dbheaders, dbheaders.size(), headers, headers.size());
+    return GPKIH_FAIL;
   }
   // Load profiles into existing_profiles
   std::vector<str> remove_profiles;
@@ -99,7 +102,7 @@ int db::profiles::add(Profile *profile) {
   }
   int bsize = fs::file_size(dbpath);
   std::ofstream db(dbpath, std::ios::app);
-  db << profile->csv_entry() << std::endl;
+  db << profile->csv_entry() << EOL;
   if (fs::file_size(dbpath) <= bsize) {
     // profile succesfully added
     seterror("couldn't add profile '{}' to database\n", profile->name);
