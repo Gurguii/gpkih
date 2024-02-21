@@ -1,7 +1,7 @@
 #include "help.hpp"
 using namespace gpkih;
 void help::list::usage() {
-  std::cout << R"(
+  fmt::print(R"(
 == list ==
 
 [ syntax ]
@@ -30,5 +30,5 @@ void help::list::usage() {
   crt: path to certificate
   - Other -
   type: the type of entity, ca|client|server
-)";
+)");
 }

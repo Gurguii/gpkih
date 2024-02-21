@@ -1,5 +1,7 @@
 #include "parser.hpp"
+
 str badchars = "~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?\t\n\r";
+using namespace gpkih;
 
 static inline void _get_and_set_prop(std::string &st) {
   std::string input;
@@ -8,6 +10,8 @@ static inline void _get_and_set_prop(std::string &st) {
     st = std::move(input);
   }
 }
+
+
 static inline int _prompt_for_subject(strview profile_name, Subject &buffer)
 {
   str input{};
@@ -41,7 +45,7 @@ static inline int _prompt_for_subject(strview profile_name, Subject &buffer)
       for (const char &c : input) {
         if (badchars.find(c) != -1) {
           // found bad char
-          PWARN("found unaccepted char '{}'\nplease avoid using any of these "
+          PWARN("found unaccepted char '{}' - please avoid using any of these "
                 "'{}'\n",
                 c, badchars);
           keepgoing = 1;

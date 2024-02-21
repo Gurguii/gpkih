@@ -27,9 +27,9 @@ set(INCLUDE_DIR "${SOURCE_DIR}")
 
 # Lib 1 - config_management
 set (gpkih_config_definition
-        "${GPKIH_SRC_DIR}/config_management.hpp")
+        "${GPKIH_SRC_DIR}/config/config_management.hpp")
 set (gpkih_config_implementation
-        "${GPKIH_SRC_DIR}/config_management.cpp"
+        "${GPKIH_SRC_DIR}/config/config_management.cpp"
 )
 add_library(gpkih_config_management_lib STATIC "${gpkih_config_implementation}")
 target_include_directories(gpkih_config_management_lib PUBLIC
@@ -73,13 +73,14 @@ set(gpkih_help_src "${GPKIH_SRC_DIR}/help")
 set(gpkih_help_definition "${gpkih_help_src}/help.hpp")
 set(gpkih_help_implementation
         "${gpkih_help_src}/help.cpp"
-        #"${gpkih_help_src}/get.cpp"
-        #"${gpkih_help_src}/help_build.cpp"
-        #"${gpkih_help_src}/help_create_pack.cpp"
-        #"${gpkih_help_src}/help_gencrl.cpp"
-        #"${gpkih_help_src}/help_init.cpp"
-        #"${gpkih_help_src}/help_remove.cpp"
-        #"${gpkih_help_src}/help_revoke.cpp"
+        "${gpkih_help_src}/get.cpp"
+        "${gpkih_help_src}/help_build.cpp"
+        "${gpkih_help_src}/help_create_pack.cpp"
+        "${gpkih_help_src}/help_gencrl.cpp"
+        "${gpkih_help_src}/help_init.cpp"
+        "${gpkih_help_src}/help_remove.cpp"
+        "${gpkih_help_src}/help_revoke.cpp"
+        "${gpkih_help_src}/help_list.cpp"
 )
 add_library(gpkih_help_lib STATIC "${gpkih_help_implementation}")
 target_include_directories(gpkih_help_lib PUBLIC
@@ -106,12 +107,27 @@ target_include_directories(gpkih_parse_lib PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
 )
-target_link_libraries(gpkih_parse_lib PUBLIC gpkih_help_lib)
+#target_link_libraries(gpkih_parse_lib PUBLIC gpkih_help_lib)
+
+# Lib 6 - logging + error handleing
+set(gpkih_logging_src "${GPKIH_SRC_DIR}/logger")
+set(gpkih_logging_definition 
+        "${gpkih_logging_src}/logger.hpp"
+        "${gpkih_logging_src}/error_management.hpp"
+)
+set(gpkih_logging_implementation
+        "${gpkih_logging_src}/logger.cpp"
+        "${gpkih_logging_src}/error_management.cpp"
+)
+add_library(gpkih_logging_lib STATIC "${gpkih_logging_implementation}")
+target_include_directories(gpkih_parse_lib PUBLIC
+        "${INCLUDE_DIR}"
+        "${FMT_LIBRARY_INCLUDE}"
+)
 
 # Add executable
 add_executable(gpkih
         ${GPKIH_SRC_DIR}/gpki.cpp
-        # Agrega otros archivos fuente si es necesario
 )
 
 # Especifica los encabezados a incluir
@@ -130,6 +146,7 @@ target_link_libraries(gpkih PRIVATE
         gpkih_actions_lib 
         gpkih_config_management_lib
         gpkih_help_lib 
+        gpkih_logging_lib
         ${FMT_LIBRARY}
 )
 

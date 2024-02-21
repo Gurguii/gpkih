@@ -1,16 +1,8 @@
 #pragma once
-#include <filesystem>
-#include <fstream>
-#include <iostream>
+#include "../config/config_management.hpp"
+#include "../structs.hpp" // struct Profile | struct Entity | struct Subject
 #include <map>
-#include <string>
-#include <unordered_map>
 #include <vector>
-
-#include "../gpki.hpp"
-#include "../printing.hpp"
-#include "../structs.hpp"
-#include "../config_management.hpp"
 
 namespace gpkih::db::profiles {
   inline std::map<std::string, Profile> existing_profiles{};

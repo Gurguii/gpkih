@@ -1,16 +1,16 @@
-
 #pragma once
-#include <filesystem>
 #include "printing.hpp"
+#include <filesystem>
 
 // Custom typenames
-using str = std::string;
+using str     = std::string;
 using strview = std::string_view;
 using sstream = std::stringstream;
-using ui8 = uint8_t;
-using ui16 = uint16_t;
-using ui32 = uint32_t;
-using ui64 = uint64_t;
+
+using ui8     = uint8_t;
+using ui16    = uint16_t;
+using ui32    = uint32_t;
+using ui64    = uint64_t;
 
 // Custom namespace names
 namespace fs = std::filesystem;
@@ -79,7 +79,6 @@ inline void seterror(std::string fmt, Args&&... args){
 }
 inline str lasterror() { return last_gpki_error; }
 inline void printlasterror() {
-  std::cout << "printlasterror() called - cuirrent last_gpki_error value = " << last_gpki_error << "\n";
 	if (last_gpki_error == "no error" || last_gpki_error.empty()) {
 		fmt::print(fg(LGREEN) | EMPHASIS::bold, "no error");
 	}else {

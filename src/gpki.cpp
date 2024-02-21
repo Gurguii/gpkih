@@ -1,4 +1,4 @@
-#include "config_management.hpp"
+#include "config/config_management.hpp"
 /* Parser & subparsers */
 #include "parse/parser.hpp"
 /* Database (csv) manipulation */
@@ -8,10 +8,21 @@
 /* Help functions */
 #include "help/help.hpp"
 
+
+/* [testing] class 'Error' to add/retrieve error related stuff */
+#include "logger/error_management.hpp"
+/* [testing] class 'Logger' for logging */
+#include "logger/logger.hpp"
+
+
+
+#include <future> // std::async() std::future<>()
+
+
 // Tasks launched by cleanup() before exiting the program
-static inline std::vector<int (*)()> cleanup_functions{db::profiles::sync};
+static inline std::vector<int (*)()> cleanup_functions{gpkih::db::profiles::sync};
 static inline int cleanup() {
-  std::cout << "\n";
+  fmt::print("\n");
   std::vector<std::future<int>> tasks{};
   // launch every task asynchronously
   for (auto cleanup_func : cleanup_functions) {
@@ -92,24 +103,24 @@ int main(int argc, const char **args) {
   
   // Map profiles' csv to db::profiles::existing_profiles{}
   int profile_count = -1;
-  if ((profile_count = db::profiles::initialize()) != GPKIH_OK) {
+  if ((profile_count = gpkih::db::profiles::initialize()) < 0) {
     printlasterror();
     cleanup();
   };
-  
+
   // wait for task
   if (load_gpkih_config.get() != GPKIH_OK) {
-      printlasterror();
-    return -1;
+    printlasterror();
+    cleanup();
   }
-  
+
   PROGRAMSTARTING();
   
   PINFO("Loaded [{}] profiles\n", profile_count, DB_DIRPATH, SLASH);
 
   // Parse options
   if (gpkih::parsers::parse(argc - 1, args + 1) != GPKIH_OK) {
-      printlasterror();
+    printlasterror();
     cleanup();
   }
 

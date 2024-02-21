@@ -1,4 +1,5 @@
 #include "actions.hpp"
+#include <iostream> // std::cin
 static inline str openssl_conf_filename = "gopenssl.conf";
 
 static inline std::vector<str> RELATIVE_DIRECTORY_PATHS(){
@@ -158,7 +159,8 @@ int actions::init(strview profile_name, strview profile_source) {
 
   // Add profile to database
   if (db::profiles::add(&profile)) {
-    return -1;
+    // error is set by db::profiles::add
+    return GPKIH_FAIL;
   }
   // Initialize entities db
   db::entities::initialize(profile.name);

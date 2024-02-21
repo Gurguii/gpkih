@@ -2,7 +2,7 @@
 
 using namespace gpkih;
 void help::init::usage() {
-  std::cout << R"(
+  fmt::print(R"(
 == init ==
 
 [ syntax ]
@@ -11,5 +11,5 @@ void help::init::usage() {
 [ subopts ]
   -n | --name : profile name
   -s | --source : source dir (where profile related files will be kept)
-)";
+)");
 }

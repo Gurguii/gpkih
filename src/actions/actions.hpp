@@ -1,12 +1,5 @@
 #pragma once
-#include <algorithm>
-#include <cstdint>
-#include <iostream>
-#include <ostream>
-#include <string>
-#include <vector>
-
-#include "../config_management.hpp"
+#include "../config/config_management.hpp"
 #include "../db/database.hpp"
 #include "../gpki.hpp"
 #include "../printing.hpp"

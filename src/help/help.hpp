@@ -1,12 +1,11 @@
 #pragma once
 #include "../gpki.hpp"
-#include "../printing.hpp"
-#include <iostream>
-#include <unordered_map>
+#include "../config/config_management.hpp"
 
 namespace gpkih::help {
-void usage();
+extern void usage();
 extern void call_helper(strview action);
+extern std::unordered_map<str, void(*)()> help_funcs;
 }
 namespace gpkih::help::build {
 extern void usage();
@@ -34,4 +33,5 @@ extern void usage();
 }
 namespace gpkih::help::set {
 extern void usage();
+
 }

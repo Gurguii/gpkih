@@ -1,5 +1,7 @@
 #include "database.hpp"
 #include <sstream>
+#include <fstream> // std::ifstream | std::ofstream
+#include <iostream> // std::cin
 using namespace gpkih;
 
 int db::profiles::populate_from_entry(str &entry, Profile *profile) {
@@ -61,7 +63,7 @@ int db::profiles::initialize() {
   str headers;
   getline(file, headers);
   if (headers != dbheaders) {
-    std::cout << "headers error...\n";
+    fmt::print("headers error...\n");
       seterror("profile headers do not match - original: '{}' size: '{}' current: '{}' size: '{}'",
           dbheaders, dbheaders.size(), headers, headers.size());
     return GPKIH_FAIL;
@@ -98,14 +100,21 @@ int db::profiles::exists(strview profile_name) {
 
 int db::profiles::add(Profile *profile) {
   if (exists(profile->name)) {
-    return -1;
+    seterror("error adding profile '{}' to database - already exists", profile->name);
+    return GPKIH_FAIL;
   }
   int bsize = fs::file_size(dbpath);
   std::ofstream db(dbpath, std::ios::app);
-  db << profile->csv_entry() << EOL;
+  fmt::print("adding profile entry -> {} to file '{}'\n", profile->csv_entry(), dbpath);
+  if(!db.is_open()){
+    seterror("couldn't open db file '{}'", dbpath);
+    return F_NOOPEN;
+  }
+  db << profile->csv_entry();
+  db.close();
+
   if (fs::file_size(dbpath) <= bsize) {
-    // profile succesfully added
-    seterror("couldn't add profile '{}' to database\n", profile->name);
+    seterror("error adding profile '{}' to database - file size didn't change after adding entry\n", profile->name);
     return GPKIH_FAIL;
   };
   return (existing_profiles.emplace(profile->name, *profile).second) 

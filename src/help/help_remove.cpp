@@ -3,7 +3,7 @@
 using namespace gpkih;
 
 void help::remove::usage() {
-  std::cout << R"(
+  fmt::print(R"(
 == remove ==
 
 [ syntax ]
@@ -11,5 +11,5 @@ void help::remove::usage() {
 
 [ subopts ]
   -all : remove all profiles instead
-)";
+)");
 }

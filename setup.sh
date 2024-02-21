@@ -8,6 +8,7 @@ fi
 base_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 src_dir="$base_dir/src"
 build_dir="$base_dir/build"
+binary_outpath="$base_dir/gpkih"
 
 cmakelists="$base_dir/CMakeLists.txt"
 
@@ -35,7 +36,8 @@ subopts["--create-packs"]="make package"
 subopts["--create-source-packs"]="make package_source"
 
 # Commands to run in order to build the executable
-commands=("cmake .." "make")
+# note: this will be executed inside build/ 
+commands=("cmake .." "make" "cp gpkih $binary_outpath")
 
 for arg in "${args[@]}"; do
 	if [ "$arg" == "-h" ]; then
@@ -64,6 +66,4 @@ for command in "${commands[@]}"; do
 	fi 
 done
 
-printf "[info] gpkih succesfully compiled: %s\n" "$src_dir/src/gpkih"
-printf "[info] installation logs can be found at %s\n" "$log_stdout"
-printf "[info] end of gpkih execution\n" | tee -a "$log_stdout"
+printf "[info] gpkih succesfully compiled: %s\n" "$binary_outpath"

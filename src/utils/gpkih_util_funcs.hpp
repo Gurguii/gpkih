@@ -1,10 +1,8 @@
 #pragma once
-#include "../gpki.hpp"
-#include <fstream>
-#include <filesystem>
-#include "../printing.hpp"
+#include "../gpki.hpp" // #include <sstream> + typename aliases (str, strview ...) 
 #include <unordered_map>
-#include <sstream>
+#include <fstream> // std::ifstream | std::ofstream
+#include <iostream> // std::cin
 
 static bool hasWritePermissions(std::string dirpath) {
   /* this approach is kind of sad to see */
@@ -79,6 +77,7 @@ static int create_output_path(str &path){
   // Directory succesfully created
   return 0;
 };
+
 static int check_out_file(str _path){
   if(fs::exists(_path)){
       str ans;

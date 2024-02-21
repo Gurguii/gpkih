@@ -1,12 +1,5 @@
 #pragma once
-#include "structs.hpp"
-#include <cmath>
-#include <cstring>
-#include <exception>
-#include <filesystem>
-#include <future>
-#include <unordered_map>
-#include <fstream>
+#include "../structs.hpp"
 
 
 namespace gpkih {
@@ -75,9 +68,9 @@ public:
   }
   static inline void print() {
     for (auto &kv : _conf_gpkih) {
-      std::cout << "== " << kv.first << " ==\n";
+      fmt::print("== {} ==\n",kv.first);
       for (auto &kvv : kv.second) {
-        std::cout << kvv.first << " " << kvv.second << "\n";
+        fmt::print("{} {}\n",kvv.first, kvv.second);
       }
     }
   }
@@ -112,7 +105,7 @@ public:
   inline void print() {
     for (auto &haha : {_conf_vpn, _conf_pki}) {
       for (auto &kv : haha) {
-        std::cout << "== " << kv.first << " ==\n";
+        fmt::print("== {} ==\n",kv.first);
         for (auto &kvv : kv.second) {
           fmt::print("{} {}\n", kvv.first, kvv.second);
         }

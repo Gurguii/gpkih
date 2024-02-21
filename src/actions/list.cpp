@@ -64,9 +64,9 @@ int actions::list(std::vector<str> &profiles, std::vector<str> &entities, PROFIL
       // all profiles
       for (auto p : db::profiles::existing_profiles) {
         print_profile(p.first, pfields);
-        std::cout << EOL;
+        fmt::print("{}",EOL);
       }
-      return 0;
+      return GPKIH_OK;
     } else {
       /* OPTION 2 */
       // all profiles certain entities
@@ -80,7 +80,7 @@ int actions::list(std::vector<str> &profiles, std::vector<str> &entities, PROFIL
           print_entity(e, efields);
         }
       }
-      return 0;
+      return GPKIH_OK;
     }
   }
   if (entities.empty()) {
@@ -90,10 +90,10 @@ int actions::list(std::vector<str> &profiles, std::vector<str> &entities, PROFIL
       print_profile(p, pfields);
       print_profile_entities(p, efields);
     }
-    return 0;
+    return GPKIH_OK;
   } else {
     /* OPTION 4 */
     // certain profiles certain entities
   }
-  return 0;
+  return GPKIH_OK;
 }

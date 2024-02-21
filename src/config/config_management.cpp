@@ -1,5 +1,7 @@
+
 #include "config_management.hpp"
 #include <sstream>
+#include <fstream>
 
 using namespace gpkih;
 int Config::load_file(strview path, ConfigMap &buff) {
@@ -125,10 +127,12 @@ bool ProfileConfig::exists(strview key, CONFIG_FILE file) {
   return conf.find(key.data()) != conf.end();
 }
 
-static inline str skipchars = "#\n ";
+// Dumps common vpn config + client|server specific configuration
+// (depending on ENTITY_TYPE) to outpath.
+// note: this function DOES NOT add any inlined certificate/key to the outpath
 bool ProfileConfig::dump_vpn_conf(strview outpath, ENTITY_TYPE type) {
   if (fs::exists(outpath)) {
-    return -1;
+    return false;
   }
 
   std::ofstream file(outpath.data());
@@ -164,6 +168,7 @@ bool ProfileConfig::dump_vpn_conf(strview outpath, ENTITY_TYPE type) {
              to_str(type));
     break;
   }
+  
   // common options
   if (this->_conf_vpn.find("common") == this->_conf_vpn.end()) {
     seterror("couldn't find 'common' section in vpn mapped values");
@@ -175,5 +180,5 @@ bool ProfileConfig::dump_vpn_conf(strview outpath, ENTITY_TYPE type) {
     }
     file << kv.first << " " << kv.second << "\n";
   }
-  return (fs::exists(outpath) && fs::file_size(outpath) > 0) ? GPKIH_OK : -1;
+  return (fs::exists(outpath) && fs::file_size(outpath) > 0) ? true : false;
 }

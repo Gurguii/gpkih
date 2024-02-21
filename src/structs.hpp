@@ -1,7 +1,5 @@
 #pragma once
-#include "gpki.hpp"
-#include <cstdint>
-#include <string>
+#include "gpki.hpp" // typename aliases (str, strview, sstream, fs, ui8, ui16, ui32, ui64) 
 #include <unordered_map>
 
 namespace gpkih {

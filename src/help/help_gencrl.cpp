@@ -2,7 +2,7 @@
 
 using namespace gpkih;
 void help::gencrl::usage() {
-  std::cout << R"(
+  fmt::print(R"(
 == gencrl ==
 
 [ syntax ]
@@ -10,5 +10,5 @@ void help::gencrl::usage() {
 
 [ subopts ]
   *no subopts yet*
-)";
+)");
 }

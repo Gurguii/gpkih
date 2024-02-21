@@ -1,9 +1,7 @@
 #pragma once
-
 #include <fmt/chrono.h>
 #include <fmt/color.h>
-#include <iostream>
-#include <string_view>
+
 
 using COLOR = fmt::color;
 using STYLE = fmt::text_style;
@@ -83,7 +81,7 @@ template <typename... T> void PWARN(std::string fmt, T &&...args) {
  
 /* HINT PRINTING */
 static inline void PHINT(std::string hint) {
-  std::cout << fmt::format(fg(YELLOW), "💡 {}\n", hint);
+  fmt::print(fmt::format(fg(YELLOW), "💡 {}\n", hint));
 }
 
 /* PROMPT PRINTING */

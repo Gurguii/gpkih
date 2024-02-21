@@ -3,7 +3,7 @@
 using namespace gpkih;
 
 void help::create_pack::usage() {
-  std::cout << R"(
+  fmt::print(R"(
 == create_pack ==
 
 [ syntax ]
@@ -12,5 +12,5 @@ void help::create_pack::usage() {
 [ subopts ]
     -o | --out : output dir (a copy will always be saved in the profile dir)
     --inline : output file in inline format (1 single config file)
- )";
+ )");
 }

@@ -34,7 +34,7 @@ foreach($executable in $required_tools){
 
 $root = $PSScriptRoot
 $build_dir = "$root\build"
-$stderr = "$root\.err.log"
+$stderr = "$root\.error.log"
 
 if (!(Get-Item "$build_dir" -ErrorAction SilentlyContinue)){
     # Create build dir
@@ -44,25 +44,23 @@ if (!(Get-Item "$build_dir" -ErrorAction SilentlyContinue)){
 Set-Location "$build_dir"
 
 # run 'cmake ..' inside build directory
-$last = $Error.Count
+[int]$exitcode;
 
 $cmake_executable = $exec["cmake"]
 $cmake_command_args = ".."
-& "$cmake_executable" "$cmake_command_args"
-if($last -lt $Error.Count){
-    # Got an error
-    Write-Host -ForegroundColor Red "Encountered an error running '$($exec["cmake"]) ..'"
-    exit 0
+$exitcode = (Start-Process -NoNewWindow -FilePath "$cmake_executable" -ArgumentList "$cmake_command_args" -RedirectStandardError "$stderr" -Wait -Passthru).ExitCode
+if($exitcode -ne 0){
+    Write-Host "Command '$cmake_executable $cmake_command_args' returned $exitcode"
+    exit $exitcode
 }
 
 $msbuild_executable = $exec["msbuild"]
 $msbuild_command_args = "$build_dir\gpkih.sln"
-& "$msbuild_executable" "$msbuild_command_args"
 
-if($last -lt $Error.Count){
-    # Got an error
-    Write-Host -ForegroundColor Red "Encountered an error running '$msbuild_command'"
-    exit 0
+$exitcode = (Start-Process -NoNewWindow -FilePath "$msbuild_executable" -ArgumentList "$msbuild_command_args" -RedirectStandardError "$stderr" -Wait -Passthru).ExitCode
+if($exitcode -ne 0){
+    Write-Host "Command '$msbuild_executable $msbuild_command_args' returned $exitcode"
+    exit $exitcode
 }
 
 Copy-Item -Path "$build_dir\Debug\gpkih.exe" -Destination "$root\gpkih.exe" -Force 

@@ -1,20 +1,15 @@
 #pragma once
+#include "../db/database.hpp"
 #include "../actions/actions.hpp"
-#include "../config_management.hpp"
+#include "../config/config_management.hpp"
 #include "../structs.hpp"
 #include "../help/help.hpp"
 #include "../printing.hpp"
-#include <algorithm>
-#include <cctype>
-#include <filesystem>
-#include <iostream>
-#include <map>
-#include <string>
-#include <vector>
 
-inline int check_and_populate_profile(strview profilename, Profile &buffer,
+
+inline int check_and_populate_profile(strview profilename, gpkih::Profile &buffer,
                                std::vector<str> &opts) {
-  if (db::profiles::load(profilename, buffer)) {
+  if (gpkih::db::profiles::load(profilename, buffer)) {
     // profile does not exist
     seterror("Profile '{}' doesn't exist\n", profilename);
     return GPKIH_FAIL;

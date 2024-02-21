@@ -3,7 +3,7 @@
 using namespace gpkih;
 
 void help::build::usage() {
-  std::cout << R"(
+  fmt::print(R"(
 == build ==
   
 [ syntax ]
@@ -17,5 +17,5 @@ void help::build::usage() {
 [ subopts ]
   -keysize <int> : key size to use
   -outformat <pem|der> : output format
-)";
+)");
 }

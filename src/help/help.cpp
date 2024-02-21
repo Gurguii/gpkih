@@ -1,19 +1,22 @@
-#include "get.cpp"
-#include "help_build.cpp"
-#include "help_create_pack.cpp"
-#include "help_gencrl.cpp"
-#include "help_init.cpp"
-#include "help_list.cpp"
-#include "help_remove.cpp"
-#include "set.cpp"
+//#include "get.cpp"
+//#include "help_build.cpp"
+//#include "help_create_pack.cpp"
+//#include "help_gencrl.cpp"
+//#include "help_init.cpp"
+//#include "help_list.cpp"
+//#include "help_remove.cpp"
+//#include "set.cpp"
+#include "help.hpp"
+#include <unordered_map>
 
+using namespace gpkih;
 void help::usage() {
-  std::cout << R"(
+  fmt::print(R"(
 == Public key infraestructure helper ==
 
-Author: Airán 'Gurgui' Gómez 
-Description: Tool to create and manage PKI profiles, 
-manage certificates and some other stuff
+Author: {} 
+Description: {}
+Version: {}
 
 For extra help on any action, do:
     ./gpki help [action]
@@ -41,29 +44,23 @@ Generate crl
 [ remove ]
 Remove profile files and database entry
   ./gpki remove [profile/s]
-)";
+)", Config::get("metadata", "author"), Config::get("metadata", "description"), Config::get("metadata", "version"));
 }
 
-void help::call_helper(strview action) {
-  if (action == "build") {
-    help::build::usage();
-  } else if (action == "revoke") {
-    help::revoke::usage();
-  } else if (action == "init") {
-    help::init::usage();
-  } else if (action == "gencrl") {
-    help::gencrl::usage();
-  } else if (action == "list") {
-    help::list::usage();
-  } else if (action == "remove") {
-    help::remove::usage();
-  } else if (action == "create-pack") {
-    help::create_pack::usage();
-  } else if (action == "set") {
-    help::set::usage();
-  } else if (action == "get") {
-    help::get::usage();
-  } else {
-    PERROR("no help defined for '{}'\n", action);
+std::unordered_map<str, void(*)()> help::help_funcs{
+  {"init"  , gpkih::help::init::usage},
+  {"build" , gpkih::help::build::usage},
+  {"list"  , gpkih::help::list::usage},
+  {"revoke", gpkih::help::revoke::usage},
+  {"gencrl", gpkih::help::gencrl::usage},
+  {"remove", gpkih::help::remove::usage}
+};
+
+void help::call_helper(strview action){
+  if(help_funcs.find(action.data()) != help_funcs.end()){
+    // usage() functions exists for given action, call it
+    help_funcs[action.data()]();
+  }else{
+    PERROR("no help::usage() defined for action '{}'\n", action);
   }
 }

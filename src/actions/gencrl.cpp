@@ -6,9 +6,9 @@ int actions::gencrl(Profile &profile) {
       fmt::format("openssl ca -config {} -gencrl -out {}{}current.pem",
                   profile.gopenssl(), profile.dir_crl(), SLASH);
   if (system(command.c_str())) {
-    std::cout << "[FAIL] - '%s'\n";
-    return -1;
+    seterror("openssl gencrl command failed - '%s'\n");
+    return GPKIH_FAIL;
   }
-  return 0;
+  return GPKIH_OK;
 }
 

@@ -1,5 +1,7 @@
 #include "database.hpp"
-#include <sstream>
+#include <sstream> // std::stringstream
+#include <fstream> // std::ifstream | std::ofstream
+
 using namespace gpkih;
 
 /* Requires a call whenever we change the profile context */
@@ -102,7 +104,7 @@ int db::entities::load(str &profile, strview common_name, Entity &entity_buff) {
 }
 
 int db::entities::add(str &profile_name, Entity &entity) {
-  std::cout << "adding entry: " << entity.csv_entry() << "\n";
+  fmt::print("adding entry: {}\n", entity.csv_entry());
   Entity &e = entity;
   str dbpath = std::move(_dbpath(profile_name));
   std::ofstream file(dbpath, std::ios::app);

@@ -1,8 +1,30 @@
 #include "actions.hpp"
+
 using namespace gpkih;
 
 // Not allowed in common_names
 
+static std::pair<str,str> load_entity_files(Entity entity){
+  strview entity_crt_path = entity.crt_path;
+  strview entity_key_path = entity.key_path;
+  // Check file existance
+  if(!fs::exists(entity_crt_path)){
+    seterror("entity cert file doesn't exist - '{}'", entity_crt_path);
+    return {};
+  }
+  if(!fs::exists(entity_key_path)){
+    seterror("entity key file doesn't exist - '{}'", entity_key_path);
+    return {};
+  }
+  // Create fixed size buffers
+  std::string crt_buff("\0",fs::file_size(entity_crt_path));
+  std::string key_buff("\0",fs::file_size(entity_key_path));
+  // Load file contents on buffer
+  std::ifstream(entity_crt_path.data()).read(&crt_buff[0], crt_buff.size());
+  std::ifstream(entity_key_path.data()).read(&key_buff[0], key_buff.size());
+  // Return buffers
+  return {std::move(crt_buff),std::move(key_buff)};
+}
 
 static std::pair<str,str> _server_client_build_commands(Profile &profile, ConfigMap &pkiconf,
                                              Entity &entity) {
@@ -57,20 +79,27 @@ static str _ca_build_command(Profile &profile, ConfigMap &pkiconf, Entity &entit
   str ca_crt_path = fmt::format("{}{}pki{}ca{}crt",profile.source,SLASH,SLASH,SLASH);
   str ca_key_path = fmt::format("{}{}pki{}ca{}key",profile.source,SLASH,SLASH,SLASH);
 
-  str command = fmt::format("openssl req -config {} -new -x509 -out {} -keyout {} -subj '{}' -set_serial '{}' -noenc",
+  str command = std::move(fmt::format("openssl req -config {} -new -x509 -out {} -keyout {} -subj '{}' -set_serial '{}' -noenc",
     profile.gopenssl(),
     ca_crt_path,
     ca_key_path,
     entity.subject.oneliner(),
     entity.serial
-  );
+  ));
+
+  // Check for optional arguments based on configuration
+  if(Config::get("behaviour","autoanswer") == "yes"){
+    command += " -batch"; // doesn't ask before signing certificate or updating database
+  }
+  if(Config::get("behaviour","print_generated_certificate") == "no"){
+    command += " -notext"; // doesn't print the generated certificates
+  }
 
   return std::move(command);
 };
 
-static inline int _create_config(Profile &profile,
-                                 std::vector<Entity> &entities,
-                                 int do_inline_file = 1) {
+static int _create_inline_config(Profile &profile,ProfileConfig &config,
+                                 std::vector<Entity> &entities) {
   str ca_crt_path = std::move(profile.ca_crt());
 
   if (!fs::exists(ca_crt_path)) {
@@ -91,68 +120,47 @@ static inline int _create_config(Profile &profile,
   
   // CA certificate loaded
   for (auto &entity : entities) {
-    str entity_key_path = profile_dir_key + entity.subject.cn;
-    str entity_crt_path = profile_dir_crt + entity.subject.cn;
+    str entity_key_path = std::move(profile_dir_key + entity.subject.cn);
+    str entity_crt_path = std::move(profile_dir_crt + entity.subject.cn);
     auto outdir = fmt::format("{}{}packs{}{}", profile.source, SLASH, SLASH,
                               entity.subject.cn);
+
     if (create_output_path(outdir)) {
       return GPKIH_FAIL;
     };
-    str outpath;
-    if (do_inline_file) {
-      outpath = fmt::format("{}{}inline_{}.{}", outdir, SLASH,
-                            entity.subject.cn, VPN_CONFIG_EXTENSION);
-    } else {
-      outpath = fmt::format("{}{}pack_{}", outdir, SLASH, entity.subject.cn);
-      if (create_output_path(outpath)) {
-        return GPKIH_FAIL;
-      };
-      // Copy files to pack dir
-      fs::copy(entity.key_path, outpath);
-      fs::copy(entity.crt_path, outpath);
-      fs::copy(ca_crt_path, outpath);
-      // Dump config file
-      // GpkihConfig::dump(fmt::format("{}{}{}.{}",outpath,SLASH,entity.subject.cn,VPN_CONFIG_EXTENSION),entity.type);
-      return GPKIH_OK;
-    }
-    // if(GpkihConfig::dump(outpath,entity.type)){
-    //   PWARN("couldn't create config file for entity with CN '{}'\n",
-    //   entity.subject.cn); return GPKIH_FAIL;
-    // }
-    /* At this point the common & (client|server) config has already been added
-     * to the file so just check if */
-    int _e_crt = fs::file_size(entity.crt_path);
-    int _e_key = fs::file_size(entity.key_path);
-    str entity_crt_str("\0", _e_crt);
-    str entity_key_str("\0", _e_key);
-    std::ifstream(entity.crt_path)
-        .read(&entity_crt_str[0], entity_crt_str.size());
-    std::ifstream(entity.key_path)
-        .read(&entity_key_str[0], entity_key_str.size());
-    if (entity_crt_str.empty()) {
-      seterror("couldn't load entity certificate '{}'\n", entity.crt_path);
+
+    str outpath = std::move(fmt::format("{}{}pack_{}", outdir, SLASH, entity.subject.cn));
+    if (create_output_path(outpath)) {
       return GPKIH_FAIL;
-    }
-    if (entity_key_str.empty()) {
-      seterror("couldn't load entity key '{}'\n", entity.key_path);
+    };
+
+    // Add the generic vpn configuration based
+    // on entity type (client|server) - this config
+    // is loaded from profile's openvpn.conf and might
+    // get overriden by command
+    if(config.dump_vpn_conf(outpath, entity.type) == false){
       return GPKIH_FAIL;
-    }
+    };
+
+    // Load entity certificate + key
+    const auto [entity_crt_str, entity_key_str] = std::move(load_entity_files(entity));
+
     std::ofstream file(outpath, std::ios::app);
     if (!file.is_open()) {
       seterror("couldn't open file '{}'\n", outpath);
-      return GPKIH_FAIL;
+      return F_NOOPEN;
     }
+
     // Append the inlined values
     file << "<ca>" << EOL << ca_crt_str << "</ca>" << EOL;
     file << "<cert>" << EOL << entity_crt_str << "</cert>" << EOL;
     file << "<key>" << EOL << entity_key_str << "</key>" << EOL;
-    // TODO - check if tls-auth property is set and append it  too
+
   }
   return GPKIH_OK;
 }
-static inline int _create_config(str &profile_name,
-                                 std::vector<str> &common_names,
-                                 int do_inline_file = 1) {
+static inline int _create_config(str &profile_name,ProfileConfig &config,
+                                 std::vector<str> &common_names) {
   Profile profile;
   if (db::profiles::load(profile_name, profile)) {
     seterror("couldn't load profile '{}'\n", profile_name);
@@ -168,9 +176,10 @@ static inline int _create_config(str &profile_name,
     };
     entities.emplace_back(e);
   }
-  return _create_config(profile, entities, do_inline_file);
+  return _create_inline_config(profile, config, entities);
 }
 
+/* BUILD SELF SIGNED CA certificate */
 int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity){
   ConfigMap &pkiconf = config._get(CONFIG_PKI);
   str command = std::move(_ca_build_command(profile,pkiconf,entity));
@@ -188,12 +197,14 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity){
     seterror("couldn't open serial file '{}' to update serial\n", filepath);
     return F_NOCREATE;
   }
+  // Set file pointer to the beginning
   serial_file.seekg(SEEK_SET);
+  // If the serial number is <= 15 (0-f) the resulting
+  // formatted hex will be 1 char and will cause openssl
+  // to  
   if(nserial.size() == 1){
     serial_file << "0";
   }
-  std::cout << "new serial: " << nserial << "\n";
-  std::cout << "adding it to '" << filepath << "'\n";
   serial_file << nserial;
 
   // Add to database
@@ -204,12 +215,12 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity){
   return GPKIH_OK;
 }
 
-/* BUILD CA-SERVER-CLIENT CERTIFICATES */
+/* BUILD SERVER-CLIENT CERTIFICATES */
 int actions::build(Profile &profile, ProfileConfig &config, Entity &entity){
   ConfigMap &pkiconf = config._get(CONFIG_PKI);
   const auto [req_command, crt_command] = _server_client_build_commands(profile, pkiconf, entity);
   // create key + csr
-  std::cout << req_command << "\n" << crt_command << "\n";
+  fmt::print("{}\n{}\n", req_command, crt_command);
   if(system(req_command.c_str())){
     // fail
     seterror("command '{}' failed\n",req_command);
@@ -231,7 +242,7 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity){
 
   // create inline config file
   std::vector<Entity> hahahah{entity};
-  if(_create_config(profile, hahahah)){
+  if(_create_inline_config(profile, config, hahahah)){
     return GPKIH_FAIL;
   }
 

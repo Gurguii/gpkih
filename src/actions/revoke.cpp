@@ -1,4 +1,5 @@
 #include "actions.hpp"
+#include <iostream> // std::cin
 
 static inline std::vector<std::pair<std::string, std::string>> crl_reasons() {
   return {{"entity key got compromised", "keyCompromised"},
@@ -24,7 +25,7 @@ int actions::revoke(Profile &profile, std::vector<str> &common_names, std::vecto
     }
 
     for (int i = 0; i < reasons.size(); ++i) {
-      std::cout << "  " << i << ".- " << reasons[i].first << std::endl;
+      fmt::print("  {}.- \n",reasons[i].first);
     }
 
     int choice = 0;

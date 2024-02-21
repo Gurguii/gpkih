@@ -33,10 +33,10 @@ int parsers::config(std::vector<str> opts) {
   str subaction = opts[0];
   opts.erase(opts.begin());
   if (subaction == "set") {
-    std::cout << "calling gpki config SET\n";
+    fmt::print("calling gpki config SET\n");
   } else if (subaction == "get") {
     // TODO - add get action into actions/config.cpp
-    std::cout << "calling gpki config GET\n";
+    fmt::print("calling gpki config GET\n");
   } else {
     PERROR("subaction '{}' doesn't exist\n", subaction);
     return -1;

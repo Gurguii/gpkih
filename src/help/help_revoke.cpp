@@ -2,7 +2,7 @@
 
 using namespace gpkih;
 void help::revoke::usage() {
-  std::cout << R"(
+  fmt::print(R"(
 == revoke ==
   
 [ syntax ]
@@ -10,5 +10,5 @@ void help::revoke::usage() {
   
 [ subopts ]
   --reason : revocation reason
-)";
+)");
 }
