@@ -1,9 +1,9 @@
 #pragma once
 #include "../actions/actions.hpp"
 #include "../config_management.hpp"
+#include "../structs.hpp"
 #include "../help/help.hpp"
 #include "../printing.hpp"
-#include "../structs.hpp"
 #include <algorithm>
 #include <cctype>
 #include <filesystem>

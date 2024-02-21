@@ -96,13 +96,13 @@ int main(int argc, const char **args) {
     printlasterror();
     cleanup();
   };
-  std::cout << "4\n";
+  
   // wait for task
   if (load_gpkih_config.get() != GPKIH_OK) {
       printlasterror();
     return -1;
   }
-  std::cout << "5\n";
+  
   PROGRAMSTARTING();
   
   PINFO("Loaded [{}] profiles\n", profile_count, DB_DIRPATH, SLASH);

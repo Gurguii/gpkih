@@ -55,7 +55,39 @@ target_include_directories(gpkih_actions_lib PUBLIC
         "${FMT_LIBRARY_INCLUDE}"
 )
 
-# Lib 3 - parse
+# Lib 3 - database
+set(gpkih_db_src "${GPKIH_SRC_DIR}/db")
+set(gpkih_db_definition "${gpkih_db_src}/database.hpp")
+set(gpkih_db_implementation 
+        "${gpkih_db_src}/profiles.cpp"
+        "${gpkih_db_src}/entities.cpp"
+)
+add_library(gpkih_db_lib STATIC "${gpkih_db_implementation}")
+target_include_directories(gpkih_db_lib PUBLIC
+        "${INCLUDE_DIR}"
+        "${FMT_LIBRARY_INCLUDE}"
+)
+
+# Lib 4 - help
+set(gpkih_help_src "${GPKIH_SRC_DIR}/help")
+set(gpkih_help_definition "${gpkih_help_src}/help.hpp")
+set(gpkih_help_implementation
+        "${gpkih_help_src}/help.cpp"
+        #"${gpkih_help_src}/get.cpp"
+        #"${gpkih_help_src}/help_build.cpp"
+        #"${gpkih_help_src}/help_create_pack.cpp"
+        #"${gpkih_help_src}/help_gencrl.cpp"
+        #"${gpkih_help_src}/help_init.cpp"
+        #"${gpkih_help_src}/help_remove.cpp"
+        #"${gpkih_help_src}/help_revoke.cpp"
+)
+add_library(gpkih_help_lib STATIC "${gpkih_help_implementation}")
+target_include_directories(gpkih_help_lib PUBLIC
+        "${INCLUDE_DIR}"
+        "${FMT_LIBRARY_INCLUDE}"
+)
+
+# Lib 5 - parse
 set(gpkih_parse_src "${GPKIH_SRC_DIR}/parse")
 set(gpkih_parse_definition "${gpkih_parse_src}/parser.hpp")
 set(gpkih_parse_implementation
@@ -74,38 +106,7 @@ target_include_directories(gpkih_parse_lib PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
 )
-
-# Lib 4 - database
-set(gpkih_db_src "${GPKIH_SRC_DIR}/db")
-set(gpkih_db_definition "${gpkih_db_src}/database.hpp")
-set(gpkih_db_implementation 
-        "${gpkih_db_src}/profiles.cpp"
-        "${gpkih_db_src}/entities.cpp"
-)
-add_library(gpkih_db_lib STATIC "${gpkih_db_implementation}")
-target_include_directories(gpkih_db_lib PUBLIC
-        "${INCLUDE_DIR}"
-        "${FMT_LIBRARY_INCLUDE}"
-)
-
-# Lib 5 - help
-set(gpkih_help_src "${GPKIH_SRC_DIR}/help")
-set(gpkih_help_definition "${gpkih_help_src}/help.hpp")
-set(gpkih_help_implementation
-        "${gpkih_help_src}/help.cpp"
-        "${gpkih_help_src}/get.cpp"
-        "${gpkih_help_src}/help_build.cpp"
-        "${gpkih_help_src}/help_create_pack.cpp"
-        "${gpkih_help_src}/help_gencrl.cpp"
-        "${gpkih_help_src}/help_init.cpp"
-        "${gpkih_help_src}/help_remove.cpp"
-        "${gpkih_help_src}/help_revoke.cpp"
-)
-add_library(gpkih_help_lib STATIC "${gpkih_help_implementation}")
-target_include_directories(gpkih_help_lib PUBLIC
-        "${INCLUDE_DIR}"
-        "${FMT_LIBRARY_INCLUDE}"
-)
+target_link_libraries(gpkih_parse_lib PUBLIC gpkih_help_lib)
 
 # Add executable
 add_executable(gpkih

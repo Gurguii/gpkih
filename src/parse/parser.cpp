@@ -36,7 +36,7 @@ int parsers::parse(int argc, const char **_args) {
   if (action == "help" || action == "--help" || action == "-help" ||
       action == "-h") {
     if (args.size() > 1) {
-      call_helper(args[1]);
+      help::call_helper(args[1]);
     } else {
       help::usage();
     }

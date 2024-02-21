@@ -6,32 +6,32 @@
 
 namespace gpkih::help {
 void usage();
+extern void call_helper(strview action);
 }
 namespace gpkih::help::build {
-void usage();
+extern void usage();
 }
 namespace gpkih::help::revoke {
-void usage();
+extern void usage();
 }
 namespace gpkih::help::gencrl {
-void usage();
+extern void usage();
 }
 namespace gpkih::help::list {
-void usage();
+extern void usage();
 }
 namespace gpkih::help::init {
-void usage();
+extern void usage();
 }
 namespace gpkih::help::remove {
-void usage();
+extern void usage();
 }
 namespace gpkih::help::create_pack {
-void usage();
+extern void usage();
 }
 namespace gpkih::help::get {
-void usage();
+extern void usage();
 }
 namespace gpkih::help::set {
-void usage();
+extern void usage();
 }
-using namespace gpkih;

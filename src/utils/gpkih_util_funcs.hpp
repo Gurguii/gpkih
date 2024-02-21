@@ -5,6 +5,7 @@
 #include "../printing.hpp"
 #include <unordered_map>
 #include <sstream>
+
 static bool hasWritePermissions(std::string dirpath) {
   /* this approach is kind of sad to see */
   try {
