@@ -1,5 +1,5 @@
 #include "actions.hpp"
-
+#include <sstream>
 /* UNUSED, left to see if i ever get to develop something around this idea */
 enum class PRINT_MODE {
   table,

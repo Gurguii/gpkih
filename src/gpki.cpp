@@ -14,13 +14,11 @@
 /* [testing] class 'Logger' for logging */
 #include "logger/logger.hpp"
 
-
-
 #include <future> // std::async() std::future<>()
 
 
 // Tasks launched by cleanup() before exiting the program
-static inline std::vector<int (*)()> cleanup_functions{gpkih::db::profiles::sync};
+static inline std::vector<int (*)()> cleanup_functions{};
 static inline int cleanup() {
   fmt::print("\n");
   std::vector<std::future<int>> tasks{};
@@ -94,7 +92,7 @@ int main(int argc, const char **args) {
   // Check if gpkih base dir is created, else try to create it
   if (check_gpkih_install_dir() != GPKIH_OK) {
     printlasterror();
-    cleanup();
+    return -1;
   }
   
   // TODO - Add PROPER checks for openssl - openvpn existence
@@ -105,13 +103,13 @@ int main(int argc, const char **args) {
   int profile_count = -1;
   if ((profile_count = gpkih::db::profiles::initialize()) < 0) {
     printlasterror();
-    cleanup();
+    return -1;
   };
 
   // wait for task
   if (load_gpkih_config.get() != GPKIH_OK) {
     printlasterror();
-    cleanup();
+    return -1;
   }
 
   PROGRAMSTARTING();
@@ -121,9 +119,9 @@ int main(int argc, const char **args) {
   // Parse options
   if (gpkih::parsers::parse(argc - 1, args + 1) != GPKIH_OK) {
     printlasterror();
-    cleanup();
+    return -1;
   }
 
   // Everything went well
-  cleanup();
+  return 0;
 }

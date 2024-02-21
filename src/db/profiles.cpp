@@ -23,6 +23,7 @@ int db::profiles::populate_from_entry(str &entry, std::vector<str> &fields) {
 /* Synchronizes profiles.csv with existing_profiles so that only valid profiles
 (with existing source dir) in existing_profiles are left in profiles.csv */
 int db::profiles::sync() {
+  PINFO("synchronizing profiles\n");
   std::string tmpfile = dbpath + ".tmp";
   std::ofstream tmp(tmpfile);
   if (!tmp.is_open()) {
@@ -30,13 +31,13 @@ int db::profiles::sync() {
     PERROR("couldn't open tmpfile to synchronize database\n");
     return -1;
   }
-  tmp << dbheaders << EOL;
+  tmp.write(&dbheaders[0],dbheaders.size());
   for (auto &p : existing_profiles) {
     Profile &ref = p.second;
     if (std::filesystem::exists(ref.source) &&
         std::filesystem::is_directory(ref.source)) {
       // good
-      tmp << (ref.csv_entry()) << EOL;
+      tmp << EOL << (ref.csv_entry());
     }
   }
   tmp.close();
@@ -55,15 +56,16 @@ int db::profiles::initialize() {
       PERROR("couldn't create file '{}'\n", dbpath);
       return -1;
     }
-    db << dbheaders;
+    db.write(&dbheaders[0], dbheaders.size());
+    db << EOL;
+    // db << dbheaders;
     db.close();
     return 0;
   }
   std::ifstream file(dbpath);
-  str headers;
-  getline(file, headers);
+  str headers("\0",dbheaders.size());
+  file.read(&headers[0], headers.size());
   if (headers != dbheaders) {
-    fmt::print("headers error...\n");
       seterror("profile headers do not match - original: '{}' size: '{}' current: '{}' size: '{}'",
           dbheaders, dbheaders.size(), headers, headers.size());
     return GPKIH_FAIL;
@@ -73,6 +75,9 @@ int db::profiles::initialize() {
   str line;
   int lines = 0;
   while (getline(file, line)) {
+      if (line.empty()) {
+          continue;
+      }
     Profile pinfo;
     ++lines;
     populate_from_entry(line, &pinfo);
@@ -90,7 +95,12 @@ int db::profiles::initialize() {
       return -1;
     };
   }
-  db::profiles::remove(remove_profiles);
+  file.close();
+  if (remove_profiles.size() > 0) {
+      // found entries whose source dirs don't exist
+      // remove them
+      db::profiles::remove(remove_profiles);
+  }
   return existing_profiles.size();
 }
 
@@ -105,12 +115,12 @@ int db::profiles::add(Profile *profile) {
   }
   int bsize = fs::file_size(dbpath);
   std::ofstream db(dbpath, std::ios::app);
-  fmt::print("adding profile entry -> {} to file '{}'\n", profile->csv_entry(), dbpath);
+  // fmt::print("adding profile entry -> {} to file '{}'\n", profile->csv_entry(), dbpath);
   if(!db.is_open()){
     seterror("couldn't open db file '{}'", dbpath);
     return F_NOOPEN;
   }
-  db << profile->csv_entry();
+  db << profile->csv_entry() << EOL;
   db.close();
 
   if (fs::file_size(dbpath) <= bsize) {

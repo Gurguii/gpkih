@@ -3,6 +3,7 @@
 #include <unordered_map>
 #include <fstream> // std::ifstream | std::ofstream
 #include <iostream> // std::cin
+#include <sstream> 
 
 static bool hasWritePermissions(std::string dirpath) {
   /* this approach is kind of sad to see */

@@ -34,7 +34,8 @@ foreach($executable in $required_tools){
 
 $root = $PSScriptRoot
 $build_dir = "$root\build"
-$stderr = "$root\.error.log"
+$stderr_log = "$root\.error.log"
+$stdout_log = "$root\.out.log"
 
 if (!(Get-Item "$build_dir" -ErrorAction SilentlyContinue)){
     # Create build dir
@@ -43,12 +44,18 @@ if (!(Get-Item "$build_dir" -ErrorAction SilentlyContinue)){
 
 Set-Location "$build_dir"
 
+Write-Host "[ Using executables ]"
+foreach($k in $exec.Keys){
+    Write-Host "$k -> $($exec[$k])"
+}
+
 # run 'cmake ..' inside build directory
 [int]$exitcode;
 
 $cmake_executable = $exec["cmake"]
 $cmake_command_args = ".."
-$exitcode = (Start-Process -NoNewWindow -FilePath "$cmake_executable" -ArgumentList "$cmake_command_args" -RedirectStandardError "$stderr" -Wait -Passthru).ExitCode
+$exitcode = (Start-Process -NoNewWindow -FilePath "$cmake_executable" -ArgumentList "$cmake_command_args" -RedirectStandardError "$stderr_log" -Wait -Passthru).ExitCode
+
 if($exitcode -ne 0){
     Write-Host "Command '$cmake_executable $cmake_command_args' returned $exitcode"
     exit $exitcode
@@ -57,11 +64,21 @@ if($exitcode -ne 0){
 $msbuild_executable = $exec["msbuild"]
 $msbuild_command_args = "$build_dir\gpkih.sln"
 
-$exitcode = (Start-Process -NoNewWindow -FilePath "$msbuild_executable" -ArgumentList "$msbuild_command_args" -RedirectStandardError "$stderr" -Wait -Passthru).ExitCode
+& "$msbuild_executable" "$msbuild_command_args"
+if( ! $?){
+    Write-Host "Command '$msbuild_executable $msbuild_command_args' failed"
+    exit 1
+}
+#$exitcode = (Start-Process -NoNewWindow 
+#    -FilePath "$msbuild_executable" 
+#    -ArgumentList "$msbuild_command_args" 
+#    -RedirectStandardOutput "$stdout_log" 
+#    -RedirectStandardError "$stderr_log" 
+#    -Passthru)
+
 if($exitcode -ne 0){
     Write-Host "Command '$msbuild_executable $msbuild_command_args' returned $exitcode"
     exit $exitcode
 }
 
 Copy-Item -Path "$build_dir\Debug\gpkih.exe" -Destination "$root\gpkih.exe" -Force 
-Write-Host -ForegroundColor Green "gpkih succesfully compiled"

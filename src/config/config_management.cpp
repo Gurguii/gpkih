@@ -138,9 +138,8 @@ bool ProfileConfig::dump_vpn_conf(strview outpath, ENTITY_TYPE type) {
   std::ofstream file(outpath.data());
   if (!file.is_open()) {
     seterror("couldn't open file '{}' to write", outpath);
-    return F_NOOPEN;
+    return false;
   }
-  // Dump _conf_pki map to output path
   // entity specific options
   switch (type) {
   case ET_SV:
@@ -172,7 +171,7 @@ bool ProfileConfig::dump_vpn_conf(strview outpath, ENTITY_TYPE type) {
   // common options
   if (this->_conf_vpn.find("common") == this->_conf_vpn.end()) {
     seterror("couldn't find 'common' section in vpn mapped values");
-    return GPKIH_FAIL;
+    return false;
   }
   for (auto &kv : this->_conf_vpn["common"]) {
     if (kv.second == "UNSET") {

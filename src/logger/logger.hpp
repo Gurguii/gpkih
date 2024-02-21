@@ -16,9 +16,9 @@ private:
 	std::string file;
 public:
 	enum class Level{
-		INFO,
-		WARNING,
-		ERROR
+		_INFO,
+		_WARNING,
+		_ERROR
 	};
 	// won't log messages to file unless .set_logfile() is called
 	Logger(); 	

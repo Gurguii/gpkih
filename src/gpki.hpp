@@ -21,7 +21,7 @@ namespace fs = std::filesystem;
 inline str CURRENT_PATH = fs::current_path().string();
 inline str SLASH = "\\";
 inline str BASEDIR = str(std::getenv("LOCALAPPDATA")) + "\\gpkih\\";
-inline str EOL = "\r\n";
+inline str EOL = "\n";
 inline str VPN_CONFIG_EXTENSION = "ovpn";
 #else
 #include <sys/signal.h>

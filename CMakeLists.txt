@@ -120,7 +120,7 @@ set(gpkih_logging_implementation
         "${gpkih_logging_src}/error_management.cpp"
 )
 add_library(gpkih_logging_lib STATIC "${gpkih_logging_implementation}")
-target_include_directories(gpkih_parse_lib PUBLIC
+target_include_directories(gpkih_logging_lib PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
 )

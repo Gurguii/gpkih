@@ -1,5 +1,5 @@
 #include "actions.hpp"
-
+#include <algorithm>
 using namespace gpkih;
 
 // Not allowed in common_names
@@ -90,9 +90,6 @@ static str _ca_build_command(Profile &profile, ConfigMap &pkiconf, Entity &entit
   // Check for optional arguments based on configuration
   if(Config::get("behaviour","autoanswer") == "yes"){
     command += " -batch"; // doesn't ask before signing certificate or updating database
-  }
-  if(Config::get("behaviour","print_generated_certificate") == "no"){
-    command += " -notext"; // doesn't print the generated certificates
   }
 
   return std::move(command);
@@ -221,18 +218,20 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity){
   const auto [req_command, crt_command] = _server_client_build_commands(profile, pkiconf, entity);
   // create key + csr
   fmt::print("{}\n{}\n", req_command, crt_command);
-  if(system(req_command.c_str())){
-    // fail
-    seterror("command '{}' failed\n",req_command);
-    return GPKIH_FAIL;
-  }
+  system(req_command.c_str());
+  //if(system(req_command.c_str())){
+  //  // fail
+  //  seterror("command '{}' failed\n",req_command);
+  //  return GPKIH_FAIL;
+  //}
 
   // create crt
-  if(system(crt_command.c_str())){
-    // fail
-    seterror("command '{}' failed\n",crt_command);
-    return GPKIH_FAIL;
-  }
+  system(crt_command.c_str());
+  //if(system(crt_command.c_str())){
+  //  // fail
+  //  seterror("command '{}' failed\n",crt_command);
+  //  return GPKIH_FAIL;
+  //}
 
   // ca | sv | cl | key | req | certificate created
   // add to database and create inline config file
