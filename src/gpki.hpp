@@ -15,13 +15,14 @@ using ui64    = uint64_t;
 // Custom namespace names
 namespace fs = std::filesystem;
 
+inline str EOL = "\n";
+
 #ifdef _WIN32
 #include <Windows.h>
 /* WINDOWS STUFF */
 inline str CURRENT_PATH = fs::current_path().string();
 inline char SLASH = '\\';
 inline str BASEDIR = str(std::getenv("LOCALAPPDATA")) + "\\gpkih\\";
-inline str EOL = "\n";
 inline str VPN_CONFIG_EXTENSION = "ovpn";
 #else
 #include <sys/signal.h>
@@ -29,7 +30,6 @@ inline str VPN_CONFIG_EXTENSION = "ovpn";
 inline str CURRENT_PATH = fs::current_path();
 inline char SLASH = '/';
 inline str BASEDIR = str(std::getenv("HOME")) + "/.config/gpkih/";
-inline str EOL = "\n";
 inline str VPN_CONFIG_EXTENSION = "conf";
 #endif
 

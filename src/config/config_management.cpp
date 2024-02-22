@@ -52,6 +52,7 @@ int Config::load_file(strview path, ConfigMap &buff) {
       }
     }
   }
+  file.close();
   return GPKIH_OK;
 };
 
@@ -171,6 +172,7 @@ bool ProfileConfig::dump_vpn_conf(strview outpath, ENTITY_TYPE type) {
   // common options
   if (this->_conf_vpn.find("common") == this->_conf_vpn.end()) {
     seterror("couldn't find 'common' section in vpn mapped values");
+    file.close();
     return false;
   }
   for (auto &kv : this->_conf_vpn["common"]) {
@@ -179,5 +181,6 @@ bool ProfileConfig::dump_vpn_conf(strview outpath, ENTITY_TYPE type) {
     }
     file << kv.first << " " << kv.second << "\n";
   }
+  file.close();
   return (fs::exists(outpath) && fs::file_size(outpath) > 0) ? true : false;
 }

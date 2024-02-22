@@ -60,7 +60,7 @@ int db::profiles::initialize() {
     db << EOL;
     // db << dbheaders;
     db.close();
-    return 0;
+    return GPKIH_OK;
   }
   std::ifstream file(dbpath);
   str headers("\0",dbheaders.size());
@@ -68,6 +68,7 @@ int db::profiles::initialize() {
   if (headers != dbheaders) {
       seterror("profile headers do not match - original: '{}' size: '{}' current: '{}' size: '{}'",
           dbheaders, dbheaders.size(), headers, headers.size());
+    file.close();
     return GPKIH_FAIL;
   }
   // Load profiles into existing_profiles
@@ -218,5 +219,6 @@ int db::profiles::get_entities(str profile, std::vector<Entity> &buff) {
     entities::populate_from_entry(entry, entity);
     buff.push_back(std::move(entity));
   }
-  return 0;
+  file.close();
+  return GPKIH_OK;
 }

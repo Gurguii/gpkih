@@ -39,7 +39,7 @@ static std::pair<str,str> _server_client_build_commands(Profile &profile, Config
   entity.csr_path = std::move(fmt::format("{}{}-csr.{}",profile.dir_req(), subject.cn, csr_creation_format.data()));
   entity.key_path = std::move(fmt::format("{}{}-key.{}",profile.dir_key(), subject.cn, key_creation_format.data()));
 
-  str csr_command = std::move(fmt::format("openssl req -newkey {}:{} -out {} -keyout {} -subj '{}' -outform {} -keyform {} -noenc",
+  str csr_command = std::move(fmt::format("openssl req -newkey {}:{} -out \"{}\" -keyout \"{}\" -subj {} -outform {} -keyform {} -noenc",
     key_algo,
     key_size,
     entity.csr_path,
@@ -55,11 +55,10 @@ static std::pair<str,str> _server_client_build_commands(Profile &profile, Config
   str x509_extensions_file_path = CONF_DIRPATH + "x509" + SLASH + to_str(entity.type);
   strview days = pkiconf["crt"]["days"];
   
-  str crt_command = std::move(fmt::format("openssl ca -config {} -in {} -out {} -subj '{}' -extfile {} -days +{}",
+  str crt_command = std::move(fmt::format("openssl ca -config \"{}\" -in \"{}\" -out \"{}\" -extfile \"{}\" -days +{}",
     profile.gopenssl(),
     entity.csr_path,
     entity.crt_path,
-    subject.oneliner(),
     x509_extensions_file_path,
     days
   ));
@@ -84,12 +83,14 @@ static str _ca_build_command(Profile &profile, ConfigMap &pkiconf, Entity &entit
   str ca_crt_path = fmt::format("{}{}pki{}ca{}crt",profile.source,SLASH,SLASH,SLASH);
   str ca_key_path = fmt::format("{}{}pki{}ca{}key",profile.source,SLASH,SLASH,SLASH);
 
-  str command = std::move(fmt::format("openssl req -config {} -new -x509 -out {} -keyout {} -subj '{}' -set_serial '{}' -noenc",
+  str command = std::move(fmt::format("openssl req -config {} -new -x509 -out {} -keyout {} -subj {} -set_serial {} -newkey {}:{} -noenc",
     profile.gopenssl(),
     ca_crt_path,
     ca_key_path,
     entity.subject.oneliner(),
-    entity.serial
+    entity.serial,
+    pkiconf["key"]["algorithm"],
+    pkiconf["key"]["size"]
   ));
 
   // Check for optional arguments based on configuration
@@ -157,7 +158,8 @@ static int _create_inline_config(Profile &profile,ProfileConfig &config,
     file << "<ca>" << EOL << ca_crt_str << "</ca>" << EOL;
     file << "<cert>" << EOL << entity_crt_str << "</cert>" << EOL;
     file << "<key>" << EOL << entity_key_str << "</key>" << EOL;
-
+    
+    file.close();
   }
   return GPKIH_OK;
 }
@@ -209,6 +211,8 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity){
   }
   serial_file << nserial;
 
+  serial_file.close();
+  
   // Add to database
   if(db::entities::add(profile.name,entity)){
     return GPKIH_FAIL;
@@ -242,7 +246,7 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity){
   if(db::entities::add(profile.name, entity)){
     return GPKIH_FAIL;
   }
-
+  return GPKIH_OK;
   // create inline config file
   std::vector<Entity> hahahah{entity};
   if(_create_inline_config(profile, config, hahahah)){

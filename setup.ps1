@@ -13,7 +13,7 @@ foreach($executable in $required_tools){
     if(Get-Command -Name "$executable" -ErrorAction SilentlyContinue){
         # Found executable in PATH
         $exec[$executable] = (Get-Command -Name "$executable").Source
-        write-host "got it in path: $executable -> $($exec[$executable])"
+        Write-Host "[info] $executable found in PATH"
         continue
     }else{
         # Not found in PATH
@@ -46,39 +46,28 @@ Set-Location "$build_dir"
 
 Write-Host "[ Using executables ]"
 foreach($k in $exec.Keys){
-    Write-Host "$k -> $($exec[$k])"
+    Write-Host "[ $k.exe ] : $($exec[$k])"
 }
 
 # run 'cmake ..' inside build directory
-[int]$exitcode;
 
 $cmake_executable = $exec["cmake"]
 $cmake_command_args = ".."
-$exitcode = (Start-Process -NoNewWindow -FilePath "$cmake_executable" -ArgumentList "$cmake_command_args" -RedirectStandardError "$stderr_log" -Wait -Passthru).ExitCode
+$cmake_process = Start-Process -FilePath "$cmake_executable" -ArgumentList "$cmake_command_args" -PassThru -Wait -NoNewWindow
 
-if($exitcode -ne 0){
+if($cmake_process.ExitCode -ne 0){
     Write-Host "Command '$cmake_executable $cmake_command_args' returned $exitcode"
-    exit $exitcode
+    exit $cmake_process.ExitCode
 }
 
-$msbuild_executable = $exec["msbuild"]
-$msbuild_command_args = "$build_dir\gpkih.sln"
+$msbuild_executable = "$($exec["msbuild"])"
+$msbuild_command_args = "-verbosity:minimal -maxCpuCount:4 -t:gpkih `"$build_dir\gpkih.sln`""
 
-& "$msbuild_executable" "$msbuild_command_args"
-if( ! $?){
-    Write-Host "Command '$msbuild_executable $msbuild_command_args' failed"
-    exit 1
-}
-#$exitcode = (Start-Process -NoNewWindow 
-#    -FilePath "$msbuild_executable" 
-#    -ArgumentList "$msbuild_command_args" 
-#    -RedirectStandardOutput "$stdout_log" 
-#    -RedirectStandardError "$stderr_log" 
-#    -Passthru)
+$build_process = Start-Process -FilePath "$msbuild_executable" -ArgumentList "$msbuild_command_args" -PassThru -Wait -NoNewWindow
 
-if($exitcode -ne 0){
-    Write-Host "Command '$msbuild_executable $msbuild_command_args' returned $exitcode"
-    exit $exitcode
+if($build_process.ExitCode -ne 0){
+    Write-Host -ForegroundColor "[error]MSBuild returned $($build_process.ExitCode)"
+    exit $cmake_process.ExitCode    
 }
 
 Copy-Item -Path "$build_dir\Debug\gpkih.exe" -Destination "$root\gpkih.exe" -Force 

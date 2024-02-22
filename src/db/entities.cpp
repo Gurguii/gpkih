@@ -54,6 +54,7 @@ int db::entities::populate_from_entry(str &entry,
   return GPKIH_OK;
 }
 
+// what the fk is this
 int db::entities::populate_from_entry(str &profile, str &entry, str &cn,
                                       Entity &buff) {
   std::ifstream file(DB_DIRPATH + profile + "_entities.csv");
@@ -64,6 +65,7 @@ int db::entities::populate_from_entry(str &profile, str &entry, str &cn,
   sstream ss(entry);
   std::string _cn;
   getline(ss, _cn, CSV_DELIMITER_c);
+  file.close();
   if (_cn == cn) {
     return populate_from_entry(entry, buff);
   }
@@ -80,9 +82,11 @@ int db::entities::exists(strview profile, strview common_name) {
   while (getline(file, line)) {
     populate_from_entry(line, info);
     if (info.subject.cn == common_name) {
+      file.close();
       return ENTITY_FOUND;
     }
   }
+  file.close();
   return GPKIH_FAIL;
 }
 
@@ -97,9 +101,11 @@ int db::entities::load(str &profile, strview common_name, Entity &entity_buff) {
     populate_from_entry(line, info);
     if (info.subject.cn == common_name) {
       entity_buff = std::move(info);
+      file.close();
       return GPKIH_OK;
     }
   }
+  file.close();
   return GPKIH_FAIL;
 }
 
@@ -108,10 +114,12 @@ int db::entities::add(str &profile_name, Entity &entity) {
   str dbpath = std::move(_dbpath(profile_name));
   std::ofstream file(dbpath, std::ios::app);
   if (!file.is_open()) {
+    file.close();
     return GPKIH_FAIL;
   }
   uint64_t bsize = fs::file_size(dbpath);
   file << e.csv_entry() << EOL;
+  file.close();
   return GPKIH_OK;
 }
 

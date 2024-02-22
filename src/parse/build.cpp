@@ -1,17 +1,39 @@
 #include "parser.hpp"
 
-str badchars = "~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?\t\n\r";
+str badchars = "~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?¿\t\n\r";
 
 using namespace gpkih;
+
+// returns true | false indicating if the given 
+// buffer contains a badchar
+static bool has_badchar (str& buff) {
+    for (const char& c : buff) {
+        if (badchars.find(c) != -1) {
+            PWARN("found unaccepted char '{}' - please avoid using any of these '{}'\n", c, R"(~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?\t\n\r)");
+            return true;
+        }
+    }
+    return false;
+};
+
+// removes any badchars from buff effectively calling std::string::erase() to the
+// actual size of the buffer will be affected to, 
+// e.g input size 6 - 2 badchars - size after func call = 4
+static void remove_badchar(str& buff) {
+    buff.erase(std::remove_if(buff.begin(), buff.end(), [](char& c) {return badchars.find(c) != -1;}), buff.end());
+}
 
 static inline void _get_and_set_prop(std::string &st) {
   std::string input;
   std::getline(std::cin, input);
   if (!input.empty()) {
+    if (has_badchar(input)) {
+      remove_badchar(input);
+      PINFO("fixed: {}\n", input);
+    }
     st = std::move(input);
   }
 }
-
 
 static inline int _prompt_for_subject(strview profile_name, Subject &buffer)
 {
@@ -36,7 +58,6 @@ static inline int _prompt_for_subject(strview profile_name, Subject &buffer)
   while (keepgoing) {
     PROMPT("Common Name: ", RED);
     std::getline(std::cin, input);
-    
     if (input.empty()) {
       // Common name can't be empty
       PWARN("common name can't be empty\n");
@@ -47,19 +68,13 @@ static inline int _prompt_for_subject(strview profile_name, Subject &buffer)
       input, profile_name);
       continue;
     }else {
-      keepgoing = 0;
-      buffer.cn = input;
-      for (const char &c : input) {
-        if (badchars.find(c) != -1) {
-          // found bad char
-          PWARN("found unaccepted char '{}' - please avoid using any of these '{}'\n",
-                c, R"(~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?\t\n\r)");          
-          keepgoing = 1;
-          break;
-        }
-      }
+      keepgoing = has_badchar(input);
     }
   }
+  
+  // Got proper cn
+  buffer.cn = input;
+  input.assign("");
   
   // Set email
   PROMPT("Email Address: ");
@@ -128,7 +143,7 @@ int parsers::build(std::vector<std::string> opts) {
     return F_NOOPEN;
   }
   file >> entity.serial;
-
+  file.close();
   // override default build params with user arguments
   for (int i = 0; i < opts.size(); ++i) {
     strview opt = opts[i];

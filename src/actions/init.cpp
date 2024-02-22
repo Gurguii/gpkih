@@ -156,20 +156,27 @@ int actions::init(strview profile_name, strview profile_source) {
   str sed_src = CONF_DIRPATH + openssl_conf_filename;
   str sed_dst = profile.source + SLASH + openssl_conf_filename;
 
-#ifdef __WIN32
+
+// [Windows] - change \ for / since openssl processes slashes as / in the openssl.conf file
+#ifdef _WIN32
   std::replace_if(
       profile.source.begin(), profile.source.end(),
       [](char c) { return c == '\\'; }, '/');
 #endif
+
   if (sed(sed_src, sed_dst, {{"GPKI_BASEDIR", profile.source + "/pki"}})) {
     PERROR("gsed failed()\n");
     return -1;
   }
-#ifdef __WIN32
+// [Windows] - change / slashes back to \ 
+#ifdef _WIN32
   std::replace_if(
       profile.source.begin(), profile.source.end(),
       [](char c) { return c == '/'; }, '\\');
 #endif
+
+
+
   // Add profile to database
   if (db::profiles::add(&profile)) {
     // error is set by db::profiles::add
