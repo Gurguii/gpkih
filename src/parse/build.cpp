@@ -1,6 +1,7 @@
 #include "parser.hpp"
 
 str badchars = "~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?\t\n\r";
+
 using namespace gpkih;
 
 static inline void _get_and_set_prop(std::string &st) {
@@ -31,39 +32,39 @@ static inline int _prompt_for_subject(strview profile_name, Subject &buffer)
   _get_and_set_prop(buffer.organisation);
   // *MANDATORY Set common name
   input.assign("");
-  // PROMPT("Common Name: ");
-  // std::getline(std::cin, input);
   int keepgoing = 1;
   while (keepgoing) {
     PROMPT("Common Name: ", RED);
     std::getline(std::cin, input);
+    
     if (input.empty()) {
+      // Common name can't be empty
       PWARN("common name can't be empty\n");
       continue;
-    } else {
+    } else if (db::entities::exists(profile_name, input) == ENTITY_FOUND) {
+      // Common name can't be duplicated
+      PWARN("Entity with CN '{}' already exists in profile '{}'\n",
+      input, profile_name);
+      continue;
+    }else {
       keepgoing = 0;
+      buffer.cn = input;
       for (const char &c : input) {
         if (badchars.find(c) != -1) {
           // found bad char
-          PWARN("found unaccepted char '{}' - please avoid using any of these "
-                "'{}'\n",
-                c, badchars);
+          PWARN("found unaccepted char '{}' - please avoid using any of these '{}'\n",
+                c, R"(~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?\t\n\r)");          
           keepgoing = 1;
           break;
         }
       }
     }
   }
-  buffer.cn = input;
+  
   // Set email
   PROMPT("Email Address: ");
   _get_and_set_prop(buffer.email);
 
-  if (db::entities::exists(profile_name, buffer.cn)) {
-    seterror("Entity with CN '{}' already exists in profile '{}'\n",
-             buffer.cn, profile_name);
-    return GPKIH_FAIL;
-  }
   return GPKIH_OK;
 }
 
@@ -131,7 +132,11 @@ int parsers::build(std::vector<std::string> opts) {
   // override default build params with user arguments
   for (int i = 0; i < opts.size(); ++i) {
     strview opt = opts[i];
-    if(opt == "-keysize" || opt == "--keysize") {
+    if(opt == "-algo" || opt == "--algorithm"){
+      // check its a valid algorithm
+      config.set(CONFIG_PKI,"key","algorithm",std::move(opts[++i]));
+    }
+    else if(opt == "-keysize" || opt == "--keysize") {
       config.set(CONFIG_PKI,"key","size",std::move(opts[++i]));
     } else if (opt == "-keyformat") {
       config.set(CONFIG_PKI,"key","creation_format",std::move(opts[++i]));

@@ -19,7 +19,7 @@ namespace fs = std::filesystem;
 #include <Windows.h>
 /* WINDOWS STUFF */
 inline str CURRENT_PATH = fs::current_path().string();
-inline str SLASH = "\\";
+inline char SLASH = '\\';
 inline str BASEDIR = str(std::getenv("LOCALAPPDATA")) + "\\gpkih\\";
 inline str EOL = "\n";
 inline str VPN_CONFIG_EXTENSION = "ovpn";
@@ -27,7 +27,7 @@ inline str VPN_CONFIG_EXTENSION = "ovpn";
 #include <sys/signal.h>
 /* LINUX STUFF */
 inline str CURRENT_PATH = fs::current_path();
-inline str SLASH = "/";
+inline char SLASH = '/';
 inline str BASEDIR = str(std::getenv("HOME")) + "/.config/gpkih/";
 inline str EOL = "\n";
 inline str VPN_CONFIG_EXTENSION = "conf";
@@ -66,7 +66,9 @@ enum class GPKIH_RETURN_CODES {
 #define F_NOOPEN static_cast<int>(GPKIH_RETURN_CODES::__cant_open)
   __cant_create = 32,
 #define F_NOCREATE static_cast<int>(GPKIH_RETURN_CODES::__cant_create)
-  
+  __found_entity = 1,
+  /* DATABASE RELATED CODES */
+#define ENTITY_FOUND static_cast<int>(GPKIH_RETURN_CODES::__found_entity)
   /* */
 };
 

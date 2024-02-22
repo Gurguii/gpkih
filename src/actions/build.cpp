@@ -64,6 +64,11 @@ static std::pair<str,str> _server_client_build_commands(Profile &profile, Config
     days
   ));
 
+  // Check additional opts based on config
+  if(Config::get("behaviour","autoanswer") == "yes"){
+    crt_command += " -batch";
+  }
+  
   return {std::move(csr_command),std::move(crt_command)};
 }
 
@@ -122,12 +127,12 @@ static int _create_inline_config(Profile &profile,ProfileConfig &config,
     auto outdir = fmt::format("{}{}packs{}{}", profile.source, SLASH, SLASH,
                               entity.subject.cn);
 
-    if (create_output_path(outdir)) {
+    if (create_output_path(outdir, 1)) {
       return GPKIH_FAIL;
     };
 
     str outpath = std::move(fmt::format("{}{}pack_{}", outdir, SLASH, entity.subject.cn));
-    if (create_output_path(outpath)) {
+    if (create_output_path(outpath, 0)) {
       return GPKIH_FAIL;
     };
 
@@ -218,20 +223,19 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity){
   const auto [req_command, crt_command] = _server_client_build_commands(profile, pkiconf, entity);
   // create key + csr
   fmt::print("{}\n{}\n", req_command, crt_command);
-  system(req_command.c_str());
-  //if(system(req_command.c_str())){
-  //  // fail
-  //  seterror("command '{}' failed\n",req_command);
-  //  return GPKIH_FAIL;
-  //}
+
+  if(system(req_command.c_str())){
+    // fail
+    seterror("command '{}' failed\n",req_command);
+    return GPKIH_FAIL;
+  }
 
   // create crt
-  system(crt_command.c_str());
-  //if(system(crt_command.c_str())){
-  //  // fail
-  //  seterror("command '{}' failed\n",crt_command);
-  //  return GPKIH_FAIL;
-  //}
+  if(system(crt_command.c_str())){
+    // fail
+    seterror("command '{}' failed\n",crt_command);
+    return GPKIH_FAIL;
+  }
 
   // ca | sv | cl | key | req | certificate created
   // add to database and create inline config file

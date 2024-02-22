@@ -1,20 +1,23 @@
 #pragma once
-
 #include <fmt/format.h>
 #include "../printing.hpp"
 
 #include <string_view>
 #include <queue>
+  
+#include <future> // std::async(), std::future<>
 
 namespace gpkih
 {
 class Logger
 {
 private:
+	static inline std::vector<int (*)()> cleanup_functions{};
 	static std::vector<std::string_view> currently_used_files();
 	std::queue<std::string> message_queue;
 	std::string file;
 public:
+	static int cleanup_with_exit();
 	enum class Level{
 		_INFO,
 		_WARNING,

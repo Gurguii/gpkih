@@ -49,10 +49,31 @@ static int sed(std::string_view src, std::string_view dst,
   return 0;
 }
 
-// Attempts to create the target path (directory)
-// - checks if a file already exists
-// - creates every non-existant intermediary directory
-static int create_output_path(str &path){
+// Returns std::string with the filename
+// of given path
+static str filename_from_path(strview path){
+  auto iter = std::find(path.rbegin(),path.rend(),SLASH);
+  if(*iter == SLASH){
+
+  }
+  str ss;
+  while(iter != path.rbegin()){
+    ss += *iter--;
+  } 
+  ss += *iter;
+  return std::move(ss);
+}
+
+// Attempts to create the target path (directory or file)
+// - if dir != 0 a directory is created and any missing intermediary
+// directories will be created too, else a file will be created
+static int create_output_path(str &_path, int dir){
+  str path;
+  if(*_path.end() == SLASH){
+    path = std::string(_path.begin(), _path.end()-1);
+  }else{
+    path = _path;
+  }
   if(fs::exists(path)){
     str ans;
     PROMPT("path '" + path + "'exists, remove?","[y/n]");
@@ -70,35 +91,18 @@ static int create_output_path(str &path){
       return -1;
     }
   }else{
-    if(!fs::create_directories(path)){
-      PERROR("couldn't create directory '{}'\n",path);
-      return -1;
+    if(dir){
+      if(!fs::create_directories(path)){
+        PERROR("couldn't create directory '{}'\n",path);
+        return GPKIH_FAIL;
+      }
+    }else{
+      if(std::ofstream(path).is_open()){
+        return GPKIH_OK;
+      }      
+      return GPKIH_OK;
     }
   }
   // Directory succesfully created
-  return 0;
-};
-
-static int check_out_file(str _path){
-  if(fs::exists(_path)){
-      str ans;
-      PINFO("path '{}' exists, remove? y/n ");
-      getline(std::cin,ans);
-      for(char &c : ans){
-        c = std::tolower(c);
-      }
-      if(ans == "n" || ans == "no"){
-        return -1;
-      }
-      if(!fs::remove_all(_path)){
-        PERROR("couldn't remove '{}'\n", _path);
-        return -1;
-      }
-  }else{
-    if(std::ofstream(_path).is_open()){
-      PERROR("couldn't create directory '{}'\n",_path);
-      return -1;
-    }
-  }
-  return 0;
+  return GPKIH_OK;
 };

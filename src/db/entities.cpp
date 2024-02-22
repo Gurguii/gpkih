@@ -41,7 +41,7 @@ int db::entities::populate_from_entry(str &entry, Entity &entity) {
   getline(ss, entity.key_path, CSV_DELIMITER_c);
   getline(ss, entity.csr_path, CSV_DELIMITER_c);
   getline(ss, entity.crt_path, CSV_DELIMITER_c);
-  return GPKIH_OK;
+  return GPKIH_OK;  
 }
 
 int db::entities::populate_from_entry(str &entry,
@@ -80,7 +80,7 @@ int db::entities::exists(strview profile, strview common_name) {
   while (getline(file, line)) {
     populate_from_entry(line, info);
     if (info.subject.cn == common_name) {
-      return 1;
+      return ENTITY_FOUND;
     }
   }
   return GPKIH_FAIL;
@@ -104,7 +104,6 @@ int db::entities::load(str &profile, strview common_name, Entity &entity_buff) {
 }
 
 int db::entities::add(str &profile_name, Entity &entity) {
-  fmt::print("adding entry: {}\n", entity.csv_entry());
   Entity &e = entity;
   str dbpath = std::move(_dbpath(profile_name));
   std::ofstream file(dbpath, std::ios::app);

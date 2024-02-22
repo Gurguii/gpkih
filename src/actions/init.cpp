@@ -4,19 +4,24 @@ static inline str openssl_conf_filename = "gopenssl.conf";
 
 static inline std::vector<str> RELATIVE_DIRECTORY_PATHS(){
   return 
-  {                                                           
-    "tls", "pki" + SLASH + "ca", "pki" + SLASH + "keys",                       
-    "pki" + SLASH + "crl", "pki" + SLASH + "serial", "packs",              
-    "pki" + SLASH + "certs", "pki" + SLASH + "reqs",                       
-    "pki" + SLASH + "database", "logs"                                     
+  {
+    "packs",
+    "logs",
+    fmt::format("pki{}ca", SLASH),
+    fmt::format("pki{}certs", SLASH),
+    fmt::format("pki{}keys", SLASH),
+    fmt::format("pki{}reqs", SLASH),
+    fmt::format("pki{}serial", SLASH),
+    fmt::format("pki{}database", SLASH),
+    fmt::format("pki{}crl", SLASH),                                                                                         
   };
 };                                               
 static inline std::unordered_map<str,str> RELATIVE_FILE_PATHS(){
   return 
-  {                                               
-    {"pki" + SLASH + "crl" + SLASH + "crlnumber", "1000"},                     
-    {"pki" + SLASH + "serial" + SLASH + "serial", "01"},                   
-    {"pki" + SLASH + "database" + SLASH + "index.txt", ""},                
+  {  
+    {fmt::format("pki{}crl{}crlnumber", SLASH, SLASH), "1000"},
+    {fmt::format("pki{}serial{}serial", SLASH, SLASH), "01"},
+    {fmt::format("pki{}database{}index.txt", SLASH, SLASH), ""}                                                         
   };
 }                                                    
 
@@ -66,8 +71,8 @@ template <typename T> int IS_VALID_PATH(T path) {
 }
 
 using namespace gpkih;
-int actions::init(strview profile_name, strview profile_source) {
-  Profile profile;
+int check_profile_info(strview profile_name, strview profile_source, Profile &buffer){
+  Profile &profile = buffer;
   if (!profile_name.empty() &&
       db::profiles::exists(profile_name)) {
     PWARN("profile '{}' already exists\n", profile_name);
@@ -104,6 +109,16 @@ int actions::init(strview profile_name, strview profile_source) {
     PERROR("no write permissions in '{}'", profile.source);
     return -1;
   };
+  return GPKIH_OK;
+}
+
+
+int actions::init(strview profile_name, strview profile_source) {
+  Profile profile;
+
+  if(check_profile_info(profile_name, profile_source, profile) != GPKIH_OK){
+    return -1;
+  };
 
   // Create directories
   for (const str &relative : RELATIVE_DIRECTORY_PATHS()) {
@@ -111,7 +126,7 @@ int actions::init(strview profile_name, strview profile_source) {
     if (!fs::create_directories(path)) {
       PERROR("couldn't create directory '{}'", path);
       // Remove the profile source dir
-      fs::remove_all(profile.source);
+      // fs::remove_all(profile.source);
       return -1;
     }
   }
@@ -137,7 +152,6 @@ int actions::init(strview profile_name, strview profile_source) {
       return -1;
     }
   }
-
   // Adapt gopenssl.cnf file to the profile
   str sed_src = CONF_DIRPATH + openssl_conf_filename;
   str sed_dst = profile.source + SLASH + openssl_conf_filename;
@@ -156,10 +170,10 @@ int actions::init(strview profile_name, strview profile_source) {
       profile.source.begin(), profile.source.end(),
       [](char c) { return c == '/'; }, '\\');
 #endif
-
   // Add profile to database
   if (db::profiles::add(&profile)) {
     // error is set by db::profiles::add
+    printlasterror();
     return GPKIH_FAIL;
   }
   // Initialize entities db

@@ -37,7 +37,7 @@ subopts["--create-source-packs"]="make package_source"
 
 # Commands to run in order to build the executable
 # note: this will be executed inside build/ 
-commands=("cmake .." "make" "cp gpkih $binary_outpath")
+commands=("cmake .." "make -j" "cp gpkih $binary_outpath")
 
 for arg in "${args[@]}"; do
 	if [ "$arg" == "-h" ]; then

@@ -109,15 +109,17 @@ target_include_directories(gpkih_parse_lib PUBLIC
 )
 #target_link_libraries(gpkih_parse_lib PUBLIC gpkih_help_lib)
 
-# Lib 6 - logging + error handleing
-set(gpkih_logging_src "${GPKIH_SRC_DIR}/logger")
+# Lib 6 - logger
+set(gpkih_logger_src "${GPKIH_SRC_DIR}/logger")
 set(gpkih_logging_definition 
-        "${gpkih_logging_src}/logger.hpp"
-        "${gpkih_logging_src}/error_management.hpp"
+        "${gpkih_logger_src}/logger.hpp"
+        "${gpkih_logger_src}/error_management.hpp"
+        "${gpkih_logger_src}/signals.hpp"
 )
 set(gpkih_logging_implementation
-        "${gpkih_logging_src}/logger.cpp"
-        "${gpkih_logging_src}/error_management.cpp"
+        "${gpkih_logger_src}/logger.cpp"
+        "${gpkih_logger_src}/error_management.cpp"
+        "${gpkih_logger_src}/signals.cpp"
 )
 add_library(gpkih_logging_lib STATIC "${gpkih_logging_implementation}")
 target_include_directories(gpkih_logging_lib PUBLIC
@@ -125,11 +127,10 @@ target_include_directories(gpkih_logging_lib PUBLIC
         "${FMT_LIBRARY_INCLUDE}"
 )
 
-# Add executable
+# Create the actual self-contained executable
 add_executable(gpkih
         ${GPKIH_SRC_DIR}/gpki.cpp
 )
-
 # Especifica los encabezados a incluir
 target_include_directories(gpkih PUBLIC
         "${INCLUDE_DIR}"

@@ -19,3 +19,18 @@ Logger::Logger(std::string filepath):file(filepath){
 void Logger::add(std::string_view msg, Level level){
 	
 }
+
+int Logger::cleanup_with_exit() {
+  fmt::print("\n");
+  std::vector<std::future<int>> tasks{};
+  // launch every task asynchronously
+  for (auto cleanup_func : cleanup_functions) {
+    tasks.push_back(std::move(std::async(std::launch::async, cleanup_func)));
+  }
+  PROGRAMEXITING();
+  // wait for every task to finish
+  for (auto &t : tasks) {
+    t.wait();
+  }
+  exit(0);
+}

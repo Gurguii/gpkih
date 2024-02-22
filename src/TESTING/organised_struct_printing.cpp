@@ -6,6 +6,24 @@
 #include <vector>
 #include <tuple>
 
+struct Profile{
+	const char *name;
+	const char *source;
+};
+
+struct Entity{
+	const char *cn;
+	const char *serial;
+};
+
+class Label{
+public:
+	enum class header_allignment{};
+	enum class column_allignment{};
+	Label(Profile prof);
+	Label(Entity entity);
+};
+
 enum class ALLIGNMENT : char
 {
 	left = '<',
@@ -29,7 +47,6 @@ template <typename ...T> void foo(FormatInfo &info, T&& ...args){
 	fmt::print(format_string.str(), std::forward<T>(args)...);
 	std::cout << "\n";
 }
-
 
 int main()
 {

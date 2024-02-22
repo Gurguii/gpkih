@@ -13,50 +13,11 @@
 #include "logger/error_management.hpp"
 /* [testing] class 'Logger' for logging */
 #include "logger/logger.hpp"
+/* [testing] class 'Signals' for signal related stuff */
+#include "logger/signals.hpp"
 
 #include <future> // std::async() std::future<>()
 
-
-// Tasks launched by cleanup() before exiting the program
-static inline std::vector<int (*)()> cleanup_functions{};
-static inline int cleanup() {
-  fmt::print("\n");
-  std::vector<std::future<int>> tasks{};
-  // launch every task asynchronously
-  for (auto cleanup_func : cleanup_functions) {
-    tasks.push_back(std::move(std::async(std::launch::async, cleanup_func)));
-  }
-  PROGRAMEXITING();
-  // wait for every task to finish
-  for (auto &t : tasks) {
-    t.wait();
-  }
-  exit(0);
-}
-
-class Signals {
-private:
-#ifdef _WIN32
-    static inline BOOL ctrl_c_handler(DWORD signal) {
-        PINFO("\ncaught ctrl+c signal, cleaning up before exiting ...");
-        cleanup();
-        return TRUE;
-    }
-#else
-    static inline void ctrl_c_handler(int sig) {
-        PINFO("\ncaught ctrl+c signal, cleaning up before exiting ...");
-        cleanup();
-    }
-#endif
-public:
-  static inline void register_signals() {
-#ifdef _WIN32
-    SetConsoleCtrlHandler(ctrl_c_handler, true);
-#else
-    signal(SIGINT, ctrl_c_handler);
-#endif
-  }
-};
 
 int check_gpkih_install_dir() {
   if (!fs::exists(BASEDIR)) {
@@ -87,7 +48,7 @@ int check_gpkih_install_dir() {
 // PROGRAM ENTRY POINT
 int main(int argc, const char **args) {
   // Register signal handlers
-  Signals::register_signals();
+  gpkih::Signals::register_signals();
 
   // Check if gpkih base dir is created, else try to create it
   if (check_gpkih_install_dir() != GPKIH_OK) {
