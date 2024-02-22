@@ -168,14 +168,12 @@ int actions::init(strview profile_name, strview profile_source) {
     PERROR("gsed failed()\n");
     return -1;
   }
-// [Windows] - change / slashes back to \ 
+// [Windows] - change '/' slashes back to '\'
 #ifdef _WIN32
   std::replace_if(
       profile.source.begin(), profile.source.end(),
       [](char c) { return c == '/'; }, '\\');
 #endif
-
-
 
   // Add profile to database
   if (db::profiles::add(&profile)) {
