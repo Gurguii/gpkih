@@ -6,6 +6,7 @@
 #include <fstream>
 #include <mutex>
 #include <unordered_map>
+#include <sstream>
 
 using namespace gpkih;
 
@@ -45,6 +46,7 @@ bool Logger::start(){
 	str line;
 	current_lines = 0;
 	while(getline(file,line)){++current_lines;}
+	file.close();
 
 	// set max_lines
 	max_lines = strtol(Config::get("logs","max_lines").data(),nullptr, 10);
@@ -77,7 +79,7 @@ bool Logger::start(){
 	}
 
 	return true;
-}
+} // Logger::start()
 
 template<typename ...T> void Logger::add(Level level, std::string_view fmt, T&& ...args){
 	// TODO - just make an asynchronous call to 
