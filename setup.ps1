@@ -66,7 +66,7 @@ $msbuild_command_args = "-verbosity:minimal -maxCpuCount:4 -t:gpkih `"$build_dir
 $build_process = Start-Process -FilePath "$msbuild_executable" -ArgumentList "$msbuild_command_args" -PassThru -Wait -NoNewWindow
 
 if($build_process.ExitCode -ne 0){
-    Write-Host -ForegroundColor "[error]MSBuild returned $($build_process.ExitCode)"
+    Write-Host -ForegroundColor Red "[error]MSBuild returned $($build_process.ExitCode)"
     exit $cmake_process.ExitCode    
 }
 
