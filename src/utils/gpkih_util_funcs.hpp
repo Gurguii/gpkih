@@ -8,7 +8,7 @@
 static bool hasWritePermissions(std::string dirpath) {
   /* this approach is kind of sad to see */
   try {
-    auto s = std::filesystem::status(dirpath);
+    auto s = fs::status(dirpath);
     return true;
   } catch (fs::filesystem_error &ex) {
     seterror(ex.what());
@@ -19,8 +19,8 @@ static bool hasWritePermissions(std::string dirpath) {
 /* sed("/home/gurgui/base", "/home/gurgui/aftersed.txt",
           {{"GPKI_BASEDIR", "WISKONSIN"}})
 */
-static int sed(std::string_view src, std::string_view dst,
-  std::unordered_map<std::string_view, std::string_view> vals) {
+static int sed(strview src, strview dst,
+  std::unordered_map<strview, strview> &&vals) {
   std::ifstream srcfile(src.data());
   if (!srcfile.is_open()) {
     return -1;
@@ -29,8 +29,8 @@ static int sed(std::string_view src, std::string_view dst,
   if (!dstfile.is_open()) {
     return -1;
   }
-  std::string line;
-  std::string word;
+  str line;
+  str word;
   while (getline(srcfile, line)) {
     auto ss = std::stringstream(line);
     while (ss >> word) {

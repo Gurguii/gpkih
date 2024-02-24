@@ -22,28 +22,29 @@ inline str EOL = "\n";
 /* WINDOWS STUFF */
 inline str CURRENT_PATH = fs::current_path().string();
 inline char SLASH = '\\';
-inline str BASEDIR = str(std::getenv("LOCALAPPDATA")) + "\\gpkih\\";
+inline str GPKIH_BASEDIR = str(std::getenv("LOCALAPPDATA")) + "\\gpkih\\";
 inline str VPN_CONFIG_EXTENSION = "ovpn";
 #else
 #include <sys/signal.h>
 /* LINUX STUFF */
 inline str CURRENT_PATH = fs::current_path();
 inline char SLASH = '/';
-inline str BASEDIR = str(std::getenv("HOME")) + "/.config/gpkih/";
+inline str GPKIH_BASEDIR = str(std::getenv("HOME")) + "/.config/gpkih/";
 inline str VPN_CONFIG_EXTENSION = "conf";
 #endif
 
-inline str DB_DIRNAME = "db";
-inline str CONF_DIRNAME = "config";
 
-inline str DB_DIRPATH = BASEDIR + DB_DIRNAME + SLASH;
-inline str CONF_DIRPATH = BASEDIR + CONF_DIRNAME + SLASH;
+inline str DB_DIRNAME = "db";
+inline str DB_DIRPATH = GPKIH_BASEDIR + DB_DIRNAME + SLASH;
+
+inline str CONF_DIRNAME = "config";
+inline str CONF_DIRPATH = GPKIH_BASEDIR + CONF_DIRNAME + SLASH;
 
 inline str vpn_conf_filename = "openvpn.conf";
 inline str pki_conf_filename = "pki.conf";
 inline str gpkih_conf_filename = "gpkih.conf";
 
-inline str CONF_GPKIH = BASEDIR + CONF_DIRNAME + SLASH + gpkih_conf_filename;
+inline str CONF_GPKIH = GPKIH_BASEDIR + CONF_DIRNAME + SLASH + gpkih_conf_filename;
 
 #define CSV_DELIMITER_s ","
 #define CSV_DELIMITER_c ','

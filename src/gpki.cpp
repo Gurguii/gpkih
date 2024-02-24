@@ -20,10 +20,10 @@
 
 
 int check_gpkih_install_dir() {
-  if (!fs::exists(BASEDIR)) {
-      PINFO("Creating gpkih source dir - '{}'\n", BASEDIR);
-    if (!fs::create_directory(BASEDIR)) {
-      seterror("Couldn't create directory '{}'\n", BASEDIR);
+  if (!fs::exists(GPKIH_BASEDIR)) {
+      PINFO("Creating gpkih source dir - '{}'\n", GPKIH_BASEDIR);
+    if (!fs::create_directory(GPKIH_BASEDIR)) {
+      seterror("Couldn't create directory '{}'\n", GPKIH_BASEDIR);
       return F_NOEXIST;
     };
     // This is the reason the program requires to be executed from the same dir than config/

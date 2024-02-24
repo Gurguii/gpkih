@@ -23,20 +23,21 @@ int parsers::revoke(std::vector<std::string> opts) {
   opts.push_back("\0");
 
   if (opts.size() == 1) {
-    PERROR("missing common name\n");
+    PERROR("missing serial | common_name\n");
     PHINT("try gpki help revoke\n");
     return -1;
   }
 
+  /* Revoke subopts */
   for(int i = 0; i < opts.size(); ++i){
     strview opt = opts[i];
-    if(opt == "-cn"){
+    if(opt == "-cn" | opt == "--common-name"){
       str cn;
       sstream ss(opts[++i]);
       while(getline(ss,cn,',')){
         common_names_to_revoke.emplace_back(cn);
       }  
-    }else if(opt == "-serial"){
+    }else if(opt == "-s" | opt == "-serial"){
       str serial;
       sstream ss(opts[++i]);
       while(getline(ss,serial,',')){

@@ -25,14 +25,14 @@ static inline std::unordered_map<str,str> RELATIVE_FILE_PATHS(){
   };
 }                                                    
 
-int create_dhparam(strview outpath) {
+static int create_dhparam(strview outpath) {
   str command = fmt::format("openssl dhparam -out {} 2048", outpath);
   if (system(command.c_str())) {
     return -1;
   }
   return 0;
 }
-int create_openvpn_static_key(std::string_view outpath) {
+static int create_openvpn_static_key(std::string_view outpath) {
   str command = fmt::format("openvpn --genkey tls-crypt {}", outpath);
   if (system(command.c_str())) {
     return -1;
@@ -152,10 +152,9 @@ int actions::init(strview profile_name, strview profile_source) {
       return -1;
     }
   }
-  // Adapt gopenssl.cnf file to the profile
-  str sed_src = CONF_DIRPATH + openssl_conf_filename;
-  str sed_dst = profile.source + SLASH + openssl_conf_filename;
-
+  
+  str gopenssl_sed_src = CONF_DIRPATH + openssl_conf_filename;
+  str gopenssl_sed_dst = profile.source + SLASH + openssl_conf_filename;
 
 // [Windows] - change \ for / since openssl processes slashes as / in the openssl.conf file
 #ifdef _WIN32
@@ -163,8 +162,8 @@ int actions::init(strview profile_name, strview profile_source) {
       profile.source.begin(), profile.source.end(),
       [](char c) { return c == '\\'; }, '/');
 #endif
-
-  if (sed(sed_src, sed_dst, {{"GPKI_BASEDIR", profile.source + "/pki"}})) {
+  // adapt gopenssl.cnf 
+  if (sed(gopenssl_sed_src, gopenssl_sed_dst, {{"GPKI_BASEDIR", profile.source + "/pki"}})) {
     PERROR("gsed failed()\n");
     return -1;
   }
@@ -203,5 +202,5 @@ int actions::init(strview profile_name, strview profile_source) {
       create_dhparam(profile.source + SLASH + "tls" + SLASH + "dhparam2048");
     }
   }
-  return 0;
+  return GPKIH_OK;
 }
