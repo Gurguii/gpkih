@@ -64,3 +64,18 @@ void help::call_helper(strview action){
     PERROR("no help::usage() defined for action '{}'\n", action);
   }
 }
+
+void help::usage_brief() {
+        fmt::print(R"(
+== Public key infraestructure helper ==
+
+Author: {} 
+Description: {}
+Version: {}
+
+Actions: init build revoke gencrl list remove
+
+For extra help on any action, do:
+    ./gpki help [action]
+)", Config::get("metadata", "author"), Config::get("metadata", "description"), Config::get("metadata", "version"));
+}

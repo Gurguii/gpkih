@@ -55,7 +55,11 @@ struct pki_building_params
 // Static class to manage gpkih.conf
 class Config {
 private:
-  static inline ConfigMap _conf_gpkih{{"metadata", {}}, {"behaviour", {}}};
+  static inline ConfigMap _conf_gpkih{
+      {"metadata", {}}, 
+      {"behaviour", {}},
+      {"logs", {} },
+  };
 
 protected:
   static int load_file(strview path, ConfigMap &buff);
@@ -74,7 +78,9 @@ public:
       }
     }
   }
-};
+}; // class Config
+
+
 
 // Class to manage profile specific configuration - pki.conf vpn.conf
 class ProfileConfig : public Config {
@@ -111,7 +117,9 @@ public:
         }
       }
     }
-  }
+  } // class ProfileConfig 
+
+
   // Set to true by ProfileConfig() constructor if files are sucesfully loaded
   bool succesfully_loaded = false;
   // Constructor

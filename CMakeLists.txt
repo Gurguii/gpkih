@@ -17,7 +17,8 @@ else()
         set(FMT_LIBRARY_NAMES "fmt")
 endif()
 
-
+# Look for FMT
+find_library(FMT_LIBRARY NAMES ${FMT_LIBRARY_NAMES} PATHS ${FMT_LIBRARY_PATH})
 
 set(GPKIH_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(GPKIH_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
@@ -82,6 +83,7 @@ set(gpkih_help_implementation
         "${gpkih_help_src}/help_revoke.cpp"
         "${gpkih_help_src}/help_list.cpp"
 )
+
 add_library(gpkih_help_lib STATIC "${gpkih_help_implementation}")
 target_include_directories(gpkih_help_lib PUBLIC
         "${INCLUDE_DIR}"
@@ -136,9 +138,6 @@ target_include_directories(gpkih PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
 )
-
-# Look for FMT
-find_library(FMT_LIBRARY NAMES ${FMT_LIBRARY_NAMES} PATHS ${FMT_LIBRARY_PATH})
 
 # Link libraries to gpkih
 target_link_libraries(gpkih PRIVATE 

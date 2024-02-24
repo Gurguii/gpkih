@@ -4,6 +4,7 @@
 
 namespace gpkih::help {
 extern void usage();
+extern void usage_brief();
 extern void call_helper(strview action);
 extern std::unordered_map<str, void(*)()> help_funcs;
 }

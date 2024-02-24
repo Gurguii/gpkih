@@ -8,7 +8,6 @@
 /* Help functions */
 #include "help/help.hpp"
 
-
 /* [testing] class 'Error' to add/retrieve error related stuff */
 #include "logger/error_management.hpp"
 /* [testing] class 'Logger' for logging */
@@ -19,7 +18,7 @@
 #include <future> // std::async() std::future<>()
 
 
-int check_gpkih_install_dir() {
+static int check_gpkih_install_dir() {
   if (!fs::exists(GPKIH_BASEDIR)) {
       PINFO("Creating gpkih source dir - '{}'\n", GPKIH_BASEDIR);
     if (!fs::create_directory(GPKIH_BASEDIR)) {
@@ -32,21 +31,34 @@ int check_gpkih_install_dir() {
     //      [LINUX] ~/.config/gpkih 
     // doesn't exist
     str configdir = CURRENT_PATH + SLASH + "config";
+
+    // Copy config directory
     fs::copy(configdir, CONF_DIRPATH, fs::copy_options::recursive);
     if (!fs::exists(CONF_DIRPATH) || !fs::is_directory(CONF_DIRPATH)) {
       seterror("couldn't copy '{}' to '{}'\n", configdir, CONF_DIRPATH);
       return F_NOCREATE;
     }
+
+    // Create gpkih db dir
     if (!fs::create_directory(DB_DIRPATH)) {
       seterror("couldn't create gpkih source db dir '{}'\n", DB_DIRPATH);
       return F_NOCREATE;
-    }; 
+    };
+
+    // Create gpkih log dir
+    if (!fs::create_directory(gpkih::Logger::log_dirpath)) {
+      seterror("couldn't create log dir '{}'\n", gpkih::Logger::log_dirpath);
+      return F_NOCREATE;
+    }
   }
-  return 0;
+  return GPKIH_OK;
 }
 
 // PROGRAM ENTRY POINT
 int main(int argc, const char **args) {
+  // Print starting msg
+  PROGRAMSTARTING();
+
   // Register signal handlers
   gpkih::Signals::register_signals();
 
@@ -55,34 +67,38 @@ int main(int argc, const char **args) {
     printlasterror();
     return -1;
   }
-  
+
+  // Create logger instance which will:
+  // 1. call Logger::start() upon construction
+  // 2. call Logger::wait() upon destruction
+  auto logger = gpkih::Logger::get();
+
   // TODO - Add PROPER checks for openssl - openvpn existence
-  // Launch task to load gpkih config
+
+  // Launch task to load `gpkih.conf` configuration
   auto load_gpkih_config = std::async(std::launch::async, gpkih::Config::load);
   
   // Map profiles' csv to db::profiles::existing_profiles{}
-  int profile_count = -1;
-  if ((profile_count = gpkih::db::profiles::initialize()) < 0) {
+  int profile_count = gpkih::db::profiles::initialize();
+  if (profile_count < 0) {
     printlasterror();
     return -1;
   };
 
-  // wait for task
+  // wait for load_gpkih_config to finish
   if (load_gpkih_config.get() != GPKIH_OK) {
     printlasterror();
     return -1;
   }
-
-  PROGRAMSTARTING();
   
   PINFO("Loaded [{}] profiles\n", profile_count, DB_DIRPATH, SLASH);
 
   // Parse options
   if (gpkih::parsers::parse(argc - 1, args + 1) != GPKIH_OK) {
     printlasterror();
-    return -1;
+    return GPKIH_FAIL;
   }
 
   // Everything went well
-  return 0;
+  return GPKIH_OK;
 }

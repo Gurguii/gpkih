@@ -4,7 +4,7 @@ using namespace gpkih;
 // [!] parse() does not expect to receive program name in args
 int parsers::parse(int argc, const char **_args) {
   if (argc == 0) {
-    help::usage();
+    help::usage_brief();
     // TODO - add a gpkih cli mode where the call to gpkih 
     // can be omitted, something like 'virsh'
     return GPKIH_OK;
