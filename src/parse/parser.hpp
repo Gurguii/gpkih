@@ -5,7 +5,7 @@
 #include "../structs.hpp"
 #include "../help/help.hpp"
 #include "../printing.hpp"
-
+#include "../logger/error_management.hpp"
 
 inline int check_and_populate_profile(strview profilename, gpkih::Profile &buffer,
                                std::vector<str> &opts) {
@@ -21,16 +21,18 @@ inline int check_and_populate_profile(strview profilename, gpkih::Profile &buffe
 
 namespace gpkih::parsers {
 // main parser
-int parse(int argc, const char **_args);
+extern int parse(int argc, const char **_args);
 // action parsers
-int init(std::vector<str> opts);
-int build(std::vector<str> opts);
-int revoke(std::vector<str> opts);
-int gencrl(std::vector<str> opts);
-int list(std::vector<str> opts);
-int remove(std::vector<str> opts);
-int config(std::vector<str> opts);
+extern int init(std::vector<str> opts);
+extern int build(std::vector<str> opts);
+extern int revoke(std::vector<str> opts);
+extern int gencrl(std::vector<str> opts);
+extern int list(std::vector<str> opts);
+extern int remove(std::vector<str> opts);
 // unimplemented
+extern int set(std::vector<str> opts);
+extern int get(std::vector<str> opts);
+
 int genkey(std::vector<str> opts);
 } // namespace gpkih::parsers
 
@@ -38,4 +40,4 @@ inline std::unordered_map<str, int (*)(std::vector<str>)> ACTION_PARSERS{
     {"init", gpkih::parsers::init},     {"list", gpkih::parsers::list},
     {"build", gpkih::parsers::build},   {"revoke", gpkih::parsers::revoke},
     {"gencrl", gpkih::parsers::gencrl}, {"remove", gpkih::parsers::remove},
-    {"config", gpkih::parsers::config}, {"genkey", gpkih::parsers::genkey}};
+    {"genkey", gpkih::parsers::genkey}};

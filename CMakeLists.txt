@@ -32,13 +32,31 @@ set (gpkih_config_definition
 set (gpkih_config_implementation
         "${GPKIH_SRC_DIR}/config/config_management.cpp"
 )
-add_library(gpkih_config_management_lib STATIC "${gpkih_config_implementation}")
+add_library(gpkih_config_management_lib STATIC "${gpkih_config_implementation}"  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp")
 target_include_directories(gpkih_config_management_lib PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
 )
 
-# Lib 2 - actions
+# Lib 2 - logger
+set(gpkih_logger_src "${GPKIH_SRC_DIR}/logger")
+set(gpkih_logging_definition 
+        "${gpkih_logger_src}/logger.hpp"
+        "${gpkih_logger_src}/error_management.hpp"
+        "${gpkih_logger_src}/signals.hpp"
+)
+set(gpkih_logging_implementation
+        "${gpkih_logger_src}/logger.cpp"
+        "${gpkih_logger_src}/error_management.cpp"
+        "${gpkih_logger_src}/signals.cpp"
+)
+add_library(gpkih_logging_lib STATIC "${gpkih_logging_implementation}"  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp")
+target_include_directories(gpkih_logging_lib PUBLIC
+        "${INCLUDE_DIR}"
+        "${FMT_LIBRARY_INCLUDE}"
+)
+
+# Lib 3 - actions
 set(gpkih_actions_src "${GPKIH_SRC_DIR}/actions")
 set (gpkih_actions_definition
         "${GPKIH_SRC_DIR}/actions/actions.hpp")
@@ -50,7 +68,7 @@ set (gpkih_actions_implementation
         "${gpkih_actions_src}/list.cpp"
         "${gpkih_actions_src}/remove.cpp"
 )
-add_library(gpkih_actions_lib STATIC "${gpkih_actions_implementation}")
+add_library(gpkih_actions_lib STATIC "${gpkih_actions_implementation}"  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp")
 target_include_directories(gpkih_actions_lib PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
@@ -63,7 +81,7 @@ set(gpkih_db_implementation
         "${gpkih_db_src}/profiles.cpp"
         "${gpkih_db_src}/entities.cpp"
 )
-add_library(gpkih_db_lib STATIC "${gpkih_db_implementation}")
+add_library(gpkih_db_lib STATIC "${gpkih_db_implementation}"  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp")
 target_include_directories(gpkih_db_lib PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
@@ -74,7 +92,8 @@ set(gpkih_help_src "${GPKIH_SRC_DIR}/help")
 set(gpkih_help_definition "${gpkih_help_src}/help.hpp")
 set(gpkih_help_implementation
         "${gpkih_help_src}/help.cpp"
-        "${gpkih_help_src}/get.cpp"
+        "${gpkih_help_src}/help_set.cpp"
+        "${gpkih_help_src}/help_get.cpp"
         "${gpkih_help_src}/help_build.cpp"
         "${gpkih_help_src}/help_create_pack.cpp"
         "${gpkih_help_src}/help_gencrl.cpp"
@@ -84,7 +103,7 @@ set(gpkih_help_implementation
         "${gpkih_help_src}/help_list.cpp"
 )
 
-add_library(gpkih_help_lib STATIC "${gpkih_help_implementation}")
+add_library(gpkih_help_lib STATIC "${gpkih_help_implementation}"  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp")
 target_include_directories(gpkih_help_lib PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
@@ -95,7 +114,8 @@ set(gpkih_parse_src "${GPKIH_SRC_DIR}/parse")
 set(gpkih_parse_definition "${gpkih_parse_src}/parser.hpp")
 set(gpkih_parse_implementation
         "${gpkih_parse_src}/build.cpp"
-        "${gpkih_parse_src}/config.cpp"
+        "${gpkih_parse_src}/set.cpp"
+        "${gpkih_parse_src}/get.cpp"
         "${gpkih_parse_src}/gencrl.cpp"
         "${gpkih_parse_src}/revoke.cpp"
         "${gpkih_parse_src}/init.cpp"
@@ -104,27 +124,18 @@ set(gpkih_parse_implementation
         "${gpkih_parse_src}/remove.cpp"
         "${gpkih_parse_src}/parser.cpp"
 )
-add_library(gpkih_parse_lib STATIC "${gpkih_parse_implementation}")
+add_library(gpkih_parse_lib STATIC "${gpkih_parse_implementation}"  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp")
 target_include_directories(gpkih_parse_lib PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
 )
-#target_link_libraries(gpkih_parse_lib PUBLIC gpkih_help_lib)
 
-# Lib 6 - logger
-set(gpkih_logger_src "${GPKIH_SRC_DIR}/logger")
-set(gpkih_logging_definition 
-        "${gpkih_logger_src}/logger.hpp"
-        "${gpkih_logger_src}/error_management.hpp"
-        "${gpkih_logger_src}/signals.hpp"
-)
-set(gpkih_logging_implementation
-        "${gpkih_logger_src}/logger.cpp"
-        "${gpkih_logger_src}/error_management.cpp"
-        "${gpkih_logger_src}/signals.cpp"
-)
-add_library(gpkih_logging_lib STATIC "${gpkih_logging_implementation}")
-target_include_directories(gpkih_logging_lib PUBLIC
+# gpkih experimental lib
+set(gpkih_experimental_src "${GPKIH_SRC_DIR}/experimental")
+set(gpkih_experimental_definition "${gpkih_experimental_src}/formatter.hpp")
+set(gpkih_experimental_implementation "${gpkih_experimental_src}/formatter.cpp")
+add_library(gpkih_experimental_lib STATIC "${gpkih_experimental_implementation}")
+target_include_directories(gpkih_experimental_lib PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
 )
@@ -132,7 +143,7 @@ target_include_directories(gpkih_logging_lib PUBLIC
 # Create the actual self-contained executable
 add_executable(gpkih
         ${GPKIH_SRC_DIR}/gpki.cpp
-)
+  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp")
 # Especifica los encabezados a incluir
 target_include_directories(gpkih PUBLIC
         "${INCLUDE_DIR}"
@@ -147,6 +158,7 @@ target_link_libraries(gpkih PRIVATE
         gpkih_config_management_lib
         gpkih_help_lib 
         gpkih_logging_lib
+        gpkih_experimental_lib
         ${FMT_LIBRARY}
 )
 

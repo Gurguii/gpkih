@@ -53,7 +53,9 @@ std::unordered_map<str, void(*)()> help::help_funcs{
   {"list"  , gpkih::help::list::usage},
   {"revoke", gpkih::help::revoke::usage},
   {"gencrl", gpkih::help::gencrl::usage},
-  {"remove", gpkih::help::remove::usage}
+  {"remove", gpkih::help::remove::usage},
+  {"set"   , gpkih::help::set::usage},
+  {"get"   , gpkih::help::get::usage},
 };
 
 void help::call_helper(strview action){

@@ -71,7 +71,7 @@ int main(int argc, const char **args) {
   // Create logger instance which will:
   // 1. call Logger::start() upon construction
   // 2. call Logger::wait() upon destruction
-  auto logger = gpkih::Logger::get();
+  gpkih::Logger::get();
 
   // TODO - Add PROPER checks for openssl - openvpn existence
 

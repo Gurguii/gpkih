@@ -1,12 +1,7 @@
 #include "logger.hpp"
-#include "../config/config_management.hpp"
 
-#include <exception>
-#include <filesystem>
-#include <fstream>
-#include <mutex>
-#include <unordered_map>
-#include <sstream>
+#include <fstream> // std::ifstream, std::ofstream
+#include <sstream> // std::stringstream, getline()
 
 using namespace gpkih;
 
@@ -42,10 +37,10 @@ static std::unordered_map<str, Logger::FormatField> __str_ffield_map
 };
 
 // Logger getter - this ensures only 1 instance of Logger is created
-Logger&const Logger::get() {
+const Logger& Logger::get() {
 	// since its a static function member,
 	// this is working like a coroutine
-	static Logger instance;
+	static Logger instance{};
 	return instance;
 };
 
@@ -56,12 +51,15 @@ Logger::Logger() {
 
 // Logger destructor
 Logger::~Logger() {
+	PINFO("waiting for logger tasks to finish...\n");
 	Logger::wait();
 }
 
 bool Logger::start(){
 	Logger::current_lines = 0;
+	PINFO("logfile path: '{}'\n", logpath);
 	if(!fs::exists(logpath)){
+		PINFO("creating log file '{}'\n", logpath);
 		// create log file 
 		if(!std::ofstream(logpath).is_open()){
 			return false;
@@ -70,7 +68,6 @@ bool Logger::start(){
 	else {
 		std::ifstream file(logpath);
 		str line;
-		
 		while (getline(file, line)) { ++current_lines; }
 		file.close();
 	}
@@ -125,46 +122,3 @@ str Logger::format_msg(Level &level, str& msg) {
 	return std::move(log.str());
 } // Logger::format_msg();
 
-template<typename ...T> void _add(Logger::Level level, std::string &&fmt, T&& ...args) {
-	str log_content = fmt::format(fmt, std::forward<T>(args)...);
-	auto formatted_msg = format_msg(level, log_content);
-
-	std::lock_guard<mutex> guard(Logger::included_levels_mutex);
-	Level& _included = Logger::included_levels;
-	if (_included & _add) {
-		// valid log 
-	}
-	// invalid log
-
-};	// Logger::_add()
-
-
-template<typename ...T> void Logger::add_info(std::string_view fmt, T&& ...args) {
-	_tasks.emplace(std::move(std::async(std::launch::async, _add, L_INFO, std::forward<T>(args)...)));
-} // Logger::add_info()
-
-
-template<typename ...T> void Logger::add_warn(std::string_view fmt, T&& ...args) {
-	_tasks.emplace(std::move(std::async(std::launch::async, _add, L_WARN, std::forward<T>(args)...)));
-} // Logger::add_warn()
-
-
-template<typename ...T> void Logger::add_error(std::string_view fmt, T&& ...args) {
-	_tasks.emplace(std::move(std::async(std::launch::async, _add, L_ERROR, std::forward<T>(args)...)));
-} // Logger::add_error()
-
-template<typename ...T> void Logger::add(Level level, std::string_view fmt, T&& ...args){
-	switch (level) {
-		case L_INFO:
-			_tasks.emplace(std::move(std::async(std::launch::async, _add, L_INFO, std::forward<T>(args)...)));
-			break;
-		case L_WARN:
-			_tasks.emplace(std::move(std::async(std::launch::async, _add, L_WARN, std::forward<T>(args)...)));
-			break;
-		case L_ERROR:
-			_tasks.emplace(std::move(std::async(std::launch::async, _add, L_ERROR, std::forward<T>(args)...)));
-			break;
-		default:
-			break;
-	}
-} // Logger::add()

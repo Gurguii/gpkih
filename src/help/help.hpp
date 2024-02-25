@@ -34,5 +34,4 @@ extern void usage();
 }
 namespace gpkih::help::set {
 extern void usage();
-
 }

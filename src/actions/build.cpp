@@ -1,9 +1,9 @@
 #include "actions.hpp"
+
 #include <algorithm>
 using namespace gpkih;
 
-// Not allowed in common_names
-
+// 
 static std::pair<str,str> load_entity_files(Entity entity){
   strview entity_crt_path = entity.crt_path;
   strview entity_key_path = entity.key_path;
@@ -145,8 +145,8 @@ static int _create_inline_config(Profile &profile,ProfileConfig &config,
       return GPKIH_FAIL;
     };
 
-    // Load entity certificate + key
-    const auto [entity_crt_str, entity_key_str] = std::move(load_entity_files(entity));
+    // Load entity certificate + key;
+    const auto [entity_crt_str, entity_key_str] = load_entity_files(entity);
 
     std::ofstream file(outpath, std::ios::app);
     if (!file.is_open()) {
@@ -245,8 +245,12 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity){
   // add to database and create inline config file
   if(db::entities::add(profile.name, entity)){
     return GPKIH_FAIL;
-  }
+  } 
   return GPKIH_OK;
+  // Add log
+  gpkih::Logger::add(L_INFO, "added profile '{}'", profile.name);
+
+ 
   // create inline config file
   std::vector<Entity> hahahah{entity};
   if(_create_inline_config(profile, config, hahahah)){

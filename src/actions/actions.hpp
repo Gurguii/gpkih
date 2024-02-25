@@ -4,6 +4,7 @@
 #include "../gpki.hpp"
 #include "../printing.hpp"
 #include "../utils/gpkih_util_funcs.hpp"
+#include "../logger/logger.hpp"
 
 namespace gpkih::actions {
 int init(strview profile_name, strview profile_source);

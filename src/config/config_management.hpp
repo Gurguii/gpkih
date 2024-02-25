@@ -106,7 +106,7 @@ private:
       {"subject", {}} // * * subject defaults (country, state, location,
                       // organisation, common name, email)
   };
-
+    
 public:
   inline void print() {
     for (auto &haha : {_conf_vpn, _conf_pki}) {

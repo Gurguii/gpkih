@@ -1,5 +1,4 @@
 #include "signals.hpp"
-#include "logger.hpp"
 
 using namespace gpkih;
 #ifdef _WIN32
