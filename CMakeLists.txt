@@ -36,28 +36,27 @@ if(NOT FMT_LIBRARY)
 
   # Make sure it hasn't already been cloned already
   if(NOT EXISTS "${fmtlib_src}")
+    # Check if Git is available
+    find_program(GIT git HINTS "C:/Program Files/Git")
 
-  # Check if Git is available
-  find_program(GIT git HINTS "C:/Program Files/Git")
+    if(NOT GIT)
+      message(FATAL_ERROR "Git executable not found. Aborting.")
+    endif()
 
-  if(NOT GIT)
-    message(FATAL_ERROR "Git executable not found. Aborting.")
-  endif()
-
-  # Clone fmtlib repository
-  execute_process(COMMAND git clone --depth 1 https://github.com/fmtlib/fmt.git fmtlib)
+    message(STATUS "cloning https://github.com/fmtlib/fmt.git")
+    # Clone fmtlib repository
+    execute_process(COMMAND git clone --depth 1 https://github.com/fmtlib/fmt.git fmtlib)
   else()
-  message(STATUS "fmtlib already exists, skipping git clone...")
-
+    message(STATUS "fmtlib already exists, skipping git clone...")
   endif()
 
-  # Compile FMT
+  # Add fmt to project
   add_subdirectory("${fmtlib_src}")
 
   set(FMT_LIBRARY_INCLUDE "${fmtlib_src}/include")
 endif()
 
-message(STATUS "fmt include dir: ${FMT_LIBRARY_INCLUDE}")
+message(STATUS "FMT include dir: ${FMT_LIBRARY_INCLUDE}")
 # Compile different gpkih components as static libraries
 
 # Lib 1 - config_management

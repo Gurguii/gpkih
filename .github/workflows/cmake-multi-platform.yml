@@ -49,12 +49,12 @@ jobs:
 
     - name: Install dependencies using system packages (Linux)
       run: |
-        sudo apt update -y && sudo apt install -y libfmt-dev
+        sudo apt update -y && sudo apt install -y git
       if: ${{ runner.os == 'ubuntu-latest' }}
 
     - name: Install dependencies using system packages (Windows)
       run: |
-        choco install fmt
+        choco install git
       if: ${{ runner.os == 'windows-latest' }}
 
     - name: Set reusable strings
