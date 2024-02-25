@@ -47,6 +47,16 @@ jobs:
     steps:
     - uses: actions/checkout@v3
 
+    - name: Install dependencies using system packages (Linux)
+      run: |
+        sudo apt update -y && sudo apt install -y libfmt-dev
+      if: ${{ runner.os == 'ubuntu-latest' }}
+
+    - name: Install dependencies using system packages (Windows)
+      run: |
+        choco install fmt
+      if: ${{ runner.os == 'windows-latest' }}
+
     - name: Set reusable strings
       # Turn repeated input strings (such as the build output directory) into step outputs. These step outputs can be used throughout the workflow file.
       id: strings
