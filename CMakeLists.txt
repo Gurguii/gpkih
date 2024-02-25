@@ -2,28 +2,62 @@ cmake_minimum_required(VERSION 3.10)
 
 project(gpkih VERSION 1.0)
 
-
 set(CMAKE_CXX_STANDARD 17)
 set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 
-if(WIN32)
-        set(FMT_LIBRARY_PATH "C:/Program Files (x86)/FMT/lib")
-        set(FMT_LIBRARY_INCLUDE "C:/Program Files (x86)/FMT/include")
-        set(CMAKE_CXX_FLAGS "/O2 /EHsc")
-        set(FMT_LIBRARY_NAMES "fmtd")
-else()
-        set(FMT_LIBRARY_PATH "/usr/lib;/usr/local/lib")
-        set(CMAKE_CXX_FLAGS "-O3")
-        set(FMT_LIBRARY_NAMES "fmt")
-endif()
+set(GPKIH_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
+set(GPKIH_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
+set(GPKIH_INCLUDE_DIR "${GPKIH_SRC_DIR}")  # Include directory for all components
+
+# Platform-specific settings
+function(configure_platform)
+  if(WIN32)
+    set(FMT_LIBRARY_PATH "C:/Program Files (x86)/FMT/lib")
+    set(CMAKE_CXX_FLAGS "/O2 /EHsc")
+    set(FMT_LIBRARY_NAMES "fmtd")
+    set(FMT_LIBRARY_INCLUDE "C:/Program Files (x86)/FMT/include")
+  else()
+    set(FMT_LIBRARY_PATH "/usr/lib;/usr/local/lib")
+    set(CMAKE_CXX_FLAGS "-O3")
+    set(FMT_LIBRARY_NAMES "fmt")
+  endif()
+endfunction()
+
+configure_platform()
 
 # Look for FMT
 find_library(FMT_LIBRARY NAMES ${FMT_LIBRARY_NAMES} PATHS ${FMT_LIBRARY_PATH})
 
-set(GPKIH_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
-set(GPKIH_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
-set(INCLUDE_DIR "${SOURCE_DIR}")
+# TEST
+if(NOT FMT_LIBRARY)
+  message(STATUS "FMT lib not found in system")
+  # Set outpath for FMT source code
+  set(fmtlib_src "${CMAKE_CURRENT_BINARY_DIR}/fmtlib")
 
+  # Make sure it hasn't already been cloned already
+  if(NOT EXISTS "${fmtlib_src}")
+
+  # Check if Git is available
+  find_program(GIT git HINTS "C:/Program Files/Git")
+
+  if(NOT GIT)
+    message(FATAL_ERROR "Git executable not found. Aborting.")
+  endif()
+
+  # Clone fmtlib repository
+  execute_process(COMMAND git clone --depth 1 https://github.com/fmtlib/fmt.git fmtlib)
+  else()
+  message(STATUS "fmtlib already exists, skipping git clone...")
+
+  endif()
+
+  # Compile FMT
+  add_subdirectory("${fmtlib_src}")
+
+  set(FMT_LIBRARY_INCLUDE "${fmtlib_src}/include")
+endif()
+
+message(STATUS "fmt include dir: ${FMT_LIBRARY_INCLUDE}")
 # Compile different gpkih components as static libraries
 
 # Lib 1 - config_management
@@ -143,25 +177,44 @@ target_include_directories(gpkih_experimental_lib PUBLIC
 # Create the actual self-contained executable
 add_executable(gpkih
         ${GPKIH_SRC_DIR}/gpki.cpp
-  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp")
+  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp"
+)
+
 # Especifica los encabezados a incluir
 target_include_directories(gpkih PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
 )
 
-# Link libraries to gpkih
+if(FMT_LIBRARY)
+# Compile with FMT found in the system
+message(STATUS "Project will be compiled with found fmtlib")
 target_link_libraries(gpkih PRIVATE 
-        gpkih_parse_lib 
-        gpkih_db_lib 
-        gpkih_actions_lib 
-        gpkih_config_management_lib
-        gpkih_help_lib 
-        gpkih_logging_lib
-        gpkih_experimental_lib
-        ${FMT_LIBRARY}
+      gpkih_parse_lib 
+      gpkih_db_lib 
+      gpkih_actions_lib 
+      gpkih_config_management_lib
+      gpkih_help_lib 
+      gpkih_logging_lib
+      gpkih_experimental_lib
+      FMT_LIBRARY
 )
+else()
+# Use compiled fmt from github clone
+message(STATUS "Project will be compiled with cloned fmtlib")
+target_link_libraries(gpkih PRIVATE 
+      gpkih_parse_lib 
+      gpkih_db_lib 
+      gpkih_actions_lib 
+      gpkih_config_management_lib
+      gpkih_help_lib 
+      gpkih_logging_lib
+      gpkih_experimental_lib
+      fmt::fmt
+)
+endif()
 
+# Link libraries to gpkih
 # Set install paths that will be used by CPack
 # Note: make install is not intended to be run, this should be changed to use cpack components
 #set(GPKIH_MISC_FILES
