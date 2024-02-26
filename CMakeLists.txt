@@ -43,9 +43,9 @@ if(NOT FMT_LIBRARY)
       message(FATAL_ERROR "Git executable not found. Aborting.")
     endif()
 
-    message(STATUS "cloning https://github.com/fmtlib/fmt.git")
+    message(STATUS "cloning https://github.com/fmtlib/fmt.git to ${fmtlib_src}")
     # Clone fmtlib repository
-    execute_process(COMMAND git clone --depth 1 https://github.com/fmtlib/fmt.git fmtlib)
+    execute_process(COMMAND git clone --depth 1 https://github.com/fmtlib/fmt.git ${fmtlib_src})
   else()
     message(STATUS "fmtlib already exists, skipping git clone...")
   endif()

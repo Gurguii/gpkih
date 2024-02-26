@@ -40,4 +40,4 @@ inline std::unordered_map<str, int (*)(std::vector<str>)> ACTION_PARSERS{
     {"init", gpkih::parsers::init},     {"list", gpkih::parsers::list},
     {"build", gpkih::parsers::build},   {"revoke", gpkih::parsers::revoke},
     {"gencrl", gpkih::parsers::gencrl}, {"remove", gpkih::parsers::remove},
-    {"genkey", gpkih::parsers::genkey}};
+    {"genkey", gpkih::parsers::genkey}, {"get", gpkih::parsers::get}, {"set", gpkih::parsers::set} };

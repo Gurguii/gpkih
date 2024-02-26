@@ -67,6 +67,7 @@ protected:
 public:
   static inline int load() { return load_file(CONF_GPKIH, _conf_gpkih); }
   static inline strview get(strview section, strview key){return _conf_gpkih[section.data()][key.data()]; }
+  static inline ConfigMap* const get() { return &_conf_gpkih; };
   static inline void set(strview section, strview key, strview val){
     _conf_gpkih[section.data()][key.data()] =  val.data();
   }
@@ -86,8 +87,8 @@ public:
 class ProfileConfig : public Config {
 private:
   // When loaded, config mappings will look like
-  // e.g _conf_vpn[client][key] = val
-  //     _conf_vpn[server][key] = val
+  // e.g   _conf_vpn[client][key] = val
+  //       _conf_vpn[server][key] = val
   //	   _conf_vpn[common][key] = val
   // the adecuate ConfigMap will be populated with
   // each config section, with each section being

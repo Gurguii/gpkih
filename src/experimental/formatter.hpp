@@ -22,26 +22,33 @@ namespace gpkih::experimental
 		};
 
 		Formatter(FormatInfo format);
-
-		template <typename ...T> void printh(T&& ...args) {
-			std::stringstream format_string{};
-			for (int i = 0; i < sizeof...(args); ++i) {
-				format_string << "{:" << static_cast<char>(info.allignment) << std::move(fmt::format("{}", info.width)) << "}";
-			}
-			fmt::print(format_string.str(), std::forward<T>(args)...);
-		}
 		template <typename ...T> void printv(T&& ...args);
+		template<typename ...T> void printh(T&& ...args);
+
+		FormatInfo& get_format();
+		void set_format(FormatInfo &&new_format);
+
 	private:
 		FormatInfo _format;
 	};
 
 } // namespace gpkih::experimental
 
+// Print vertically
 template <typename ...T> inline void gpkih::experimental::Formatter::printv(T&& ...args)
 {
-	std::stringstream format_string{};
+	std::stringstream format_string();
 	for (int i = 0; i < sizeof...(args); ++i) {
-		format_string << "{:" << static_cast<char>(info.allignment) << std::move(fmt::format("{}", info.width)) << "}\n";
+		format_string << "{:" << static_cast<char>(_format.allignment) << std::move(fmt::format("{}", _format.width)) << "}\n";
+	}
+	fmt::print(format_string.str(), std::forward<T>(args)...);
+}
+
+// Print horizontally
+template <typename ...T> inline void gpkih::experimental::Formatter::printh(T&& ...args) {
+	std::stringstream format_string();
+	for (int i = 0; i < sizeof...(args); ++i) {
+		format_string << "{:" << static_cast<char>(_format.allignment) << std::move(fmt::format("{}", _format.width)) << "}";
 	}
 	fmt::print(format_string.str(), std::forward<T>(args)...);
 }

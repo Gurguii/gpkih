@@ -60,12 +60,12 @@ int Config::load_file(strview path, ConfigMap &buff) {
 ProfileConfig::ProfileConfig(Profile &profile, CONFIG_FILE files_to_load) {
   if (files_to_load & CONFIG_PKI) {
     // Load pki.conf
-    auto path = fmt::format("{}{}{}", profile.source, SLASH, pki_conf_filename);
+    auto path = std::move(fmt::format("{}{}{}", profile.source, SLASH, pki_conf_filename));
     succesfully_loaded = load_file(path, this->_conf_pki) ? false : true;
   }
   if (files_to_load & CONFIG_VPN) {
     // Load openvpn.conf
-    auto path = fmt::format("{}{}{}", profile.source, SLASH, vpn_conf_filename);
+    auto path = std::move(fmt::format("{}{}{}", profile.source, SLASH, vpn_conf_filename));
     succesfully_loaded = load_file(path, this->_conf_vpn) ? false : true;
   }
 }
