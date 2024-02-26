@@ -6,6 +6,7 @@
 #include "../help/help.hpp"
 #include "../printing.hpp"
 #include "../logger/error_management.hpp"
+#include "../experimental/formatter.hpp"
 
 inline int check_and_populate_profile(strview profilename, gpkih::Profile &buffer,
                                std::vector<str> &opts) {
@@ -22,6 +23,7 @@ inline int check_and_populate_profile(strview profilename, gpkih::Profile &buffe
 namespace gpkih::parsers {
 // main parser
 extern int parse(int argc, const char **_args);
+
 // action parsers
 extern int init(std::vector<str> opts);
 extern int build(std::vector<str> opts);
@@ -29,6 +31,7 @@ extern int revoke(std::vector<str> opts);
 extern int gencrl(std::vector<str> opts);
 extern int list(std::vector<str> opts);
 extern int remove(std::vector<str> opts);
+
 // unimplemented
 extern int set(std::vector<str> opts);
 extern int get(std::vector<str> opts);

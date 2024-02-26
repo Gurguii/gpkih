@@ -39,7 +39,11 @@ $stdout_log = "$root\.out.log"
 
 if (!(Get-Item "$build_dir" -ErrorAction SilentlyContinue)){
     # Create build dir
-    New-Item -ItemType Directory -Path "$build_dir"
+    New-Item -ItemType Directory -Path "$build_dir" | Out-Null
+    if(!(Get-Item "$build_dir")){
+        Write-Host -ForegroundColor Red "Couldn't create build directory"
+        exit 0
+    }
 }
 
 Set-Location "$build_dir"
@@ -50,7 +54,6 @@ foreach($k in $exec.Keys){
 }
 
 # run 'cmake ..' inside build directory
-
 $cmake_executable = $exec["cmake"]
 $cmake_command_args = ".."
 $cmake_process = Start-Process -FilePath "$cmake_executable" -ArgumentList "$cmake_command_args" -PassThru -Wait -NoNewWindow
@@ -70,4 +73,9 @@ if($build_process.ExitCode -ne 0){
     exit $cmake_process.ExitCode    
 }
 
-Copy-Item -Path "$build_dir\Debug\gpkih.exe" -Destination "$root\gpkih.exe" -Force 
+[string]$exe_src = "$build_dir\Debug\gpkih.exe"
+[string]$exe_dst = "$root\gpkih.exe"
+
+Write-Host " -- Copying $exe_src to $exe_dst"
+
+Copy-Item -Path "$exe_src" -Destination "$exe_dst" -Force

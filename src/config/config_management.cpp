@@ -11,7 +11,7 @@ int Config::load_file(strview path, ConfigMap &buff) {
     return F_NOOPEN;
   }
   str line;
-  int next_section;
+  ui64 next_section;
   while (getline(file, line)) {
     char first = line[0];
     if (first == section_delim_open) {
@@ -68,7 +68,29 @@ ProfileConfig::ProfileConfig(Profile &profile, CONFIG_FILE files_to_load) {
     auto path = std::move(fmt::format("{}{}{}", profile.source, SLASH, vpn_conf_filename));
     succesfully_loaded = load_file(path, this->_conf_vpn) ? false : true;
   }
-}
+} // ProfileConfig::ProfileConfig()
+
+void ProfileConfig::print(CONFIG_FILE files)
+{
+    if (files & CONFIG_VPN) {
+        // print vpn config
+        fmt::print("== vpn config ==\n");
+        for (const auto& section : _conf_vpn) {
+            for (const auto &kv : section.second) {
+                fmt::print("{} -> {}\n", kv.first, kv.second);
+            }
+        }
+    }
+    if (files & CONFIG_PKI) {
+        // print pki config
+        fmt::print("== pki config ==\n");
+        for (const auto& section : _conf_pki) {
+            for (const auto& kv : section.second) {
+                fmt::print("{} -> {}\n", kv.first, kv.second);
+            }
+        }
+    }
+} // ProfileConfig::print()
 
 Subject ProfileConfig::default_subject() {
     Subject subj;

@@ -65,7 +65,7 @@ set (gpkih_config_definition
 set (gpkih_config_implementation
         "${GPKIH_SRC_DIR}/config/config_management.cpp"
 )
-add_library(gpkih_config_management_lib STATIC "${gpkih_config_implementation}"  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp")
+add_library(gpkih_config_management_lib STATIC "${gpkih_config_implementation}")
 target_include_directories(gpkih_config_management_lib PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
@@ -83,7 +83,7 @@ set(gpkih_logging_implementation
         "${gpkih_logger_src}/error_management.cpp"
         "${gpkih_logger_src}/signals.cpp"
 )
-add_library(gpkih_logging_lib STATIC "${gpkih_logging_implementation}"  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp")
+add_library(gpkih_logging_lib STATIC "${gpkih_logging_implementation}")
 target_include_directories(gpkih_logging_lib PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
@@ -101,7 +101,7 @@ set (gpkih_actions_implementation
         "${gpkih_actions_src}/list.cpp"
         "${gpkih_actions_src}/remove.cpp"
 )
-add_library(gpkih_actions_lib STATIC "${gpkih_actions_implementation}"  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp")
+add_library(gpkih_actions_lib STATIC "${gpkih_actions_implementation}")
 target_include_directories(gpkih_actions_lib PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
@@ -114,7 +114,7 @@ set(gpkih_db_implementation
         "${gpkih_db_src}/profiles.cpp"
         "${gpkih_db_src}/entities.cpp"
 )
-add_library(gpkih_db_lib STATIC "${gpkih_db_implementation}"  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp")
+add_library(gpkih_db_lib STATIC "${gpkih_db_implementation}")
 target_include_directories(gpkih_db_lib PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
@@ -136,7 +136,7 @@ set(gpkih_help_implementation
         "${gpkih_help_src}/help_list.cpp"
 )
 
-add_library(gpkih_help_lib STATIC "${gpkih_help_implementation}"  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp")
+add_library(gpkih_help_lib STATIC "${gpkih_help_implementation}")
 target_include_directories(gpkih_help_lib PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
@@ -157,7 +157,7 @@ set(gpkih_parse_implementation
         "${gpkih_parse_src}/remove.cpp"
         "${gpkih_parse_src}/parser.cpp"
 )
-add_library(gpkih_parse_lib STATIC "${gpkih_parse_implementation}"  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp")
+add_library(gpkih_parse_lib STATIC "${gpkih_parse_implementation}")
 target_include_directories(gpkih_parse_lib PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
@@ -176,7 +176,6 @@ target_include_directories(gpkih_experimental_lib PUBLIC
 # Create the actual self-contained executable
 add_executable(gpkih
         ${GPKIH_SRC_DIR}/gpki.cpp
-  "src/parse/set.cpp" "src/parse/get.cpp" "src/help/help_get.cpp" "src/help/help_set.cpp" "src/experimental/formatter.cpp"
 )
 
 # Especifica los encabezados a incluir
@@ -184,7 +183,7 @@ target_include_directories(gpkih PUBLIC
         "${INCLUDE_DIR}"
         "${FMT_LIBRARY_INCLUDE}"
 )
-
+        
 if(FMT_LIBRARY)
 # Compile with FMT found in the system
 message(STATUS "Project will be compiled with found fmtlib")

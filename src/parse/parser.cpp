@@ -23,6 +23,11 @@ int parsers::parse(int argc, const char **_args) {
       args.erase(args.begin() + i);
       --argc;
     }
+    else if (op == "--noprint") {
+      Config::set("behaviour", "print_generated_certificate", "no");
+      args.erase(args.begin() + i);
+      --argc;
+    }
   }
 
   // At this point action is mandatory

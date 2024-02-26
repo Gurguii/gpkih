@@ -109,17 +109,8 @@ private:
   };
     
 public:
-  inline void print() {
-    for (auto &haha : {_conf_vpn, _conf_pki}) {
-      for (auto &kv : haha) {
-        fmt::print("== {} ==\n",kv.first);
-        for (auto &kvv : kv.second) {
-          fmt::print("{} {}\n", kvv.first, kvv.second);
-        }
-      }
-    }
-  } // class ProfileConfig 
-
+  // Print requested file/s, by default prints both VPN - PKI
+  void print(CONFIG_FILE files = CONFIG_ALL);
 
   // Set to true by ProfileConfig() constructor if files are sucesfully loaded
   bool succesfully_loaded = false;

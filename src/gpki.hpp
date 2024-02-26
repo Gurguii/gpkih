@@ -20,34 +20,34 @@ inline str EOL = "\n";
 #ifdef _WIN32
 #include <Windows.h>
 /* WINDOWS STUFF */
-inline str CURRENT_PATH = fs::current_path().string();
-inline char SLASH = '\\';
-inline str GPKIH_BASEDIR = str(std::getenv("LOCALAPPDATA")) + "\\gpkih\\";
-inline str VPN_CONFIG_EXTENSION = "ovpn";
+extern str CURRENT_PATH;
+extern char SLASH;
+extern str GPKIH_BASEDIR;
+extern str VPN_CONFIG_EXTENSION;
 #else
 #include <sys/signal.h>
 /* LINUX STUFF */
-inline str CURRENT_PATH = fs::current_path();
-inline char SLASH = '/';
-inline str GPKIH_BASEDIR = str(std::getenv("HOME")) + "/.config/gpkih/";
-inline str VPN_CONFIG_EXTENSION = "conf";
+extern str CURRENT_PATH;
+extern char SLASH;
+extern str GPKIH_BASEDIR;
+extern str VPN_CONFIG_EXTENSION;
 #endif
 
 
-inline str DB_DIRNAME = "db";
-inline str DB_DIRPATH = GPKIH_BASEDIR + DB_DIRNAME + SLASH;
+extern str DB_DIRNAME;
+extern str DB_DIRPATH;
 
-inline str CONF_DIRNAME = "config";
-inline str CONF_DIRPATH = GPKIH_BASEDIR + CONF_DIRNAME + SLASH;
+extern str CONF_DIRNAME;
+extern str CONF_DIRPATH;
 
-inline str vpn_conf_filename = "openvpn.conf";
-inline str pki_conf_filename = "pki.conf";
-inline str gpkih_conf_filename = "gpkih.conf";
+extern str vpn_conf_filename;
+extern str pki_conf_filename;
+extern str gpkih_conf_filename;
 
-inline str CONF_GPKIH = GPKIH_BASEDIR + CONF_DIRNAME + SLASH + gpkih_conf_filename;
+extern str CONF_GPKIH;
 
-#define CSV_DELIMITER_s ","
-#define CSV_DELIMITER_c ','
+extern str CSV_DELIMITER_s;
+extern char CSV_DELIMITER_c;
 
 enum class GPKIH_RETURN_CODES {
   /* ALL GOOD */
