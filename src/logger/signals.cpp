@@ -3,6 +3,7 @@
 
 using namespace gpkih;
 #ifdef _WIN32
+#include <Windows.h>
     BOOL Signals::ctrl_c_handler(DWORD signal){
         return TRUE;
     }

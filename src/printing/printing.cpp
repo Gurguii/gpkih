@@ -40,7 +40,7 @@ void PRINT(std::string_view msg, STYLE style) {
 
 /* Used to style PROMPT components: icon - body - answers */
 static inline std::string PROMPT_icon(COLOR icon_color) {
-	return fmt::format(fg(icon_color), "➜ ");
+	return fmt::format(fg(icon_color), "-> ");
 };
 static inline std::string PROMPT_body(std::string_view body) {
 	return fmt::format(fg(WHITE), "{}", body);
