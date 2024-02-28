@@ -12,7 +12,7 @@ int parsers::init(std::vector<std::string> opts) {
     } else if (opt == "-s" || opt == "--source") {
       profile_source = opts[++i];
     } else {
-      UNKNOWN_OPTION_MSG(opt);
+      UNKNOWN_OPTION_MESSAGE(opt);
     }
   }
   actions::init(profile_name,profile_source);

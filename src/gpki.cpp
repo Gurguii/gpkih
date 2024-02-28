@@ -2,6 +2,7 @@
 #include "logger/signals.hpp"
 #include "parse/parser.hpp"
 #include "db/database.hpp"
+#include <cstdlib>
 #include <stdlib.h>
 
 /* Directory names */
@@ -73,6 +74,28 @@ static int check_gpkih_install_dir(str &path) {
   return GPKIH_OK;
 }
 
+static str __get_environment_variable(strview varname)
+{
+    #ifdef _WIN32
+    size_t size = 0;
+    getenv_s(&size, NULL, 0, varname);
+    if(size == 0){
+        seterror("couldn't get env var '{}'", varname);
+        return {};
+    }
+    std::string env("\0", size);
+    getenv_s(&size, &env[0], env.size(), varname);
+
+    return std::move(env);
+    #else
+    if(secure_getenv(varname.data()) == NULL){
+        seterror("couldn't get env var '{}'", varname);
+        return {};
+    }
+    return str{secure_getenv(varname.data())};
+    #endif
+};
+
 static int __set_platform_dependant_variables()
 {
 #ifdef _WIN32
@@ -99,6 +122,7 @@ static int __set_platform_dependant_variables()
     return GPKIH_OK;
 }
 
+
 static int set_variables() {
 
     if (__set_platform_dependant_variables() != GPKIH_OK) {
@@ -120,8 +144,7 @@ static int set_variables() {
 // PROGRAM ENTRY POINT
 int main(int argc, const char **args) {
   // Print starting msg
-  PROGRAMSTARTING();
-
+  // PROGRAMSTARTING();
   if(set_variables() != GPKIH_OK){
       printlasterror();
       return GPKIH_FAIL;
@@ -135,12 +158,7 @@ int main(int argc, const char **args) {
   // Register signal handlers
   gpkih::Signals::register_signals();
 
-  // Create logger instance which will:
-  // 1. call Logger::start() upon construction
-  // 2. call Logger::wait() upon destruction
-  gpkih::Logger logger(fmt::format("{}logs{}gpkih.log",GPKIH_BASEDIR ,SLASH));
-
-  // TODO - Add PROPER checks for openssl - openvpn existence
+  // TODO - Add PROPER checks for openssl - openvpn existence (static lib with utils to check and execute commands on both win|lin)
 
   // Launch task to load `gpkih.conf` configuration
   auto load_gpkih_config = std::async(std::launch::async, gpkih::Config::load, CONF_GPKIH);
@@ -157,7 +175,12 @@ int main(int argc, const char **args) {
     return -1;
   }
   
-  PINFO("Loaded [{}] profiles\n", profile_count, DB_DIRPATH, SLASH);
+  // Create logger instance which will:
+  // 1. call Logger::start() upon construction
+  // 2. call Logger::wait() upon destruction
+  gpkih::Logger logger(fmt::format("{}logs{}gpkih.log",GPKIH_BASEDIR ,SLASH));
+
+  //PINFO("Loaded [{}] profiles\n", profile_count, DB_DIRPATH, SLASH);
 
   // Parse options
   if (gpkih::parsers::parse(argc - 1, args + 1) != GPKIH_OK) {

@@ -53,7 +53,7 @@ int parsers::revoke(std::vector<std::string> opts) {
     if (opt == "--reason") {
       extra_reason = opts[++i];
     } else {
-      UNKNOWN_OPTION_MSG(opt);
+      UNKNOWN_OPTION_MESSAGE(opt);
     }
   }
 

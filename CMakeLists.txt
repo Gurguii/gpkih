@@ -34,7 +34,7 @@ if(NOT FMT_LIBRARY)
   # Set outpath for FMT source code
   set(fmtlib_src "${CMAKE_CURRENT_BINARY_DIR}/fmtlib")
 
-  # Make sure it hasn't already been cloned already
+  # Make sure it hasn't already been cloned
   if(NOT EXISTS "${fmtlib_src}")
     # Check if Git is available
     find_program(GIT git HINTS "C:/Program Files/Git")
@@ -163,7 +163,7 @@ add_executable(gpkih
 
 set(GPKIH_LIBS gpkih_parse_lib gpkih_db_lib gpkih_actions_lib 
               gpkih_config_management_lib gpkih_help_lib
-              gpkih_logging_lib gpkih_experimental_lib)
+              gpkih_logging_lib gpkih_experimental_lib gpkih_printing_lib)
 
 if(FMT_LIBRARY)
     # Compile with FMT found in the system
@@ -180,21 +180,3 @@ else()
           fmt::fmt
     )
 endif()
-
-# Link libraries to gpkih
-# Set install paths that will be used by CPack
-# Note: make install is not intended to be run, this should be changed to use cpack components
-#set(GPKIH_MISC_FILES
-#        "${GPKIH_ROOT_DIR}/setup.sh"
-#        "${GPKIH_ROOT_DIR}/COMANDOS.md"
-#)
-set(GPKIH_CONFIG_DIR
-        "${GPKIH_ROOT_DIR}/config"
-)
-install(TARGETS gpkih DESTINATION bin)
-install(DIRECTORY "${GPKIH_CONFIG_DIR}" DESTINATION .)
-#install(FILES "${GPKIH_MISC_FILES}" DESTINATION .)
-
-# Include CPack
-# Note: CPack configuration must be done before including it
-include(CPack) 

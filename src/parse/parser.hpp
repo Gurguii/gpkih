@@ -4,7 +4,7 @@
 #include "../config/config_management.hpp"
 #include "../structs.hpp"
 #include "../help/help.hpp"
-#include "../printing.hpp"
+#include "../printing/printing.hpp"
 #include "../logger/error_management.hpp"
 #include "../experimental/formatter.hpp"
 

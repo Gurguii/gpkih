@@ -1,13 +1,15 @@
 #include "signals.hpp"
 
+
 using namespace gpkih;
 #ifdef _WIN32
     BOOL Signals::ctrl_c_handler(DWORD signal){
         return TRUE;
     }
 #else
+#include <sys/signal.h>
     void Signals::ctrl_c_handler(int sig){
-        Logger::cleanup_with_exit();
+        //Logger::cleanup_with_exit();
     };
 #endif
 

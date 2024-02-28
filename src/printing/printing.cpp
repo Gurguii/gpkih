@@ -7,6 +7,7 @@ STYLE S_WARNING = fg(ORANGE) | EMPHASIS::bold | EMPHASIS::italic;
 STYLE S_INFO = fg(PALE_GOLDEN_ROD) | EMPHASIS::italic;
 STYLE S_ERROR = fg(RED) | EMPHASIS::bold | EMPHASIS::italic;
 STYLE S_SUCCESS = fg(LGREEN) | EMPHASIS::bold;
+STYLE S_HINT = fg(YELLOW) | EMPHASIS::italic;
 
 /* Styling used in action 'list' */
 STYLE ENTITY_LABEL_KEY_STYLE = fg(PALE_GOLDEN_ROD) | EMPHASIS::bold;
@@ -15,17 +16,17 @@ STYLE ENTITY_LABEL_VAL_STYLE = fg(WHITE) | EMPHASIS::italic | EMPHASIS::bold;
 STYLE PROFILE_LABEL_KEY_STYLE = fg(WHITE) | EMPHASIS::bold;
 STYLE PROFILE_LABEL_VAL_STYLE = fg(LGREEN) | EMPHASIS::italic | EMPHASIS::bold;
 
-std::string S_ELABEL(std::string& st){
+std::string S_ELABEL(std::string_view st){
 	return std::move(fmt::format(ENTITY_LABEL_KEY_STYLE, st));
 }
-std::string S_ELABEL_V(std::string& st){
+std::string S_ELABEL_V(std::string_view st){
 	return std::move(fmt::format(ENTITY_LABEL_VAL_STYLE, st));
 }
 
-std::string S_PLABEL(std::string& st) {
+std::string S_PLABEL(std::string_view st) {
 	return std::move(fmt::format(PROFILE_LABEL_KEY_STYLE, st));
 }
-std::string S_PLABEL_V(std::string& st) {
+std::string S_PLABEL_V(std::string_view st) {
 	return std::move(fmt::format(PROFILE_LABEL_VAL_STYLE, st));
 }
 
@@ -50,6 +51,9 @@ static inline std::string PROMPT_answers(std::string_view ans) {
 
 void PROMPT(std::string_view msg, std::string_view ans, COLOR icon_color) {
 	fmt::print("{} {} {}: ", PROMPT_icon(icon_color), PROMPT_body(msg), PROMPT_answers(ans));
+};
+void PROMPT(std::string_view msg, COLOR icon_color) {
+	fmt::print("{} {}: ", PROMPT_icon(icon_color), PROMPT_body(msg));
 };
 
 void PROGRAMSTARTING() {

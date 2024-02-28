@@ -175,7 +175,7 @@ int parsers::build(std::vector<std::string> opts) {
       continue;
     }
     else {
-      UNKNOWN_OPTION_MSG(opt);
+      UNKNOWN_OPTION_MESSAGE(opt);
     }
   }
   if(entity.subject.cn.empty()){

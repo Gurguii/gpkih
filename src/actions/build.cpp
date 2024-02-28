@@ -109,10 +109,12 @@ static int _create_inline_config(Profile &profile,ProfileConfig &config,
     seterror("ca cert path '{}' doesn't exist\n", ca_crt_path);
     return GPKIH_FAIL;
   }
+
   // Load CA certificate
   int _ca_filesize = fs::file_size(ca_crt_path);
   str ca_crt_str("\0", _ca_filesize);
   std::ifstream(ca_crt_path).read(&ca_crt_str[0], ca_crt_str.size());
+
   if (ca_crt_str.empty()) {
     seterror("couldn't load CA certificate '{}'\n", ca_crt_path);
     return GPKIH_FAIL;
@@ -163,6 +165,7 @@ static int _create_inline_config(Profile &profile,ProfileConfig &config,
   }
   return GPKIH_OK;
 }
+
 static inline int _create_config(str &profile_name,ProfileConfig &config,
                                  std::vector<str> &common_names) {
   Profile profile;
@@ -230,14 +233,14 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity){
 
   if(system(req_command.c_str())){
     // fail
-    seterror("command '{}' failed\n",req_command);
+    seterror("[ REQUEST ] command '{}' failed\n",req_command);
     return GPKIH_FAIL;
   }
 
   // create crt
   if(system(crt_command.c_str())){
     // fail
-    seterror("command '{}' failed\n",crt_command);
+    seterror("[ CERTIFICATE SIGNING ] command '{}' failed\n",crt_command);
     return GPKIH_FAIL;
   }
 
@@ -246,8 +249,6 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity){
   if(db::entities::add(profile.name, entity)){
     return GPKIH_FAIL;
   } 
-  return GPKIH_OK;
-
  
   // create inline config file
   std::vector<Entity> hahahah{entity};

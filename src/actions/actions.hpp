@@ -2,7 +2,7 @@
 #include "../config/config_management.hpp"
 #include "../db/database.hpp"
 #include "../gpki.hpp"
-#include "../printing.hpp"
+#include "../printing/printing.hpp"
 #include "../utils/gpkih_util_funcs.hpp"
 #include "../logger/logger.hpp"
 

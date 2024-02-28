@@ -1,5 +1,4 @@
 #pragma once
-#include "../gpki.hpp" // typename aliases, <windows.h>
 
 namespace gpkih
 {

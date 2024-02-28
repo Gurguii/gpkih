@@ -42,6 +42,8 @@ public:
 	
 	~Logger();
 	Logger(str logpath);
+
+	str format_msg(Level &level, str &msg);
 private:
 	bool start(); // called by CONSTRUCTOR() - opens log file and loads configuration from gpkih.conf
 	void wait();  // called by DESTRUCTOR() - waits for every task in `std::vector<void> Logger::tasks` to finish
@@ -64,7 +66,7 @@ private:
 	std::vector<std::future<void>> tasks{}; // holds tasks added by Logger::add()
 	std::mutex tasks_mutex;
 
-	str format_msg(Level &level, str &msg); // 
+	
 
 }; // class Logger
 	
@@ -84,8 +86,9 @@ private:
 		return static_cast<bool>(static_cast<ui16>(lo) & static_cast<ui16>(ro));
 	} // Level operator &
 	
-	template <typename ...T>  static inline void __add_log(gpkih::Logger::Level level, str &&msg) {
-		PINFO("adding log '{}'\n", msg);
+	template <typename ...T>  static inline void __add_log(gpkih::Logger &obj, gpkih::Logger::Level level, str &&msg) {
+		auto formatted = obj.format_msg(level, msg);
+		PRINT(formatted);
 	};
 
 	template<typename ...T>
@@ -93,18 +96,18 @@ private:
 	{
 		switch (level) {
 			case L_INFO:
-				__add_log(L_INFO, std::move(fmt::format(fmt, std::forward<T>(args)...)));
+				__add_log(*this, L_INFO, std::move(fmt::format(fmt, std::forward<T>(args)...)));
 				break;
 			case L_WARN:
-				__add_log(L_WARN, std::move(fmt::format(fmt, std::forward<T>(args)...)));
+				__add_log(*this, L_WARN, std::move(fmt::format(fmt, std::forward<T>(args)...)));
 				break;
 			case L_ERROR:
-				__add_log(L_ERROR, std::move(fmt::format(fmt, std::forward<T>(args)...)));
+				__add_log(*this, L_ERROR, std::move(fmt::format(fmt, std::forward<T>(args)...)));
+				break;
+			default:
+				__add_log(*this, L_ERROR, "invalid Level type on call to Logger::add");
 				break;
 		}
 	}
 
 } // namespace gpkih
-
-
-

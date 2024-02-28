@@ -1,5 +1,5 @@
 #pragma once
-#include "printing.hpp"
+#include "printing/printing.hpp"
 #include <filesystem>
 
 // Custom typenames
@@ -26,7 +26,6 @@ constexpr const char *VPN_CONFIG_EXTENSION = "ovpn";
 #else
 
 /* LINUX STUFF */
-#include <sys/signal.h>
 constexpr char SLASH = '/';
 constexpr const char *VPN_CONFIG_EXTENSION = "conf";
 #endif

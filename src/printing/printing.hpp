@@ -1,5 +1,4 @@
 ﻿#pragma once
-
 #include <fmt/chrono.h>
 #include <fmt/color.h>
 #include <fmt/format.h>
@@ -30,6 +29,7 @@ extern STYLE S_WARNING;
 extern STYLE S_INFO;
 extern STYLE S_ERROR;
 extern STYLE S_SUCCESS;
+extern STYLE S_HINT;
 
 /* Styling used in action 'list' */
 extern STYLE ENTITY_LABEL_KEY_STYLE;
@@ -39,15 +39,15 @@ extern STYLE PROFILE_LABEL_KEY_STYLE;
 extern STYLE PROFILE_LABEL_VAL_STYLE;
 
 /* Returns styled string */
-extern std::string S_ELABEL(std::string& st);
-extern std::string S_ELABEL_V(std::string& st);
+extern std::string S_ELABEL(std::string_view st);
+extern std::string S_ELABEL_V(std::string_view st);
 
-extern std::string S_PLABEL(std::string& st);
-extern std::string S_PLABEL_V(std::string& st);
+extern std::string S_PLABEL(std::string_view st);
+extern std::string S_PLABEL_V(std::string_view st);
 
 /* Normal printing */
 extern void PRINT(std::string_view msg, COLOR color);
-extern void PRINT(std::string_view msg, STYLE style);
+extern void PRINT(std::string_view msg, STYLE style = S_NONE);
 
 /* success */
 template <typename ...T> inline void PSUCCESS(std::string_view fmt, T&& ...args) {
@@ -71,6 +71,7 @@ template <typename ...T> extern void PHINT(std::string_view fmt, T&& ...args){
 }
 /* prompt */
 extern void PROMPT(std::string_view msg, std::string_view ans, COLOR icon_color = LGREEN);
+extern void PROMPT(std::string_view msg, COLOR icon_color = LGREEN);
 
 // Message to print when starting
 extern void PROGRAMSTARTING();
@@ -78,4 +79,4 @@ extern void PROGRAMSTARTING();
 extern void PROGRAMEXITING();
 
 // Message to print when an unknown option is found when parsing
-extern void UNKNOWN_OPTION_MSG(std::string_view opt);
+extern void UNKNOWN_OPTION_MESSAGE(std::string_view opt);

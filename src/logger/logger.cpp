@@ -38,7 +38,7 @@ static std::unordered_map<str, Logger::FormatField> __str_ffield_map
 
 bool Logger::start() {
 	// Set logpath on runtime to avoid declaring GPKIH_BASEDIR as static inline in the header with getenv() 
-	// and instead use getenv_s()
+	// and instead use getenv_s() in Windows
 	this->current_lines = 0;
 	if (!fs::exists(logpath)) {
 		PINFO("creating log file '{}'\n", logpath);
@@ -53,8 +53,13 @@ bool Logger::start() {
 		while (getline(file, line)) { ++current_lines; }
 		file.close();
 	}
+
 	// TODO - change this 
 	// set current lines
+	strview s0 = Config::get("logs","max_lines");
+	strview s1 = Config::get("logs", "included_format_fields");
+
+	fflush(stdout);
 
 	// set max_lines
 	this->max_lines = strtol(Config::get("logs", "max_lines").data(), nullptr, 10);
@@ -78,6 +83,7 @@ bool Logger::start() {
 
 	// set include_levels
 	this->included_levels = Logger::Level::NONE;
+
 	ss = std::move(sstream(Config::get("logs", "included_levels").data()));
 	while (getline(ss, token, ':')) {
 		if (__str_level_map.find(token) != __str_level_map.end()) {
@@ -96,10 +102,9 @@ Logger::Logger(str path):logpath(path)
 
 
 Logger::~Logger() {
-	PINFO("waiting for logger tasks to finish...\n");
+	//PINFO("waiting for logger tasks to finish...\n");
 	Logger::wait();
 }// Logger destructor
-
 
 
 void Logger::wait() {

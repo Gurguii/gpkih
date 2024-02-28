@@ -70,7 +70,7 @@ int parsers::list(std::vector<str> opts) {
         }
       }
     } else {
-      UNKNOWN_OPTION_MSG(opt);
+      UNKNOWN_OPTION_MESSAGE(opt);
     }
   }
   return actions::list(profile_names, entity_names, pfields, efields);
