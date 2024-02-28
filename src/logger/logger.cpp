@@ -56,10 +56,6 @@ bool Logger::start() {
 
 	// TODO - change this 
 	// set current lines
-	strview s0 = Config::get("logs","max_lines");
-	strview s1 = Config::get("logs", "included_format_fields");
-
-	fflush(stdout);
 
 	// set max_lines
 	this->max_lines = strtol(Config::get("logs", "max_lines").data(), nullptr, 10);
@@ -117,12 +113,12 @@ void Logger::wait() {
 str Logger::format_msg(Level &level, str& msg) {
 	sstream log;
 	// log syntax - [date] [level] [msg]
-	this->included_format_fields & Logger::FormatField::msg_time      && log << std::move(fmt::format("[{:%H:%M}] ", std::chrono::system_clock::now()));
+	this->included_format_fields & Logger::FormatField::msg_time      && log << std::move(fmt::format("[{:%d %h %Y @ %H:%M}] ", std::chrono::system_clock::now()));
 	this->included_format_fields & Logger::FormatField::msg_type	  && log << std::move(fmt::format(__level_style_map[level],"[{}] ",__level_str_map[level]));
 	this->included_format_fields & Logger::FormatField::msg_content   && log << msg << EOL;
 	return std::move(log.str());
 } // Logger::format_msg();
 
-void Logger::cleanup_with_exit() {
-	printlasterror(); exit(0);
+		void Logger::cleanup_with_exit() {
+			printlasterror(); exit(0);
 } // Logger::cleanup_with_exit()

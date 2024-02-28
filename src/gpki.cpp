@@ -3,6 +3,7 @@
 #include "parse/parser.hpp"
 #include "db/database.hpp"
 #include <cstdlib>
+#include <filesystem>
 #include <stdlib.h>
 
 /* Directory names */
@@ -98,30 +99,26 @@ static str __get_environment_variable(strview varname)
 
 static int __set_platform_dependant_variables()
 {
-#ifdef _WIN32
-    CURRENT_PATH = fs::current_path().string();
-    size_t size = 0;
-    getenv_s(&size, NULL, 0, "LOCALAPPDATA");
-    if (size == 0) {
-        seterror("couldn't get environment variable 'LOCALAPPDATA'\n");
+    #ifdef _WIN32
+    GPKIH_BASEDIR = __get_environment_variable("LOCALAPPDATA");
+    #else
+    GPKIH_BASEDIR = __get_environment_variable("HOME");
+    #endif
+
+    if(GPKIH_BASEDIR.empty()){
         return GPKIH_FAIL;
     }
-    GPKIH_BASEDIR = std::string("\0", size);
-    getenv_s(&size, &GPKIH_BASEDIR[0], size, "LOCALAPPDATA");
+
+    #ifdef _WIN32
     GPKIH_BASEDIR += "\\gpkih\\";
-    GPKIH_BASEDIR.erase(std::remove_if(GPKIH_BASEDIR.begin(), GPKIH_BASEDIR.end(), [](char& c) {return c == '\0';}), GPKIH_BASEDIR.end());
-#else
-    CURRENT_PATH = fs::current_path();
-    char* env_home = std::getenv("HOME");
-    if (env_home == nullptr) {
-        seterror("couldn't retrieve environment variable 'HOME'\n");
-        return GPKIH_FAIL;
-    }
-    GPKIH_BASEDIR = str(std::getenv("HOME")) + "/.config/gpkih/";
-#endif
+    #else
+    GPKIH_BASEDIR += "/.config/gpkih/";
+    #endif
+
+    GPKIH_BASEDIR.erase(std::remove_if(GPKIH_BASEDIR.begin(), GPKIH_BASEDIR.end(), [](char &c){return c == '\0';}),GPKIH_BASEDIR.end());
+
     return GPKIH_OK;
 }
-
 
 static int set_variables() {
 

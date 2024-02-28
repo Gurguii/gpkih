@@ -1,5 +1,4 @@
 #pragma once
-#include "../gpki.hpp"
 #include "../logger/logger.hpp"
 
 namespace gpkih::experimental
@@ -69,7 +68,6 @@ namespace gpkih::experimental
 	}
 
 	FormatInfo inline Formatter::gpkih_formatinfo() {
-
 		FormatInfo finfo;
 		finfo.key_val_delim = "=";
 		finfo.delim_styling = fg(WHITE) | EMPHASIS::bold;

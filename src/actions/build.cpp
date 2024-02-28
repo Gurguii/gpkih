@@ -166,7 +166,7 @@ static int _create_inline_config(Profile &profile,ProfileConfig &config,
   return GPKIH_OK;
 }
 
-static inline int _create_config(str &profile_name,ProfileConfig &config,
+static inline int _create_inline_config(str &profile_name,ProfileConfig &config,
                                  std::vector<str> &common_names) {
   Profile profile;
   if (db::profiles::load(profile_name, profile)) {

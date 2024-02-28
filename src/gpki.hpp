@@ -39,8 +39,10 @@ enum class GPKIH_RETURN_CODES {
   __we_good = 0,
 #define GPKIH_OK static_cast<int>(GPKIH_RETURN_CODES::__we_good)
   __we_notgood = -1,
+  
   /* FAIL - call lasterror() for more info */
 #define GPKIH_FAIL static_cast<int>(GPKIH_RETURN_CODES::__we_notgood)
+
   /* FILE RELATED CODES */
   __doesnt_exist = 2,
 #define F_NOEXIST static_cast<int>(GPKIH_RETURN_CODES::__doesnt_exist)
@@ -53,6 +55,7 @@ enum class GPKIH_RETURN_CODES {
   __cant_create = 32,
 #define F_NOCREATE static_cast<int>(GPKIH_RETURN_CODES::__cant_create)
   __found_entity = 1,
+
   /* DATABASE RELATED CODES */
 #define ENTITY_FOUND static_cast<int>(GPKIH_RETURN_CODES::__found_entity)
   /* */
