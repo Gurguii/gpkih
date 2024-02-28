@@ -5,7 +5,7 @@ using namespace gpkih;
 // [subopts]
 // -dh
 // -tls
-//
+
 int parsers::genkey(std::vector<str> opts) {
   if (opts.empty()) {
     PERROR("profile name must be given\n");

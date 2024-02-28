@@ -18,32 +18,31 @@ namespace gpkih::experimental
 	// formatting and styling
 	struct FormatInfo {
 		// Key val delimiter
-		const char* key_val_delim = "=";
-		STYLE delim_styling = STYLE(fg(WHITE));
-		ALLIGNMENT delim_allign = L_ALLIGN;
-		int delim_width = 5;
+		const char* key_val_delim;
+		STYLE delim_styling;
+		ALLIGNMENT delim_allign;
+		int delim_width;
 
 		// Header
-		STYLE header_styling = STYLE(fg(WHITE) | bg(BLACK) | EMPHASIS::bold);
-		ALLIGNMENT header_allign = C_ALLIGN;
-		int header_width = 10;
+		STYLE header_styling;
+		ALLIGNMENT header_allign;
+		int header_width;
 
 		// Key
-		// std::pair<STYLE, ALLIGNMENT> key{ fg(WHITE) | EMPHASIS::bold, C_ALLIGN };
-		STYLE key_styling = STYLE(fg(WHITE) | EMPHASIS::bold);
-		ALLIGNMENT key_allign = C_ALLIGN;
-		int key_width = 10;
+		STYLE key_styling;
+		ALLIGNMENT key_allign;
+		int key_width;
 
 		// Val
-		STYLE val_styling = STYLE(fg(GREEN) | EMPHASIS::bold | EMPHASIS::italic);
-		ALLIGNMENT val_allign = C_ALLIGN;
-		int val_width = 10;
+		STYLE val_styling;
+		ALLIGNMENT val_allign;
+		int val_width;
 	}; // struct FormatInfo
 
 	class Formatter
 	{
 	public:
-		static FormatInfo gpkih_formatinfo();
+		static FormatInfo gpkih_formatinfo(); // FormatInfo struct with predefined values that fit gpkih.conf
 
 		Formatter(FormatInfo format);
 		void print_keyval(strview key, strview val) const;
@@ -70,17 +69,7 @@ namespace gpkih::experimental
 	}
 	
 	inline FormatInfo Formatter::gpkih_formatinfo(){
-		FormatInfo finfo;
-		
-		finfo.header_styling = STYLE(fg(CYAN) | bg(BLACK));
-		finfo.header_width = 30; // looks more aesthetic with the same width as the key
-		
-		finfo.delim_width = 5;
-		finfo.key_width = 30;   // max key length is 27 so 30 to make it fit
-		
-		finfo.val_width = 20;
-		finfo.val_allign = L_ALLIGN;
-
+		static FormatInfo finfo{};
 		return finfo;
 	}
 } // namespace gpkih::experimental

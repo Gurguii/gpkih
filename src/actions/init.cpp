@@ -32,13 +32,6 @@ static int create_dhparam(strview outpath) {
   }
   return 0;
 }
-static int create_openvpn_static_key(std::string_view outpath) {
-  str command = fmt::format("openvpn --genkey tls-crypt {}", outpath);
-  if (system(command.c_str())) {
-    return -1;
-  }
-  return 0;
-}
 
 template <typename T> int IS_ABSOLUT_PATH(T path) {
 #ifdef _WIN32

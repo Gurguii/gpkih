@@ -228,4 +228,4 @@ install(DIRECTORY "${GPKIH_CONFIG_DIR}" DESTINATION .)
 
 # Include CPack
 # Note: CPack configuration must be done before including it
-include(CPack)
+include(CPack) 

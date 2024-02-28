@@ -1,8 +1,9 @@
 #pragma once
-#include "../gpki.hpp" // custom typenames, fmt
+#include "../gpki.hpp"
 #include "../config/config_management.hpp" // Config::get()
 #include <future> // std::vector<std::future<void>> Logger::tasks
 #include <queue> // Logger::message_queue
+
 namespace gpkih
 {
 
@@ -30,66 +31,65 @@ public:
 		ALL = 15
 	};
 
-	static inline str log_dirname = "logs";
-	static inline str log_dirpath = GPKIH_BASEDIR + log_dirname + SLASH;
-	static inline str logpath = log_dirpath + SLASH + "gpkih.log"; // only one actually used
+	str logpath; // only one actually used
 
-	static inline void cleanup_with_exit() { printlasterror(); Logger::wait(); exit(0); };
+	void cleanup_with_exit();
 	 
-	static const Logger&get();
+	const Logger&get();
+	const Logger* const get_ptr();
 
-	template<typename ...T> static void add(Level level, strview fmt, T&& ...args);
+	template<typename ...T> void add(Level level, strview fmt, T&& ...args);
 	
 	~Logger();
-
+	Logger(str logpath);
 private:
-	Logger();
-	static bool start(); // called by CONSTRUCTOR() - opens log file and loads configuration from gpkih.conf
-	static void wait();  // called by DESTRUCTOR() - waits for every task in `std::vector<void> Logger::tasks` to finish
+	bool start(); // called by CONSTRUCTOR() - opens log file and loads configuration from gpkih.conf
+	void wait();  // called by DESTRUCTOR() - waits for every task in `std::vector<void> Logger::tasks` to finish
 
-	static inline std::queue<str> message_queue;        
-	static inline std::mutex message_queue_mutex;
-
-	static std::ifstream logfile;			     // set by start() using LOGPATH
-	static inline std::mutex logfile_mutex;
+	std::queue<str> message_queue;        
+	std::mutex message_queue_mutex;
+			     		 
+	std::mutex logfile_mutex;
 	
-	static inline int current_lines;					 // set by start() using gpkih.conf | current lines in log file
-	static inline int max_lines;						 // set by start() using gpkih.conf[logs][max_lines] | maximum lines allowed in logfile
-	static inline std::mutex maxlines_mutex;
+	int current_lines;					    // set by start() using gpkih.conf | current lines in log file
+	int max_lines;						    // set by start() using gpkih.conf[logs][max_lines] | maximum lines allowed in logfile
+	std::mutex maxlines_mutex;
 
-	static inline Level included_levels;				 // set by start() using gpkih.conf | log levels that will be logged
-	static inline std::mutex included_levels_mutex;
+	Level included_levels;				    // set by start() using gpkih.conf | log levels that will be logged
+	std::mutex included_levels_mutex;
 
-	static inline FormatField included_format_fields;	 // set by start() using gpkih.conf | log message fields that will be included | log syntax [date][level][msg]
-	static inline std::mutex included_format_fields_mutex;
+	FormatField included_format_fields;	    // set by start() using gpkih.conf | log message fields that will be included | log syntax [date][level][msg]
+	std::mutex included_format_fields_mutex;
 
-	static inline std::vector<std::future<void>> tasks{}; // holds tasks added by Logger::add()
-	static inline std::mutex tasks_mutex;
+	std::vector<std::future<void>> tasks{}; // holds tasks added by Logger::add()
+	std::mutex tasks_mutex;
 
-	static str format_msg(Level &level, str &msg); // 
+	str format_msg(Level &level, str &msg); // 
 
 }; // class Logger
-
-	inline Logger::FormatField operator|(Logger::FormatField lo, Logger::FormatField ro){
-		return static_cast<Logger::FormatField>(static_cast<ui16>(lo) | static_cast<ui16>(ro)); 
-	}
-	inline bool operator&(Logger::FormatField lo, Logger::FormatField ro){
-		return static_cast<bool>(static_cast<ui16>(lo) & static_cast<ui16>(ro));
-	}
-	inline Logger::Level operator|(Logger::Level lo, Logger::Level ro){
-		return static_cast<Logger::Level>(static_cast<ui16>(lo) | static_cast<ui16>(ro));
-	}
-	inline bool operator&(Logger::Level lo, Logger::Level ro){
-		return static_cast<bool>(static_cast<ui16>(lo) & static_cast<ui16>(ro));
-	}
 	
+	static inline Logger::FormatField operator|(Logger::FormatField lo, Logger::FormatField ro){
+		return static_cast<Logger::FormatField>(static_cast<ui16>(lo) | static_cast<ui16>(ro)); 
+	} // FormatField operator |
 
-	template <typename ...T> static inline void __add_log(gpkih::Logger::Level level, str &&msg) {
+	static inline bool operator&(Logger::FormatField lo, Logger::FormatField ro){
+		return static_cast<bool>(static_cast<ui16>(lo) & static_cast<ui16>(ro));
+	} // FormatField operator &
+
+	static inline Logger::Level operator|(Logger::Level lo, Logger::Level ro){
+		return static_cast<Logger::Level>(static_cast<ui16>(lo) | static_cast<ui16>(ro));
+	} // Level operator |
+
+	static inline bool operator&(Logger::Level lo, Logger::Level ro){
+		return static_cast<bool>(static_cast<ui16>(lo) & static_cast<ui16>(ro));
+	} // Level operator &
+	
+	template <typename ...T>  static inline void __add_log(gpkih::Logger::Level level, str &&msg) {
 		PINFO("adding log '{}'\n", msg);
 	};
 
 	template<typename ...T>
-	void inline Logger::add(Level level, strview fmt, T && ...args)
+	inline void Logger::add(Level level, strview fmt, T && ...args)
 	{
 		switch (level) {
 			case L_INFO:

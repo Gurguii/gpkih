@@ -36,32 +36,14 @@ static std::unordered_map<str, Logger::FormatField> __str_ffield_map
 	{"content", Logger::FormatField::msg_content}
 };
 
-// Logger getter - this ensures only 1 instance of Logger is created
-const Logger& Logger::get() {
-	// since its a static function member,
-	// this is working like a coroutine
-	static Logger instance{};
-	return instance;
-};
-
-// Logger constructor
-Logger::Logger() {
-	Logger::start();
-};
-
-// Logger destructor
-Logger::~Logger() {
-	PINFO("waiting for logger tasks to finish...\n");
-	Logger::wait();
-}
-
-bool Logger::start(){
-	Logger::current_lines = 0;
-	PINFO("logfile path: '{}'\n", logpath);
-	if(!fs::exists(logpath)){
+bool Logger::start() {
+	// Set logpath on runtime to avoid declaring GPKIH_BASEDIR as static inline in the header with getenv() 
+	// and instead use getenv_s()
+	this->current_lines = 0;
+	if (!fs::exists(logpath)) {
 		PINFO("creating log file '{}'\n", logpath);
 		// create log file 
-		if(!std::ofstream(logpath).is_open()){
+		if (!std::ofstream(logpath).is_open()) {
 			return false;
 		}
 	}
@@ -75,17 +57,17 @@ bool Logger::start(){
 	// set current lines
 
 	// set max_lines
-	max_lines = strtol(Config::get("logs","max_lines").data(),nullptr, 10);
-	if(current_lines >= max_lines){
-		return false;	
+	this->max_lines = strtol(Config::get("logs", "max_lines").data(), nullptr, 10);
+	if (current_lines >= max_lines) {
+		return false;
 	}
 
 	// set included_format_fields
-	included_format_fields = Logger::FormatField::NONE;
+	this->included_format_fields = Logger::FormatField::NONE;
 	str token;
-	sstream ss(Config::get("logs","included_format_fields").data());
-	while(getline(ss, token, ':')){
-		if(__str_ffield_map.find(token) != __str_ffield_map.end()){
+	sstream ss(Config::get("logs", "included_format_fields").data());
+	while (getline(ss, token, ':')) {
+		if (__str_ffield_map.find(token) != __str_ffield_map.end()) {
 			// it exists, add field
 			included_format_fields = included_format_fields | __str_ffield_map[token];
 		}
@@ -95,17 +77,30 @@ bool Logger::start(){
 	ss.clear();
 
 	// set include_levels
-	included_levels = Logger::Level::NONE;
-	ss = std::move(sstream(Config::get("logs","included_levels").data()));
-	while(getline(ss,token,':')){
-		if(__str_level_map.find(token) != __str_level_map.end()){
+	this->included_levels = Logger::Level::NONE;
+	ss = std::move(sstream(Config::get("logs", "included_levels").data()));
+	while (getline(ss, token, ':')) {
+		if (__str_level_map.find(token) != __str_level_map.end()) {
 			// it exists, add field
-			included_levels = included_levels | __str_level_map[token];	
+			included_levels = included_levels | __str_level_map[token];
 		}
 	}
 
 	return true;
 } // Logger::start()
+
+Logger::Logger(str path):logpath(path)
+{
+	start();
+}// Logger constructor
+
+
+Logger::~Logger() {
+	PINFO("waiting for logger tasks to finish...\n");
+	Logger::wait();
+}// Logger destructor
+
+
 
 void Logger::wait() {
 	for (std::future<void>& f : tasks) {
@@ -113,12 +108,16 @@ void Logger::wait() {
 	}
 } // Logger::wait();
 
-// log structure - [date] [level] [msg]
+
 str Logger::format_msg(Level &level, str& msg) {
 	sstream log;
-	Logger::included_format_fields & Logger::FormatField::msg_time    && log << std::move(fmt::format("[{:%H:%M}] ", std::chrono::system_clock::now()));
-	Logger::included_format_fields & Logger::FormatField::msg_type	  && log << std::move(fmt::format(__level_style_map[level],"[{}] ",__level_str_map[level]));
-	Logger::included_format_fields & Logger::FormatField::msg_content && log << msg << EOL;
+	// log syntax - [date] [level] [msg]
+	this->included_format_fields & Logger::FormatField::msg_time      && log << std::move(fmt::format("[{:%H:%M}] ", std::chrono::system_clock::now()));
+	this->included_format_fields & Logger::FormatField::msg_type	  && log << std::move(fmt::format(__level_style_map[level],"[{}] ",__level_str_map[level]));
+	this->included_format_fields & Logger::FormatField::msg_content   && log << msg << EOL;
 	return std::move(log.str());
 } // Logger::format_msg();
 
+void Logger::cleanup_with_exit() {
+	printlasterror(); exit(0);
+} // Logger::cleanup_with_exit()

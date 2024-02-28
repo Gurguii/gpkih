@@ -6,8 +6,8 @@ using namespace gpkih;
 
 int db::profiles::populate_from_entry(str &entry, Profile *profile) {
   sstream ss(entry);
-  std::getline(ss, profile->name, CSV_DELIMITER_c);
-  std::getline(ss, profile->source, CSV_DELIMITER_c);
+  std::getline(ss, profile->name, ',');
+  std::getline(ss, profile->source, ',');
   return 0;
 }
 
@@ -48,7 +48,8 @@ int db::profiles::sync() {
 }
 /* Requires only 1 call since the profiles
  * are all in the same csv */
-int db::profiles::initialize() {
+int db::profiles::initialize(strview path) {
+  dbpath = path;
   if (!fs::exists(dbpath)) {
     // Create
     std::ofstream db(dbpath);
@@ -163,7 +164,7 @@ int db::profiles::remove(std::vector<str> &profiles) {
     // remove profile from existing_profiles
     existing_profiles.erase(iter);
     // remove profile entities db
-    str db = DB_DIRPATH + target.name + "_entities.csv";
+    str db = gpkih::db::profiles::dbpath + target.name + "_entities.csv";
     if (fs::exists(db)) {
       if (!fs::remove(db)) {
         seterror(fmt::format("couldn't remove entities' csv '{}'", db));
@@ -204,7 +205,7 @@ Profile *const db::profiles::load(strview profile_name) {
 }
 
 int db::profiles::get_entities(str profile, std::vector<Entity> &buff) {
-  str edb = DB_DIRPATH + profile + "_entities.csv";
+  str edb = gpkih::db::profiles::dbpath + profile + "_entities.csv";
   std::ifstream file(edb);
   if (!file.is_open()) {
     PERROR("couldn't open database {}\n", edb);

@@ -14,40 +14,26 @@ using ui64    = uint64_t;
 
 // Custom namespace names
 namespace fs = std::filesystem;
-
-inline str EOL = "\n";
+constexpr char EOL = '\n';
 
 #ifdef _WIN32
-#include <Windows.h>
+
 /* WINDOWS STUFF */
-extern str CURRENT_PATH;
-extern char SLASH;
-extern str GPKIH_BASEDIR;
-extern str VPN_CONFIG_EXTENSION;
+#include <Windows.h>
+constexpr char SLASH = '\\';
+constexpr const char *VPN_CONFIG_EXTENSION = "ovpn";
+
 #else
-#include <sys/signal.h>
+
 /* LINUX STUFF */
-extern str CURRENT_PATH;
-extern char SLASH;
-extern str GPKIH_BASEDIR;
-extern str VPN_CONFIG_EXTENSION;
+#include <sys/signal.h>
+constexpr char SLASH = '/';
+constexpr const char *VPN_CONFIG_EXTENSION = "conf";
 #endif
-
-
-extern str DB_DIRNAME;
-extern str DB_DIRPATH;
-
-extern str CONF_DIRNAME;
-extern str CONF_DIRPATH;
 
 extern str vpn_conf_filename;
 extern str pki_conf_filename;
-extern str gpkih_conf_filename;
-
-extern str CONF_GPKIH;
-
-extern str CSV_DELIMITER_s;
-extern char CSV_DELIMITER_c;
+extern str CONF_DIRPATH;
 
 enum class GPKIH_RETURN_CODES {
   /* ALL GOOD */
@@ -83,7 +69,7 @@ inline void seterror(std::string fmt, Args&&... args){
 inline str lasterror() { return last_gpki_error; }
 inline void printlasterror() {
 	if (last_gpki_error == "no error" || last_gpki_error.empty()) {
-		fmt::print(fg(LGREEN) | EMPHASIS::bold, "no error");
+		fmt::print(fg(LGREEN) | EMPHASIS::bold, "no error\n");
 	}else {
 		PERROR(last_gpki_error); 
 	}

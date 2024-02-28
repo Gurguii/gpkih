@@ -11,7 +11,7 @@ int Config::load_file(strview path, ConfigMap &buff) {
     return F_NOOPEN;
   }
   str line;
-  ui64 next_section;
+  ui64 next_section = file.tellg();
   while (getline(file, line)) {
     char first = line[0];
     if (first == section_delim_open) {
@@ -100,7 +100,7 @@ Subject ProfileConfig::default_subject() {
     subj.organisation = _conf_pki["subject"]["organisation"];
     subj.cn = "";
     subj.email = _conf_pki["subject"]["email"];
-    return std::move(subj);
+    return subj;
 };
 
 ConfigMap* const ProfileConfig::get(CONFIG_FILE file) {
@@ -131,6 +131,7 @@ void ProfileConfig::set(CONFIG_FILE file, strview section, strview key, strview 
       break;
     case CONFIG_VPN:
       _conf_pki[section.data()][key.data()] = val;
+      break;
     default:
       break;
   }

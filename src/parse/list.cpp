@@ -13,7 +13,7 @@ int parsers::list(std::vector<str> opts) {
   if (opts[0][0] != '-') {
     sstream _profiles(opts[0]);
     str profile;
-    while (getline(_profiles, profile, CSV_DELIMITER_c)) {
+    while (getline(_profiles, profile, ',')) {
       if (!db::profiles::exists(profile)) {
         PERROR("profile '{}' doesn't exist, omitting...\n", profile);
         continue;
@@ -23,6 +23,7 @@ int parsers::list(std::vector<str> opts) {
     opts.erase(opts.begin(), opts.begin() + 1);
   }
   opts.push_back("\0");
+  auto emap = entity_fields_map();
   for (int i = 0; i < opts.size() - 1; ++i) {
     strview opt = opts[i];
     if (opt == "-e" || opt == "--entities") {
@@ -31,7 +32,7 @@ int parsers::list(std::vector<str> opts) {
         // all entities
         str entity;
         sstream ss(str{opt[++i]});
-        while (getline(ss, entity, CSV_DELIMITER_c)) {
+        while (getline(ss, entity, ',')) {
           entity_names.push_back(entity);
         }
       }
@@ -43,10 +44,9 @@ int parsers::list(std::vector<str> opts) {
         sstream ss(opts[++i]);
         str field;
         auto emap = entity_fields_map();
-        while (getline(ss, field, CSV_DELIMITER_c)) {
+        while (getline(ss, field, ',')) {
           if (emap.find(field) != emap.end()) {
-            ENTITY_FIELDS f = emap[field];
-            efields = efields | f;
+            efields = efields | emap[field];
           } else {
             PWARN("field '{}' doesn't exist\n", field);
           }
@@ -60,7 +60,7 @@ int parsers::list(std::vector<str> opts) {
         sstream ss(opts[++i]);
         str field;
         auto pmap = profile_fields_map();
-        while (getline(ss, field, CSV_DELIMITER_c)) {
+        while (getline(ss, field, ',')) {
           if (pmap.find(field) != pmap.end()) {
             PROFILE_FIELDS f = pmap[field];
             pfields = pfields | f;

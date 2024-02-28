@@ -247,8 +247,6 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity){
     return GPKIH_FAIL;
   } 
   return GPKIH_OK;
-  // Add log
-  gpkih::Logger::add(L_INFO, "added profile '{}'", profile.name);
 
  
   // create inline config file

@@ -1,7 +1,6 @@
 #pragma once
 #include "../structs.hpp"
 
-
 namespace gpkih {
 using ConfigMap = std::unordered_map<str, std::unordered_map<str, str>>;
 
@@ -55,6 +54,8 @@ struct pki_building_params
 // Static class to manage gpkih.conf
 class Config {
 private:
+  int loaded;
+  
   static inline ConfigMap _conf_gpkih{
       {"metadata", {}}, 
       {"behaviour", {}},
@@ -65,7 +66,7 @@ protected:
   static int load_file(strview path, ConfigMap &buff);
 
 public:
-  static inline int load() { return load_file(CONF_GPKIH, _conf_gpkih); }
+  static inline int load(strview filepath) { return load_file(filepath, _conf_gpkih); }
   static inline strview get(strview section, strview key){return _conf_gpkih[section.data()][key.data()]; }
   static inline ConfigMap* const get() { return &_conf_gpkih; };
   static inline void set(strview section, strview key, strview val){
@@ -123,6 +124,7 @@ public:
 
   ConfigMap* const get(CONFIG_FILE sections);
   ConfigMap& _get(CONFIG_FILE file);
+
   void set(CONFIG_FILE file, strview section, strview key, strview val);
   
   bool exists(strview key, CONFIG_FILE sections);

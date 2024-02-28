@@ -89,7 +89,7 @@ static inline std::string PROMPT_icon(COLOR icon_color = GREEN) {
   return fmt::format(fg(icon_color), "➜ ");
 };
 static inline std::string PROMPT_body(std::string &body) {
-  return fmt::format(fg(WHITE), "{}", body);
+    return fmt::format(fg(WHITE), "{}", body); 
 };
 static inline std::string PROMPT_answers(std::string &ans) {
   return fmt::format(fg(WHITE) | EMPHASIS::italic | EMPHASIS::bold, "{}", ans);

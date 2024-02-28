@@ -1,59 +1,51 @@
 #include "gpki.hpp"
-#include "logger/logger.hpp"
 #include "logger/signals.hpp"
 #include "parse/parser.hpp"
 #include "db/database.hpp"
-
 #include <stdlib.h>
-#ifdef _WIN32
-#include <Windows.h>
-str CURRENT_PATH = fs::current_path().string();
-char SLASH = '\\';
-str GPKIH_BASEDIR = "";
-str VPN_CONFIG_EXTENSION = "ovpn";
-#else
-str CURRENT_PATH = fs::current_path();
-char SLASH = '/';
-str GPKIH_BASEDIR = str(std::getenv("HOME")) + "/.config/gpkih/";
-str VPN_CONFIG_EXTENSION = "conf";
-#endif
 
-/* DATABASE */
-str DB_DIRNAME = "db";
-str DB_DIRPATH = GPKIH_BASEDIR + DB_DIRNAME + SLASH;
+/* Directory names */
+static constexpr const char* DB_DIRNAME  = "db";
+static constexpr const char* CFG_DIRNAME = "config";
+static constexpr const char* LOG_DIRNAME = "logs";
 
-/* CONFIGURATION */
-str CONF_DIRNAME = "config";
-str CONF_DIRPATH = GPKIH_BASEDIR + CONF_DIRNAME + SLASH;
-
-/* CONFIGURATION FILENAMES */
+/* Configuration names */
 str vpn_conf_filename = "openvpn.conf";
 str pki_conf_filename = "pki.conf";
-str gpkih_conf_filename = "gpkih.conf";
 
-str CONF_GPKIH = GPKIH_BASEDIR + CONF_DIRNAME + SLASH + gpkih_conf_filename;
+/* Current path */
+static str CURRENT_PATH;
 
-str CSV_DELIMITER_s = ",";
-char CSV_DELIMITER_c = ',';
+static str GPKIH_BASEDIR; // initialized by __set_globals()
+str CONF_DIRPATH;         // proper value set by __set_globals()
+static str DB_DIRPATH;    // initialized by __set_globals()
 
-int check_gpkih_install_dir() {
-  PINFO("checking basedir '{}'\n", GPKIH_BASEDIR);
-  if (!fs::exists(GPKIH_BASEDIR)) {
-    PINFO("base dir doesn't exist\n");
-    fflush(stdout);
-    str ans;
-    PROMPT("About to create gpkih source dir , proceed?", "[y/n]");
-    getline(std::cin, ans);
-    for (char& c : ans) {c = tolower(c);}
-        if(ans != "y" && ans != "yes"){
+static str DB_PROFILES_CSV;
+
+static str CONF_GPKIH;    // initialized by __set_globals()
+
+static str gpkih_conf_filename = "gpkih.conf";
+static str LOG_DIRPATH;
+
+static str CSV_DELIMITER_s = ",";
+static char CSV_DELIMITER_c = ',';
+
+static int check_gpkih_install_dir(str &path) {
+    if (!fs::exists(path))
+    {
+        str ans;
+        PROMPT("About to create gpkih source dir , proceed?", "[y/n]");
+        getline(std::cin, ans);
+        for (char& c : ans) { c = tolower(c); }
+        if (ans != "y" && ans != "yes") {
             PINFO("User refused, exiting ...\n");
             return GPKIH_FAIL;
         }
 
-        PINFO("Creating gpkih source dir '{}'\n", GPKIH_BASEDIR);
-        if (!fs::create_directory(GPKIH_BASEDIR)) {
-          seterror("Couldn't create directory '{}'\n", GPKIH_BASEDIR);
-          return F_NOEXIST;
+        PINFO("Creating gpkih source dir '{}'\n", path);
+        if (!fs::create_directory(path)) {
+            seterror("Couldn't create directory '{}'\n", path);
+            return F_NOEXIST;
         };
 
         // This is the reason the program requires to be executed from the same dir than config/
@@ -66,49 +58,79 @@ int check_gpkih_install_dir() {
         // Copy config directory
         fs::copy(configdir, CONF_DIRPATH, fs::copy_options::recursive);
         if (!fs::exists(CONF_DIRPATH) || !fs::is_directory(CONF_DIRPATH)) {
-          seterror("couldn't copy '{}' to '{}'\n", configdir, CONF_DIRPATH);
-          return F_NOCREATE;
+            seterror("couldn't copy '{}' to '{}'\n", configdir, CONF_DIRPATH);
+            return F_NOCREATE;
         }
-
-        // Create gpkih db dir
-        if (!fs::create_directory(DB_DIRPATH)) {
-          seterror("couldn't create gpkih source db dir '{}'\n", DB_DIRPATH);
-          return F_NOCREATE;
+        
+        // Create db - logs dir
+        for (const std::string& path : { DB_DIRPATH, LOG_DIRPATH }) {
+            if (!fs::create_directory(path)) {
+                seterror("couldn't create dir '{}'\n", path);
+                return F_NOCREATE;
+            }
         };
-
-        // Create gpkih log dir
-        if (!fs::create_directory(gpkih::Logger::log_dirpath)) {
-          seterror("couldn't create log dir '{}'\n", gpkih::Logger::log_dirpath);
-          return F_NOCREATE;
-        }
-  }else{
-    PINFO("basedir '{}' exists\n", GPKIH_BASEDIR);
-  }
+    }
   return GPKIH_OK;
 }
 
-// PROGRAM ENTRY POINT
-int main(int argc, const char **args) {
+static int __set_platform_dependant_variables()
+{
 #ifdef _WIN32
+    CURRENT_PATH = fs::current_path().string();
     size_t size = 0;
     getenv_s(&size, NULL, 0, "LOCALAPPDATA");
     if (size == 0) {
-        PERROR("couldn't get environment variable 'LOCALAPPDATA'\n");
+        seterror("couldn't get environment variable 'LOCALAPPDATA'\n");
         return GPKIH_FAIL;
     }
     GPKIH_BASEDIR = std::string("\0", size);
     getenv_s(&size, &GPKIH_BASEDIR[0], size, "LOCALAPPDATA");
     GPKIH_BASEDIR += "\\gpkih\\";
-    PINFO("GPKIH_BASEDIR set to '{}'", GPKIH_BASEDIR);
+    GPKIH_BASEDIR.erase(std::remove_if(GPKIH_BASEDIR.begin(), GPKIH_BASEDIR.end(), [](char& c) {return c == '\0';}), GPKIH_BASEDIR.end());
+#else
+    CURRENT_PATH = fs::current_path();
+    char* env_home = std::getenv("HOME");
+    if (env_home == nullptr) {
+        seterror("couldn't retrieve environment variable 'HOME'\n");
+        return GPKIH_FAIL;
+    }
+    GPKIH_BASEDIR = str(std::getenv("HOME")) + "/.config/gpkih/";
 #endif
+}
 
+static int set_variables() {
+
+    if (__set_platform_dependant_variables() != GPKIH_OK) {
+        return GPKIH_FAIL;
+    }
+
+    DB_DIRPATH   = fmt::format("{}{}{}", GPKIH_BASEDIR, DB_DIRNAME, SLASH);
+    CONF_DIRPATH = fmt::format("{}{}{}", GPKIH_BASEDIR, CFG_DIRNAME, SLASH);
+    LOG_DIRPATH  = fmt::format("{}{}{}", GPKIH_BASEDIR, LOG_DIRNAME, SLASH);
+    CONF_GPKIH   = fmt::format("{}{}", CONF_DIRPATH, gpkih_conf_filename);
+    DB_PROFILES_CSV = fmt::format("{}{}", CONF_DIRPATH, "profiles.csv");
+
+    std::cout << "CONF_GPKIH set to " << CONF_GPKIH << "\n";
+    // profiles.csv
+    gpkih::db::profiles::dbpath = fmt::format("{}profiles.csv", DB_DIRPATH);
+    std::cout << "profiles dbdir set to " << gpkih::db::profiles::dbpath << "\n";
+    return GPKIH_OK;
+}
+
+// PROGRAM ENTRY POINT
+int main(int argc, const char **args) {
   // Print starting msg
   PROGRAMSTARTING();
+   
 
-  // Check if gpkih base dir is created, else try to create it
-  if (check_gpkih_install_dir() != GPKIH_OK) {
-    printlasterror();
-    return -1;
+  if(set_variables() != GPKIH_OK){
+      printlasterror();
+      return GPKIH_FAIL;
+  };
+
+  if (check_gpkih_install_dir(GPKIH_BASEDIR) != GPKIH_OK) {
+      printlasterror();
+      return GPKIH_FAIL;
   }
 
   // Register signal handlers
@@ -117,20 +139,19 @@ int main(int argc, const char **args) {
   // Create logger instance which will:
   // 1. call Logger::start() upon construction
   // 2. call Logger::wait() upon destruction
-  gpkih::Logger::get();
+  gpkih::Logger logger(fmt::format("{}logs{}gpkih.log",GPKIH_BASEDIR ,SLASH));
 
   // TODO - Add PROPER checks for openssl - openvpn existence
 
   // Launch task to load `gpkih.conf` configuration
-  auto load_gpkih_config = std::async(std::launch::async, gpkih::Config::load);
-  
+  auto load_gpkih_config = std::async(std::launch::async, gpkih::Config::load, CONF_GPKIH);
+
   // Map profiles' csv to db::profiles::existing_profiles{}
-  int profile_count = gpkih::db::profiles::initialize();
+  int profile_count = gpkih::db::profiles::initialize(DB_DIRPATH + "profiles.csv");
   if (profile_count < 0) {
     printlasterror();
     return -1;
   };
-
   // wait for load_gpkih_config to finish
   if (load_gpkih_config.get() != GPKIH_OK) {
     printlasterror();

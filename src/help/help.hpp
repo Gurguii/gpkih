@@ -1,6 +1,10 @@
 #pragma once
-#include "../gpki.hpp"
+#include <fmt/format.h>
+#include <fmt/core.h>
 #include "../config/config_management.hpp"
+
+using str = std::string;
+using strview = std::string_view;
 
 namespace gpkih::help {
 extern void usage();

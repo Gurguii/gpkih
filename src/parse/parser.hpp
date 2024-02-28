@@ -12,7 +12,6 @@ inline int check_and_populate_profile(strview profilename, gpkih::Profile &buffe
                                std::vector<str> &opts) {
   if (gpkih::db::profiles::load(profilename, buffer)) {
     // profile does not exist
-    seterror("Profile '{}' doesn't exist\n", profilename);
     return GPKIH_FAIL;
   }
   // delete profile name from vector
@@ -20,7 +19,8 @@ inline int check_and_populate_profile(strview profilename, gpkih::Profile &buffe
   return GPKIH_OK;
 };
 
-namespace gpkih::parsers {
+namespace gpkih::parsers 
+{
 // main parser
 extern int parse(int argc, const char **_args);
 
@@ -32,8 +32,10 @@ extern int gencrl(std::vector<str> opts);
 extern int list(std::vector<str> opts);
 extern int remove(std::vector<str> opts);
 
-// unimplemented
+// partially implemented
 extern int set(std::vector<str> opts);
+
+// unimplemented
 extern int get(std::vector<str> opts);
 
 int genkey(std::vector<str> opts);
