@@ -47,16 +47,15 @@ template <typename T> int IS_VALID_PATH(T path) {
   try {
     if (fs::exists(path)) {
       str ans;
-      PROMPT("file or directory already exists, remove?", "[y/n]");
+      PROMPT("File or directory already exists, remove?", "[y/n]");
       getline(std::cin, ans);
       if (ans == "y" || ans == "Y") {
-        return fs::remove_all(
-            path); // true if file got deleted - valid path (its free)
+        return (fs::remove_all(path) ? GPKIH_OK : GPKIH_FAIL); // true if file got deleted - valid path (its free)
       }
       return 0;
     };
   } catch (std::exception ex) {
-    PERROR("permission denied in '{}'\n", path);
+    seterror("permission denied in '{}'\n", path);
     return 0;
   }
 
@@ -64,7 +63,7 @@ template <typename T> int IS_VALID_PATH(T path) {
 }
 
 using namespace gpkih;
-int check_profile_info(strview profile_name, strview profile_source, Profile &buffer){
+static int check_profile_info(strview profile_name, strview profile_source, Profile &buffer){
   Profile &profile = buffer;
   if (!profile_name.empty() &&
       db::profiles::exists(profile_name)) {

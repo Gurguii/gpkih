@@ -1,6 +1,5 @@
 #pragma once
 #include "../config/config_management.hpp"
-#include "../structs.hpp" // struct Profile | struct Entity | struct Subject
 #include <map>
 #include <vector>
 

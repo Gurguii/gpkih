@@ -96,6 +96,7 @@ static int __set_platform_dependant_variables()
     }
     GPKIH_BASEDIR = str(std::getenv("HOME")) + "/.config/gpkih/";
 #endif
+    return GPKIH_OK;
 }
 
 static int set_variables() {
@@ -110,10 +111,9 @@ static int set_variables() {
     CONF_GPKIH   = fmt::format("{}{}", CONF_DIRPATH, gpkih_conf_filename);
     DB_PROFILES_CSV = fmt::format("{}{}", CONF_DIRPATH, "profiles.csv");
 
-    std::cout << "CONF_GPKIH set to " << CONF_GPKIH << "\n";
-    // profiles.csv
+    // db::profiles::dbpath
     gpkih::db::profiles::dbpath = fmt::format("{}profiles.csv", DB_DIRPATH);
-    std::cout << "profiles dbdir set to " << gpkih::db::profiles::dbpath << "\n";
+    
     return GPKIH_OK;
 }
 
@@ -121,7 +121,6 @@ static int set_variables() {
 int main(int argc, const char **args) {
   // Print starting msg
   PROGRAMSTARTING();
-   
 
   if(set_variables() != GPKIH_OK){
       printlasterror();

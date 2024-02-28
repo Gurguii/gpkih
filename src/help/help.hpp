@@ -30,9 +30,6 @@ extern void usage();
 namespace gpkih::help::remove {
 extern void usage();
 }
-namespace gpkih::help::create_pack {
-extern void usage();
-}
 namespace gpkih::help::get {
 extern void usage();
 }

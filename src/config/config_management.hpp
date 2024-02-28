@@ -1,5 +1,5 @@
 #pragma once
-#include "../structs.hpp"
+#include "../structs.hpp" // struct Profile | struct Entity | struct Subject
 
 namespace gpkih {
 using ConfigMap = std::unordered_map<str, std::unordered_map<str, str>>;

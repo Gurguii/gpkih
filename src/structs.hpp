@@ -1,5 +1,5 @@
 #pragma once
-#include "gpki.hpp" // typename aliases (str, strview, sstream, fs, ui8, ui16, ui32, ui64) 
+#include "gpki.hpp" // typename aliases + fmtlib
 #include <unordered_map>
 
 namespace gpkih {

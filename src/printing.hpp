@@ -18,6 +18,8 @@ static constexpr COLOR BLACK = COLOR::black;
 static constexpr COLOR ALICIA = COLOR::alice_blue;
 static constexpr COLOR LGREEN = COLOR::light_green;
 static constexpr COLOR PALE_GOLDEN_ROD = COLOR::pale_golden_rod;
+static constexpr COLOR LPINK = COLOR::light_pink;
+static constexpr COLOR PINK = COLOR::pink;
 
 static STYLE S_NONE = fg(BLACK);
 static STYLE S_WARNING = fg(ORANGE) | EMPHASIS::bold | EMPHASIS::italic;

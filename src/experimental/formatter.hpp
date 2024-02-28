@@ -42,7 +42,7 @@ namespace gpkih::experimental
 	class Formatter
 	{
 	public:
-		static FormatInfo gpkih_formatinfo(); // FormatInfo struct with predefined values that fit gpkih.conf
+		FormatInfo static gpkih_formatinfo(); // FormatInfo struct with predefined values that fit gpkih.conf
 
 		Formatter(FormatInfo format);
 		void print_keyval(strview key, strview val) const;
@@ -67,9 +67,28 @@ namespace gpkih::experimental
 		fmt::print(_format.header_styling,std::move(formatted.str()), std::forward<T>(header_names)...);
 		fmt::print("\n");
 	}
-	
-	inline FormatInfo Formatter::gpkih_formatinfo(){
-		static FormatInfo finfo{};
+
+	FormatInfo inline Formatter::gpkih_formatinfo() {
+
+		FormatInfo finfo;
+		finfo.key_val_delim = "=";
+		finfo.delim_styling = fg(WHITE) | EMPHASIS::bold;
+		finfo.delim_allign = L_ALLIGN;
+		finfo.delim_width = 3;
+
+		finfo.header_styling = fg(LPINK) | bg(BLACK) | EMPHASIS::bold;
+		finfo.header_allign = C_ALLIGN;
+		finfo.header_width = 30;
+
+		finfo.key_styling = fg(WHITE) | EMPHASIS::bold | EMPHASIS::italic;
+		finfo.key_allign = C_ALLIGN;
+		finfo.key_width = 30;
+
+		finfo.val_styling = fg(LGREEN) | EMPHASIS::bold;
+		finfo.val_allign = L_ALLIGN;
+		finfo.val_width = 20;
+
 		return finfo;
 	}
 } // namespace gpkih::experimental
+

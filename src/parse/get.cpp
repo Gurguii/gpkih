@@ -33,6 +33,7 @@ static void __handle_gpkih_full_printing()
 	Formatter formatter(finfo);
 	
 	ConfigMap& conf = *Config::get();
+
 	for (const auto& section : conf) {
 		formatter.print_headers(section.first);
 		for (const auto& keyval : section.second) {

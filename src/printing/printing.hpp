@@ -2,6 +2,8 @@
 
 #include <fmt/chrono.h>
 #include <fmt/color.h>
+#include <fmt/format.h>
+
 #include <string_view>
 
 using COLOR = fmt::color;
@@ -19,6 +21,8 @@ constexpr COLOR BLACK = COLOR::black;
 constexpr COLOR ALICIA = COLOR::alice_blue;
 constexpr COLOR LGREEN = COLOR::light_green;
 constexpr COLOR PALE_GOLDEN_ROD = COLOR::pale_golden_rod;
+constexpr COLOR LPINK = COLOR::light_pink;
+constexpr COLOR PINK = COLOR::pink;
 
 /* Defined styles for printing */
 extern STYLE S_NONE;
@@ -46,37 +50,27 @@ extern void PRINT(std::string_view msg, COLOR color);
 extern void PRINT(std::string_view msg, STYLE style);
 
 /* success */
-template <typename ...T> extern void PSUCCESS(std::string_view fmt, T&& ...args);
+template <typename ...T> inline void PSUCCESS(std::string_view fmt, T&& ...args) {
+    fmt::print(S_SUCCESS, "[success] {}", fmt::format(fmt, std::forward<T>(args)...));
+};
 /* error */
-template <typename ...T> extern void PERROR(std::string_view fmt, T&& ...args);
+template <typename ...T> extern void PERROR(std::string_view fmt, T&& ...args) {
+    fmt::print(S_ERROR, "[error] {}", fmt::format(fmt, std::forward<T>(args)...));
+};
 /* info */
-template <typename ...T> extern void PINFO(std::string_view fmt, T&& ...args);
+template <typename ...T> extern void PINFO(std::string_view fmt, T&& ...args) {
+    fmt::print(S_INFO, "[info] {}", fmt::format(fmt, std::forward<T>(args)...));
+};
 /* warning */
-template <typename ...T> extern void PWARN(std::string_view fmt, T&& ...args);
+template <typename ...T> extern void PWARN(std::string_view fmt, T&& ...args) {
+    fmt::print(S_WARNING, "[warn] {}", fmt::format(fmt, std::forward<T>(args)...));
+};
 /* hint */
-template <typename ...T> extern void PHINT(std::string_view fmt, T&& ...args);
-/* prompt */
-extern std::string PROMPT_icon();
-extern std::string PROMPT_body();
-extern std::string PROMPT_answers();
-extern void PROMPT; // Leave this one here, the PROMPT_... functions can be staticly declared in printing.cpp
-
-static inline std::string PROMPT_icon(COLOR icon_color = GREEN) {
-    return fmt::format(fg(icon_color), "➜ ");
-};
-static inline std::string PROMPT_body(std::string& body) {
-    return fmt::format(fg(WHITE), "{}", body)
-};
-static inline std::string PROMPT_answers(std::string& ans) {
-    return fmt::format(fg(WHITE) | EMPHASIS::italic | EMPHASIS::bold, "{}", ans);
-};
-static inline void PROMPT(std::string msg, COLOR icon_color = GREEN) {
-    fmt::print(" {} {}", PROMPT_icon(icon_color), PROMPT_body(msg));
+template <typename ...T> extern void PHINT(std::string_view fmt, T&& ...args){
+    fmt::print(S_HINT, "[hint] {}", fmt::format(fmt, std::forward<T>(args)...));
 }
-static inline void PROMPT(std::string msg, std::string ans,
-    COLOR icon_color = GREEN) {
-    fmt::print(" {} {} {}", PROMPT_icon(icon_color), PROMPT_body(msg),
-        PROMPT_answers(ans));
+/* prompt */
+extern void PROMPT(std::string_view msg, std::string_view ans, COLOR icon_color = LGREEN);
 
 // Message to print when starting
 extern void PROGRAMSTARTING();
