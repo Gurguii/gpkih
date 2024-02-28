@@ -126,6 +126,7 @@ static int set_variables() {
         return GPKIH_FAIL;
     }
 
+    CURRENT_PATH = fs::current_path().string();
     DB_DIRPATH   = fmt::format("{}{}{}", GPKIH_BASEDIR, DB_DIRNAME, SLASH);
     CONF_DIRPATH = fmt::format("{}{}{}", GPKIH_BASEDIR, CFG_DIRNAME, SLASH);
     LOG_DIRPATH  = fmt::format("{}{}{}", GPKIH_BASEDIR, LOG_DIRNAME, SLASH);
