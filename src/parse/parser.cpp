@@ -1,6 +1,7 @@
 #include "parser.hpp"
 
 using namespace gpkih;
+
 // [!] parse() does not expect to receive program name in args
 int parsers::parse(int argc, const char **_args) {
   if (argc == 0) {
@@ -9,9 +10,10 @@ int parsers::parse(int argc, const char **_args) {
     // can be omitted, something like 'virsh'
     return GPKIH_OK;
   }
+
   std::vector<str> args(_args, _args + argc);
 
-  // Check global config options
+  // Override global config options
   for (int i = 0; i < argc; ++i) {
     strview op = args[i];
     if (op == "-y") {
@@ -38,10 +40,10 @@ int parsers::parse(int argc, const char **_args) {
 
   str action = args[0];
 
+  // Check if user is requesting some sort of help
   if (action == "help" || action == "--help" || action == "-help" ||
       action == "-h") {
     if (args.size() > 1) {
-      //fmt::print("call_helper() - parse/parser.cpp - line 39\n");
       help::call_helper(args[1]);
     } else {
       help::usage();
@@ -52,7 +54,7 @@ int parsers::parse(int argc, const char **_args) {
   // Check if action exists
   if (ACTION_PARSERS.find(action) == ACTION_PARSERS.end()) {
     PERROR("action '{}' doesn't exist\n", action);
-    return -1;
+    return GPKIH_FAIL;
   }
   
   args.erase(args.begin());

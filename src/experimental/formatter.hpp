@@ -44,7 +44,7 @@ namespace gpkih::experimental
 		FormatInfo static gpkih_formatinfo(); // FormatInfo struct with predefined values that fit gpkih.conf
 
 		Formatter(FormatInfo format);
-		void print_keyval(strview key, strview val) const;
+		void print_keyval(strview key, strview val, bool newline = true) const;
 		template <typename ...T> void print_headers(T&& ...header_names);
 
 		const FormatInfo& get_format();
@@ -89,4 +89,3 @@ namespace gpkih::experimental
 		return finfo;
 	}
 } // namespace gpkih::experimental
-

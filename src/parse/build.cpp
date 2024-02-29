@@ -144,6 +144,7 @@ int parsers::build(std::vector<std::string> opts) {
   }
   file >> entity.serial;
   file.close();
+  
   // override default build params with user arguments
   for (int i = 0; i < opts.size(); ++i) {
     strview opt = opts[i];

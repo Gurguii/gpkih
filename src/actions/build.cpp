@@ -1,5 +1,5 @@
 #include "actions.hpp"
-
+#include <filesystem>
 #include <algorithm>
 using namespace gpkih;
 
@@ -101,8 +101,8 @@ static str _ca_build_command(Profile &profile, ConfigMap &pkiconf, Entity &entit
   return std::move(command);
 };
 
-static int _create_inline_config(Profile &profile,ProfileConfig &config,
-                                 std::vector<Entity> &entities) {
+static int __create_inline_config(Profile &profile,ProfileConfig &config,
+                                 std::vector<Entity> &entities,bool autoanswer, bool prompt) {
   str ca_crt_path = std::move(profile.ca_crt());
 
   if (!fs::exists(ca_crt_path)) {
@@ -123,51 +123,37 @@ static int _create_inline_config(Profile &profile,ProfileConfig &config,
   str profile_dir_key = std::move(profile.dir_key());
   str profile_dir_crt = std::move(profile.dir_crt());
   
-  // CA certificate loaded
-  for (auto &entity : entities) {
+  for (auto &entity : entities) 
+  {
+    //PINFO("Creating pack for '{}'\n", entity.subject.cn);
     str entity_key_path = std::move(profile_dir_key + entity.subject.cn);
     str entity_crt_path = std::move(profile_dir_crt + entity.subject.cn);
-    auto outdir = fmt::format("{}{}packs{}{}", profile.source, SLASH, SLASH,
-                              entity.subject.cn);
 
-    if (create_output_path(outdir, 1)) {
+    fs::path entity_directory = profile.source;
+    entity_directory /= "packs";
+    entity_directory /= entity.subject.cn;
+
+    //PINFO("entity directory: {}", entity_directory.string());
+    if (create_output_path(entity_directory, 1)) {
       return GPKIH_FAIL;
     };
 
-    str outpath = std::move(fmt::format("{}{}pack_{}", outdir, SLASH, entity.subject.cn));
-    if (create_output_path(outpath, 0)) {
+    fs::path entity_config_file = entity_directory /= fmt::format("inline_{}.{}",entity.subject.cn,VPN_CONFIG_EXTENSION);
+
+    //PINFO("entity_config: {}", entity_config_file.string());
+    if(create_output_path(entity_config_file, 0)){
       return GPKIH_FAIL;
-    };
-
-    // Add the generic vpn configuration based
-    // on entity type (client|server) - this config
-    // is loaded from profile's openvpn.conf and might
-    // get overriden by command
-    if(config.dump_vpn_conf(outpath, entity.type) == false){
-      return GPKIH_FAIL;
-    };
-
-    // Load entity certificate + key;
-    const auto [entity_crt_str, entity_key_str] = load_entity_files(entity);
-
-    std::ofstream file(outpath, std::ios::app);
-    if (!file.is_open()) {
-      seterror("couldn't open file '{}'\n", outpath);
-      return F_NOOPEN;
     }
 
-    // Append the inlined values
-    file << "<ca>" << EOL << ca_crt_str << "</ca>" << EOL;
-    file << "<cert>" << EOL << entity_crt_str << "</cert>" << EOL;
-    file << "<key>" << EOL << entity_key_str << "</key>" << EOL;
-    
-    file.close();
+    if(config.dump_vpn_conf(entity_config_file, entity.type)){
+      return GPKIH_FAIL;
+    }
   }
   return GPKIH_OK;
 }
 
-static inline int _create_inline_config(str &profile_name,ProfileConfig &config,
-                                 std::vector<str> &common_names) {
+static inline int __create_inline_config(str &profile_name,ProfileConfig &config,
+                                 std::vector<str> &common_names, bool autoanswer, bool prompt) {
   Profile profile;
   if (db::profiles::load(profile_name, profile)) {
     seterror("couldn't load profile '{}'\n", profile_name);
@@ -183,7 +169,7 @@ static inline int _create_inline_config(str &profile_name,ProfileConfig &config,
     };
     entities.emplace_back(e);
   }
-  return _create_inline_config(profile, config, entities);
+  return __create_inline_config(profile, config, entities, autoanswer, prompt);
 }
 
 /* BUILD SELF SIGNED CA certificate */
@@ -206,14 +192,15 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity){
   }
   // Set file pointer to the beginning
   serial_file.seekg(SEEK_SET);
+
   // If the serial number is <= 15 (0-f) the resulting
   // formatted hex will be 1 char and will cause openssl
-  // to  
+  // to fail, so just add the 0 ourselves (tried fmt :x fixing, but 0x01 syntax doesn't work for openssl either)
   if(nserial.size() == 1){
     serial_file << "0";
   }
   serial_file << nserial;
-
+  
   serial_file.close();
   
   // Add to database
@@ -226,8 +213,14 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity){
 
 /* BUILD SERVER-CLIENT CERTIFICATES */
 int actions::build(Profile &profile, ProfileConfig &config, Entity &entity){
+  
   ConfigMap &pkiconf = config._get(CONFIG_PKI);
+
+  bool autoanswer = Config::get("behaviour","autoanswer") == "yes" ? true : false;
+  bool prompt = Config::get("behaviour","prompt") == "yes" ? true : false;
+
   const auto [req_command, crt_command] = _server_client_build_commands(profile, pkiconf, entity);
+
   // create key + csr
   fmt::print("{}\n{}\n", req_command, crt_command);
 
@@ -252,10 +245,10 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity){
  
   // create inline config file
   std::vector<Entity> hahahah{entity};
-  if(_create_inline_config(profile, config, hahahah)){
+  if(__create_inline_config(profile, config, hahahah, autoanswer, prompt)){
     return GPKIH_FAIL;
   }
-
+  
   return GPKIH_OK;
 }
 

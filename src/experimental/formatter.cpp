@@ -13,7 +13,7 @@ void Formatter::set_format(FormatInfo&& new_format) {
 	_format = std::move(new_format);
 } // Formatter::set_format()
 
-void Formatter::print_keyval (strview key, strview val) const {
+void Formatter::print_keyval (strview key, strview val, bool newline) const {
 	sstream formatted{};
 
 	// Add placeholders with desired allignment and width for each component - [key|delim|val]
@@ -27,6 +27,8 @@ void Formatter::print_keyval (strview key, strview val) const {
 	fmt::print(_format.delim_styling, styled_delim_placeholder, _format.key_val_delim);
 	fmt::print(_format.val_styling, styled_val_placeholder, val);
 
-	fmt::print("\n");
+	if(newline){
+		fmt::print("\n");
+	}
 }
 

@@ -67,16 +67,15 @@ static str filename_from_path(strview path){
 // Attempts to create the target path (directory or file)
 // - if dir != 0 a directory is created and any missing intermediary
 // directories will be created too, else a file will be created
-static int create_output_path(str &_path, int dir){
-  str path;
-  if(*_path.end() == SLASH){
-    path = std::string(_path.begin(), _path.end()-1);
-  }else{
-    path = _path;
+static int create_output_path(fs::path &path, int dir){
+  if(path.is_relative()){
+    seterror("path to create_output_path() must be absolute, given path: {}", path.string());
+    return GPKIH_FAIL;
   }
+
   if(fs::exists(path)){
     str ans;
-    PROMPT("path '" + path + "'exists, remove?","[y/n]");
+    PROMPT("path '" + path.string() + "'exists, remove?","[y/n]");
     getline(std::cin,ans);
     for(char &c : ans){
       c = std::tolower(c);
@@ -93,7 +92,7 @@ static int create_output_path(str &_path, int dir){
   }else{
     if(dir){
       if(!fs::create_directories(path)){
-        PERROR("couldn't create directory '{}'\n",path);
+        PERROR("couldn't create directory '{}'\n",path.string());
         return GPKIH_FAIL;
       }
     }else{
