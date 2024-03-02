@@ -237,6 +237,7 @@ bool ProfileConfig::exists(strview key, CONFIG_FILE file) {
 // note: this function DOES NOT add any inlined certificate/key to the outpath
 bool ProfileConfig::dump_vpn_conf(fs::path &outpath, ENTITY_TYPE type) {
   if (fs::exists(outpath)) {
+    seterror("already existing file '{}'\n", outpath.string());
     return false;
   }
 

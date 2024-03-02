@@ -15,10 +15,6 @@ $exec = @{
 
 [string]$build_dir = "$root\build"
 
-[string]$stderr_log = "$root\.error.log"
-[string]$stdout_log = "$root\.out.log"
-
-
 [string]$binpaths = "$root\.tools"
 
 # Check binpaths

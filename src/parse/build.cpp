@@ -2,7 +2,7 @@
 #include <iostream>
 #include <fstream>
 
-str badchars = "~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?¿\t\n\r";
+static inline str badchars = "~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?¿\t\n\r";
 
 using namespace gpkih;
 

@@ -1,7 +1,7 @@
 #include "actions.hpp"
 #include <iostream> // std::cin
 #include <fstream>
-
+#include <sstream>
 static inline str openssl_conf_filename = "gopenssl.conf";
 
 static bool hasWritePermissions(std::string dirpath) {
@@ -79,14 +79,14 @@ static int create_dhparam(strview outpath) {
   return 0;
 }
 
-template <typename T> int IS_ABSOLUT_PATH(T path) {
+template <typename T> static int IS_ABSOLUT_PATH(T path) {
 #ifdef _WIN32
   return std::isalpha(path[0]);
 #else
   return (path[0] == '/');
 #endif
 };
-template <typename T> int IS_VALID_PATH(T path) {
+template <typename T> static int IS_VALID_PATH(T path) {
   if (!IS_ABSOLUT_PATH(path)) {
     return 0;
   };

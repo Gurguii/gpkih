@@ -46,8 +46,7 @@ for arg in "${args[@]}"; do
 Usage: setup.sh [optional-subopts]
 
 [optional-subopts]
-  --create-packs         : adds 'make package' to the command list
-  --create-source-packs  : adds 'make package_source' to the command list
+  none haha
 
 EOF
 	exit 0

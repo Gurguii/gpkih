@@ -62,7 +62,7 @@ enum class GPKIH_RETURN_CODES {
 };
 
 // TODO - split error management to its own file + class
-static  str last_gpki_error = "no error";
+static inline str last_gpki_error = "no error";
 
 template<typename ...Args>
 static inline void seterror(std::string fmt, Args&&... args){

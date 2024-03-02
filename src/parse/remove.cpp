@@ -1,4 +1,5 @@
 #include "parser.hpp"
+#include <sstream>
 using namespace gpkih;
 
 int parsers::remove(std::vector<std::string> opts) {

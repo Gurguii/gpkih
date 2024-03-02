@@ -6,7 +6,6 @@
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
-
 /* Directory names */
 static constexpr const char* DB_DIRNAME  = "db";
 static constexpr const char* CFG_DIRNAME = "config";
@@ -80,13 +79,13 @@ static str __get_environment_variable(strview varname)
 {
     #ifdef _WIN32
     size_t size = 0;
-    getenv_s(&size, NULL, 0, varname);
+    getenv_s(&size, NULL, 0, varname.data());
     if(size == 0){
         seterror("couldn't get env var '{}'", varname);
         return {};
     }
     std::string env("\0", size);
-    getenv_s(&size, &env[0], env.size(), varname);
+    getenv_s(&size, &env[0], env.size(), varname.data());
 
     return std::move(env);
     #else
@@ -163,7 +162,7 @@ int main(int argc, const char **args) {
   auto load_gpkih_config = std::async(std::launch::async, gpkih::Config::load, CONF_GPKIH);
 
   // Map profiles' csv to db::profiles::existing_profiles{}
-  int profile_count = gpkih::db::profiles::initialize(DB_DIRPATH + "profiles.csv");
+  size_t profile_count = gpkih::db::profiles::initialize(DB_DIRPATH + "profiles.csv");
   if (profile_count < 0) {
     printlasterror();
     return -1;

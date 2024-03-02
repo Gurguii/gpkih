@@ -48,7 +48,7 @@ int db::profiles::sync() {
 }
 /* Requires only 1 call since the profiles
  * are all in the same csv */
-int db::profiles::initialize(strview path) {
+size_t db::profiles::initialize(strview path) {
   dbpath = path;
   if (!fs::exists(dbpath)) {
     // Create
@@ -115,7 +115,7 @@ int db::profiles::add(Profile *profile) {
     seterror("error adding profile '{}' to database - already exists", profile->name);
     return GPKIH_FAIL;
   }
-  int bsize = fs::file_size(dbpath);
+  size_t bsize = fs::file_size(dbpath);
   std::ofstream db(dbpath, std::ios::app);
   // fmt::print("adding profile entry -> {} to file '{}'\n", profile->csv_entry(), dbpath);
   if(!db.is_open()){

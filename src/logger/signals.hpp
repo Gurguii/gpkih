@@ -1,16 +1,17 @@
 #pragma once
 
-namespace gpkih
-{
-class Signals {
-private:
 #ifdef _WIN32
-    static BOOL ctrl_c_handler(DWORD signal);
+#include <Windows.h>
 #else
-    static void ctrl_c_handler(int sig);
+#include <sys/signal.h>
 #endif
-    
-public:
-    static void register_signals();
-};
-} // namespace gpkih
+
+namespace gpkih::Signals
+{
+#ifdef _WIN32
+    extern BOOL ctrl_c_handler(DWORD signal);
+#else
+    extern void ctrl_c_handler(int sig);
+#endif
+    extern void register_signals();
+}; // namespace gpkih::Signals

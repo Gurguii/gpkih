@@ -13,7 +13,7 @@ namespace gpkih::db::profiles
 
   inline int initialized = 0;
   extern int sync();  // overwrites profiles.csv with the profiles in existing_profiles while
-  extern int initialize(strview path);
+  extern size_t initialize(strview path);
   extern int populate_from_entry(str &entry, Profile *profile);
   extern int populate_from_entry(str &entry, std::vector<str> &fields);
   extern int exists(strview profile_name);

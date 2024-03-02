@@ -78,6 +78,11 @@ static std::pair<str,str> _server_client_build_commands(Profile &profile, Config
   strview key_algo = pkiconf["key"]["algorithm"];
   strview key_size = pkiconf["key"]["size"];
   
+  // TODO - add entity paths to the csv when created
+  // if a client key is created and the configuration is changed afterwards,
+  // the format taken won't match with the actual format used when the entity
+  // was created, leading to errors
+
   strview csr_creation_format = pkiconf["csr"]["creation_format"];
   strview key_creation_format = pkiconf["key"]["creation_format"];
 
@@ -156,7 +161,8 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
   }
 
   // Load CA certificate
-  int _ca_filesize = fs::file_size(ca_crt_path);
+  // TODO - do std::stringstream and load contents with rdbuf()
+  size_t _ca_filesize = fs::file_size(ca_crt_path);
   str ca_crt_str("\0", _ca_filesize);
   std::ifstream(ca_crt_path).read(&ca_crt_str[0], ca_crt_str.size());
 
@@ -165,14 +171,11 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
     return GPKIH_FAIL;
   }
 
-  str profile_dir_key = std::move(profile.dir_key());
-  str profile_dir_crt = std::move(profile.dir_crt());
+  fs::path profile_dir_key = std::move(profile.dir_key());
+  fs::path profile_dir_crt = std::move(profile.dir_crt());
   
   for (auto &entity : entities) 
   {
-    //PINFO("Creating pack for '{}'\n", entity.subject.cn);
-    str entity_key_path = std::move(profile_dir_key + entity.subject.cn);
-    str entity_crt_path = std::move(profile_dir_crt + entity.subject.cn);
 
     fs::path entity_directory = profile.source;
     entity_directory /= "packs";
@@ -185,14 +188,61 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
 
     fs::path entity_config_file = entity_directory /= fmt::format("inline_{}.{}",entity.subject.cn,VPN_CONFIG_EXTENSION);
 
-    //PINFO("entity_config: {}", entity_config_file.string());
-    if(create_output_path(entity_config_file, 0)){
+    if(config.dump_vpn_conf(entity_config_file, entity.type) == false){
       return GPKIH_FAIL;
     }
 
-    if(config.dump_vpn_conf(entity_config_file, entity.type)){
-      return GPKIH_FAIL;
+    ConfigMap &pkiconf = config._get(CONFIG_PKI);
+    
+    strview key_extension = pkiconf["key"]["creation_format"];
+    strview crt_extension = pkiconf["crt"]["creation_format"];
+
+    // Add entity certificate + key + CA certificate to file
+    fs::path entity_key_path = profile_dir_key /= fmt::format("{}-key.{}", entity.subject.cn, key_extension);
+    fs::path entity_crt_path = profile_dir_crt /= fmt::format("{}-crt.{}", entity.subject.cn, crt_extension);
+
+    if (!fs::exists(entity_key_path)) {
+        seterror("missing entity key '{}'\n", entity.subject.cn);
+        return GPKIH_FAIL;
     }
+
+    if(!fs::exists(entity_crt_path)){
+        seterror("missing entity crt '{}'\n", entity.subject.cn);
+        return GPKIH_FAIL;
+    }
+    
+    size_t entity_key_size = fs::file_size(entity_key_path);
+    size_t entity_crt_size = fs::file_size(entity_crt_path);
+    
+    std::ofstream file(entity_config_file, std::ios::app);
+    
+    if (!file.is_open()) {
+        seterror("couldn't open entity config file '{}'\n", entity_config_file.string());
+        return GPKIH_FAIL;
+    }
+
+    std::ifstream ekey(entity_key_path);
+    std::ifstream ecrt(entity_crt_path);
+
+    if (!ekey.is_open()) {
+        seterror("couldn't open entity key file '{}'\n", entity_key_path.string());
+        return GPKIH_FAIL;
+    }
+
+    if (!ecrt.is_open()) {
+        seterror("couldn't open entity certificate file '{}'\n", entity_crt_path.string());
+        return GPKIH_FAIL;
+    }
+
+    // add entity key
+    file << "<key>" << EOL << ekey.rdbuf() << "</key>" << EOL;
+    // add entity certificate
+    file << "<crt>" << EOL << ecrt.rdbuf() << "</crt>" << EOL;
+    // add ca certificate
+    file << "<ca>" << EOL << ca_crt_str.c_str() << "</ca>" << EOL;
+
+    ecrt.close();
+    ekey.close();
   }
   return GPKIH_OK;
 }

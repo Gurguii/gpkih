@@ -2,13 +2,12 @@
 
 
 using namespace gpkih;
+
 #ifdef _WIN32
-#include <Windows.h>
-    BOOL Signals::ctrl_c_handler(DWORD signal){
-        return TRUE;
-    }
+BOOL Signals::ctrl_c_handler(DWORD signal) {
+    return TRUE;
+}
 #else
-#include <sys/signal.h>
     void Signals::ctrl_c_handler(int sig){
         //Logger::cleanup_with_exit();
     };

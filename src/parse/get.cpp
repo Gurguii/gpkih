@@ -2,6 +2,7 @@
 #include <fmt/color.h>
 #include <unordered_map>
 #include "../experimental/formatter.hpp"
+#include <sstream>
 using namespace gpkih;
 
 static void print_scope_change(strview scope)
@@ -44,23 +45,23 @@ static inline std::unordered_map<str, ConfigMap*> get_mapped_config(ProfileConfi
 static std::tuple<strview, strview, strview> __unpack_input(strview user_input)
 {
 	size_t isize = user_input.size();
-	int pos_fdot = user_input.find('.');
+	size_t pos_fdot = user_input.find('.');
 
 	if(pos_fdot == -1){
 		// depth 1 - just file
 		return std::make_tuple(user_input, "", "");
 	}
-
-	strview file(user_input.begin(), pos_fdot);
-	int pos_sdot = user_input.find('.', pos_fdot+1); 
+	
+	strview file(&user_input[0], pos_fdot);
+	size_t pos_sdot = user_input.find('.', pos_fdot+1); 
 	
 	if(pos_sdot == -1){
 		// depth 2 - file and section
-		return std::make_tuple(file, strview(user_input.begin()+pos_fdot+1,user_input.size() - pos_fdot), "");
+		return std::make_tuple(file, strview(&user_input[pos_fdot + 1], user_input.size() - pos_fdot), "");
 	}
 
-	strview section(user_input.begin()+pos_fdot+1,pos_sdot-(pos_fdot+1));
-	strview key(user_input.begin()+pos_sdot+1);
+	strview section(&user_input[pos_fdot+1], pos_sdot - (pos_fdot + 1));
+	strview key(&user_input[pos_fdot+1]);
 
 	return std::make_tuple(file,section,key);
 }
@@ -70,9 +71,9 @@ static std::tuple<strview, strview, strview> __unpack_input(strview user_input)
 // stops when @ is encountered, indicating next session
 // @returns index of next unprocessed opt in vector, last pos when done or -1 on error
 // 
-static int __handle_scope_printing (strview &scope_opt, std::vector<str> &opts, int next_pos)
+static size_t __handle_scope_printing (strview &scope_opt, std::vector<str> &opts, int next_pos)
 {
-	const char *scope = scope_opt.begin()+1; // scope opt without '@'
+	const char *scope = &scope_opt[1]; // scope opt without '@'
 	
 	const auto [file, section, key] = __unpack_input(scope);
 	

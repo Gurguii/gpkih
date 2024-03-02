@@ -1,5 +1,5 @@
 #include "parser.hpp"
-
+#include <sstream>
 // SYNTAX ./gpki revoke <profile> <cn1,cn2 ... cnX> [subopts]
 using namespace gpkih;
 int parsers::revoke(std::vector<std::string> opts) {
@@ -31,13 +31,13 @@ int parsers::revoke(std::vector<std::string> opts) {
   /* Revoke subopts */
   for(int i = 0; i < opts.size(); ++i){
     strview opt = opts[i];
-    if(opt == "-cn" | opt == "--common-name"){
+    if(opt == "-cn" || opt == "--common-name"){
       str cn;
       sstream ss(opts[++i]);
       while(getline(ss,cn,',')){
         common_names_to_revoke.emplace_back(cn);
       }  
-    }else if(opt == "-s" | opt == "-serial"){
+    }else if(opt == "-s" || opt == "-serial"){
       str serial;
       sstream ss(opts[++i]);
       while(getline(ss,serial,',')){
