@@ -1,10 +1,11 @@
 #include "gpki.hpp"
+#include "printing/printing.cpp"
 #include "logger/signals.hpp"
 #include "parse/parser.hpp"
-#include "db/database.hpp"
+
 #include <cstdlib>
 #include <filesystem>
-#include <stdlib.h>
+#include <iostream>
 
 /* Directory names */
 static constexpr const char* DB_DIRNAME  = "db";

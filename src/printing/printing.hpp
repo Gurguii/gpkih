@@ -50,25 +50,30 @@ extern void PRINT(std::string_view msg, COLOR color);
 extern void PRINT(std::string_view msg, STYLE style = S_NONE);
 
 /* success */
-template <typename ...T> inline void PSUCCESS(std::string_view fmt, T&& ...args) {
-    fmt::print(S_SUCCESS, "[success] {}", fmt::format(fmt, std::forward<T>(args)...));
+template <typename ...T> static inline void PSUCCESS(std::string_view fmt, T&& ...args){
+	fmt::print(S_SUCCESS, "[success] {}", fmt::format(fmt, std::forward<T>(args)...));
 };
+
 /* error */
-template <typename ...T> extern void PERROR(std::string_view fmt, T&& ...args) {
-    fmt::print(S_ERROR, "[error] {}", fmt::format(fmt, std::forward<T>(args)...));
+template <typename ...T> static inline void PERROR(std::string_view fmt, T&& ...args){
+	fmt::print(S_ERROR, "[error] {}", fmt::format(fmt, std::forward<T>(args)...));
 };
+
 /* info */
-template <typename ...T> extern void PINFO(std::string_view fmt, T&& ...args) {
-    fmt::print(S_INFO, "[info] {}", fmt::format(fmt, std::forward<T>(args)...));
+template <typename ...T> static inline void PINFO(std::string_view fmt, T&& ...args){
+	fmt::print(S_INFO, "[info] {}", fmt::format(fmt, std::forward<T>(args)...));
 };
+
 /* warning */
-template <typename ...T> extern void PWARN(std::string_view fmt, T&& ...args) {
-    fmt::print(S_WARNING, "[warn] {}", fmt::format(fmt, std::forward<T>(args)...));
+template <typename ...T> static inline void PWARN(std::string_view fmt, T&& ...args){
+	fmt::print(S_WARNING, "[warn] {}", fmt::format(fmt, std::forward<T>(args)...));
 };
+
 /* hint */
-template <typename ...T> extern void PHINT(std::string_view fmt, T&& ...args){
-    fmt::print(S_HINT, "[hint] {}", fmt::format(fmt, std::forward<T>(args)...));
-}
+template <typename ...T> static inline void PHINT(std::string_view fmt, T&& ...args){
+	fmt::print(S_HINT, "[hint] {}", fmt::format(fmt, std::forward<T>(args)...));
+};
+
 /* prompt */
 extern void PROMPT(std::string_view msg, std::string_view ans, COLOR icon_color = LGREEN);
 extern void PROMPT(std::string_view msg, COLOR icon_color = LGREEN);

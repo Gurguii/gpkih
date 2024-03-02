@@ -1,4 +1,6 @@
 #include "parser.hpp"
+#include <iostream>
+#include <fstream>
 
 str badchars = "~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?¿\t\n\r";
 

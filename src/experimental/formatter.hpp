@@ -1,5 +1,6 @@
 #pragma once
 #include "../logger/logger.hpp"
+#include <fmt/color.h>
 
 namespace gpkih::experimental
 {
@@ -54,7 +55,7 @@ namespace gpkih::experimental
 		FormatInfo _format;
 	}; // class Formatter
 
-	// Print headers {:{width}} 
+	// Print headers {:{allign}{width}} 
 	template <typename ...T> inline void Formatter::print_headers(T&& ...header_names)
 	{
 		sstream formatted{};
@@ -67,25 +68,26 @@ namespace gpkih::experimental
 		fmt::print("\n");
 	}
 
-	FormatInfo inline Formatter::gpkih_formatinfo() {
-		FormatInfo finfo;
-		finfo.key_val_delim = "=";
-		finfo.delim_styling = fg(WHITE) | EMPHASIS::bold;
-		finfo.delim_allign = L_ALLIGN;
-		finfo.delim_width = 3;
-
-		finfo.header_styling = fg(LPINK) | bg(BLACK) | EMPHASIS::bold;
-		finfo.header_allign = C_ALLIGN;
-		finfo.header_width = 30;
-
-		finfo.key_styling = fg(WHITE) | EMPHASIS::bold | EMPHASIS::italic;
-		finfo.key_allign = C_ALLIGN;
-		finfo.key_width = 30;
-
-		finfo.val_styling = fg(LGREEN) | EMPHASIS::bold;
-		finfo.val_allign = L_ALLIGN;
-		finfo.val_width = 20;
-
-		return finfo;
-	}
 } // namespace gpkih::experimental
+
+using namespace gpkih::experimental;
+static inline constexpr FormatInfo gpkih_default_formatinfo(){
+	return FormatInfo {
+		.key_val_delim = "=",
+		.delim_styling = fg(WHITE) | EMPHASIS::bold,
+		.delim_allign = C_ALLIGN,
+		.delim_width = 3,
+
+		.header_styling = fg(fmt::terminal_color::cyan) | EMPHASIS::bold,
+		.header_allign = C_ALLIGN,
+		.header_width = 60,
+
+		.key_styling = fg(WHITE) | EMPHASIS::bold,
+		.key_allign = L_ALLIGN,
+		.key_width = 30,
+
+		.val_styling = fg(LGREEN) | EMPHASIS::bold,
+		.val_allign = L_ALLIGN,
+		.val_width = 30
+	};
+}

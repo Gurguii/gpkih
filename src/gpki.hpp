@@ -62,17 +62,17 @@ enum class GPKIH_RETURN_CODES {
 };
 
 // TODO - split error management to its own file + class
-inline str last_gpki_error = "no error";
+static  str last_gpki_error = "no error";
 
 template<typename ...Args>
-inline void seterror(std::string fmt, Args&&... args){
+static inline void seterror(std::string fmt, Args&&... args){
   last_gpki_error = std::move(fmt::format(fmt,std::forward<Args>(args)...));
 }
-inline str lasterror() { return last_gpki_error; }
-inline void printlasterror() {
+static inline str lasterror() { return last_gpki_error; }
+static inline void printlasterror() {
 	if (last_gpki_error == "no error" || last_gpki_error.empty()) {
 		fmt::print(fg(LGREEN) | EMPHASIS::bold, "no error\n");
 	}else {
-		PERROR(last_gpki_error); 
+		fmt::print(fg(RED), last_gpki_error); 
 	}
 }

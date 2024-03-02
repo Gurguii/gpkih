@@ -1,6 +1,52 @@
 #include "actions.hpp"
 #include <iostream> // std::cin
+#include <fstream>
+
 static inline str openssl_conf_filename = "gopenssl.conf";
+
+static bool hasWritePermissions(std::string dirpath) {
+  /* this approach is kind of sad to see */
+  try {
+    auto s = fs::status(dirpath);
+    return true;
+  } catch (fs::filesystem_error &ex) {
+    seterror(ex.what());
+    return false;
+  }
+}
+
+/* sed("/home/gurgui/base", "/home/gurgui/aftersed.txt",
+          {{"GPKI_BASEDIR", "WISKONSIN"}})
+*/
+static int sed(strview src, strview dst,
+  std::unordered_map<strview, strview> &&vals) {
+  std::ifstream srcfile(src.data());
+  if (!srcfile.is_open()) {
+    return -1;
+  }
+  std::ofstream dstfile(dst.data());
+  if (!dstfile.is_open()) {
+    return -1;
+  }
+  str line;
+  str word;
+  while (getline(srcfile, line)) {
+    auto ss = std::stringstream(line);
+    while (ss >> word) {
+      if (vals.find(word) != vals.end()) {
+        dstfile << vals[word];
+      } else {
+        dstfile << word;
+      }
+      dstfile << " ";
+    }
+    dstfile << EOL;
+  }
+  dstfile << EOL;
+  srcfile.close();
+  dstfile.close();
+  return 0;
+}
 
 static inline std::vector<str> RELATIVE_DIRECTORY_PATHS(){
   return 

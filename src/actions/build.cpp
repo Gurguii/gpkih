@@ -1,7 +1,52 @@
 #include "actions.hpp"
 #include <filesystem>
 #include <algorithm>
+#include <iostream>
+#include <fstream>
+
 using namespace gpkih;
+
+// Attempts to create the target path (directory or file)
+// - if dir != 0 a directory is created and any missing intermediary
+// directories will be created too, else a file will be created
+static int create_output_path(fs::path &path, int dir){
+  if(path.is_relative()){
+    seterror("path to create_output_path() must be absolute, given path: {}", path.string());
+    return GPKIH_FAIL;
+  }
+
+  if(fs::exists(path)){
+    str ans;
+    PROMPT("path '" + path.string() + "'exists, remove?","[y/n]");
+    getline(std::cin,ans);
+    for(char &c : ans){
+      c = std::tolower(c);
+    }
+    if(ans == "n" || ans == "no"){
+      return -1;
+    }
+    try{
+      fs::remove_all(path);
+    }catch(fs::filesystem_error err){
+      PERROR(err.what());
+      return -1;
+    }
+  }else{
+    if(dir){
+      if(!fs::create_directories(path)){
+        PERROR("couldn't create directory '{}'\n",path.string());
+        return GPKIH_FAIL;
+      }
+    }else{
+      if(std::ofstream(path).is_open()){
+        return GPKIH_OK;
+      }      
+      return GPKIH_OK;
+    }
+  }
+  // Directory succesfully created
+  return GPKIH_OK;
+};
 
 // 
 static std::pair<str,str> load_entity_files(Entity entity){
@@ -222,7 +267,7 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity){
   const auto [req_command, crt_command] = _server_client_build_commands(profile, pkiconf, entity);
 
   // create key + csr
-  fmt::print("{}\n{}\n", req_command, crt_command);
+  //fmt::print("{}\n{}\n", req_command, crt_command);
 
   if(system(req_command.c_str())){
     // fail

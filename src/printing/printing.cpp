@@ -17,17 +17,18 @@ STYLE PROFILE_LABEL_KEY_STYLE = fg(WHITE) | EMPHASIS::bold;
 STYLE PROFILE_LABEL_VAL_STYLE = fg(LGREEN) | EMPHASIS::italic | EMPHASIS::bold;
 
 std::string S_ELABEL(std::string_view st){
-	return std::move(fmt::format(ENTITY_LABEL_KEY_STYLE, st));
+	return fmt::format(ENTITY_LABEL_KEY_STYLE, st);
 }
+
 std::string S_ELABEL_V(std::string_view st){
-	return std::move(fmt::format(ENTITY_LABEL_VAL_STYLE, st));
+	return fmt::format(ENTITY_LABEL_VAL_STYLE, st);
 }
 
 std::string S_PLABEL(std::string_view st) {
-	return std::move(fmt::format(PROFILE_LABEL_KEY_STYLE, st));
+	return fmt::format(PROFILE_LABEL_KEY_STYLE, st);
 }
 std::string S_PLABEL_V(std::string_view st) {
-	return std::move(fmt::format(PROFILE_LABEL_VAL_STYLE, st));
+	return fmt::format(PROFILE_LABEL_VAL_STYLE, st);
 }
 
 /* Normal printing */

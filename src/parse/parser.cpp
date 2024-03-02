@@ -1,4 +1,5 @@
 #include "parser.hpp"
+#include "../help/help.hpp"
 
 using namespace gpkih;
 

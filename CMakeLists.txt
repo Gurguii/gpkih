@@ -61,6 +61,13 @@ message(STATUS "FMT include dir: ${FMT_LIBRARY_INCLUDE}")
 
 # Compile different gpkih parts as static libraries
 
+# Lib - printing
+set(gpkih_printing_src "${GPKIH_SRC_DIR}/printing")
+set(gpkih_printing_definition "${gpkih_printing_src}/printing.hpp")
+set(gpkih_printing_implementation "${gpkih_printing_src}/printing.cpp")
+add_library(gpkih_printing_lib STATIC "${gpkih_printing_implementation}")
+target_include_directories(gpkih_printing_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
+
 # Lib - config_management
 set (gpkih_config_definition
         "${GPKIH_SRC_DIR}/config/config_management.hpp")
@@ -107,6 +114,7 @@ set(gpkih_db_implementation
         "${gpkih_db_src}/profiles.cpp"
         "${gpkih_db_src}/entities.cpp"
 )
+
 add_library(gpkih_db_lib STATIC "${gpkih_db_implementation}")
 target_include_directories(gpkih_db_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
 
@@ -147,13 +155,7 @@ add_library(gpkih_parse_lib STATIC "${gpkih_parse_implementation}")
 target_include_directories(gpkih_parse_lib PUBLIC
         "${FMT_LIBRARY_INCLUDE}"
 )
-
-# Lib - printing
-set(gpkih_printing_src "${GPKIH_SRC_DIR}/printing")
-set(gpkih_printing_definition "${gpkih_printing_src}/printing.hpp")
-set(gpkih_printing_implementation "${gpkih_printing_src}/printing.cpp")
-add_library(gpkih_printing_lib STATIC "${gpkih_printing_implementation}")
-target_include_directories(gpkih_printing_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
+target_link_libraries(gpkih_parse_lib PRIVATE gpkih_printing_lib)
 
 # Lib - experimental
 set(gpkih_experimental_src "${GPKIH_SRC_DIR}/experimental")

@@ -1,12 +1,6 @@
 #pragma once
-#include "../db/database.hpp"
-#include "../actions/actions.hpp"
-#include "../config/config_management.hpp"
-#include "../structs.hpp"
-#include "../help/help.hpp"
-#include "../printing/printing.hpp"
-#include "../logger/error_management.hpp"
-#include "../experimental/formatter.hpp"
+#include <vector>
+#include "../actions/actions.hpp" // database.hpp gpki.hpp structs.hpp
 
 inline int check_and_populate_profile(strview profilename, gpkih::Profile &buffer,
                                std::vector<str> &opts) {

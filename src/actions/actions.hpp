@@ -3,7 +3,6 @@
 #include "../db/database.hpp"
 #include "../gpki.hpp"
 #include "../printing/printing.hpp"
-#include "../utils/gpkih_util_funcs.hpp"
 #include "../logger/logger.hpp"
 
 namespace gpkih::actions {
