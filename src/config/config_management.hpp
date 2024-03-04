@@ -17,7 +17,7 @@ enum class CONFIG_FILE
   #define CONFIG_GPKIH CONFIG_FILE::_gpkih
 };
   
-// Static class to manage gpkih.conf
+// Namespace to manage gpkih.conf
 namespace Config
 {
   extern ConfigMap _conf_gpkih;
@@ -43,7 +43,7 @@ private:
   // When loaded, config mappings will look like
   // e.g   _conf_vpn[client][key] = val
   //       _conf_vpn[server][key] = val
-  //	   _conf_vpn[common][key] = val
+  //	     _conf_vpn[common][key] = val
   // the adecuate ConfigMap will be populated with
   // each config section, with each section being
   // loaded in a map key
