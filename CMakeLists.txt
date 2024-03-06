@@ -169,6 +169,7 @@ set(gpkih_cli_src "${GPKIH_SRC_DIR}/experimental")
 set(gpkih_cli_definition "${gpkih_cli_src}/cli.hpp")
 set(gpkih_cli_implementation "${gpkih_cli_src}/cli.cpp")
 add_library(gpkih_cli_lib STATIC "${gpkih_cli_implementation}")
+target_include_directories(gpkih_cli_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
 
 # Lib utils
 set(gpkih_utils_src "${GPKIH_SRC_DIR}/utils")
