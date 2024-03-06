@@ -178,6 +178,7 @@ set(gpkih_utils_implementation
     "${gpkih_utils_src}/str.cpp"
 )
 add_library(gpkih_utils_lib STATIC "${gpkih_utils_implementation}")
+target_include_directories(gpkih_utils_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
 
 # Binary - gpkih
 add_executable(gpkih
