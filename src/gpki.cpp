@@ -1,8 +1,9 @@
 #include "gpki.hpp"
-#include "printing/printing.cpp"
 #include "logger/signals.hpp"
 #include "parse/parser.hpp"
+#include "utils/utils.hpp"
 
+#include "printing/printing.cpp"
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
@@ -75,34 +76,14 @@ static int check_gpkih_install_dir(str &path) {
   return GPKIH_OK;
 }
 
-static str __get_environment_variable(strview varname)
-{
-    #ifdef _WIN32
-    size_t size = 0;
-    getenv_s(&size, NULL, 0, varname.data());
-    if(size == 0){
-        seterror("couldn't get env var '{}'", varname);
-        return {};
-    }
-    std::string env("\0", size);
-    getenv_s(&size, &env[0], env.size(), varname.data());
 
-    return std::move(env);
-    #else
-    if(secure_getenv(varname.data()) == NULL){
-        seterror("couldn't get env var '{}'", varname);
-        return {};
-    }
-    return str{secure_getenv(varname.data())};
-    #endif
-};
 
 static int __set_platform_dependant_variables()
 {
     #ifdef _WIN32
-    GPKIH_BASEDIR = __get_environment_variable("LOCALAPPDATA");
+    GPKIH_BASEDIR = gpkih::utils::env::get_environment_variable("LOCALAPPDATA");
     #else
-    GPKIH_BASEDIR = __get_environment_variable("HOME");
+    GPKIH_BASEDIR = gpkih::utils::env::get_environment_variable("HOME");
     #endif
 
     if(GPKIH_BASEDIR.empty()){
@@ -142,7 +123,7 @@ static int set_variables() {
 // PROGRAM ENTRY POINT
 int main(int argc, const char **args) {
   // Print starting msg
-  // PROGRAMSTARTING();
+  PROGRAMSTARTING();
   if(set_variables() != GPKIH_OK){
       printlasterror();
       return GPKIH_FAIL;

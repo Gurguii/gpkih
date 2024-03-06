@@ -157,12 +157,27 @@ target_include_directories(gpkih_parse_lib PUBLIC
 )
 target_link_libraries(gpkih_parse_lib PRIVATE gpkih_printing_lib)
 
-# Lib - experimental
-set(gpkih_experimental_src "${GPKIH_SRC_DIR}/experimental")
-set(gpkih_experimental_definition "${gpkih_experimental_src}/formatter.hpp")
-set(gpkih_experimental_implementation "${gpkih_experimental_src}/formatter.cpp")
-add_library(gpkih_experimental_lib STATIC "${gpkih_experimental_implementation}")
-target_include_directories(gpkih_experimental_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
+# Lib - formatter
+set(gpkih_formatter_src "${GPKIH_SRC_DIR}/experimental")
+set(gpkih_formatter_definition "${gpkih_formatter_src}/formatter.hpp")
+set(gpkih_formatter_implementation "${gpkih_formatter_src}/formatter.cpp")
+add_library(gpkih_formatter_lib STATIC "${gpkih_formatter_implementation}")
+target_include_directories(gpkih_formatter_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
+
+# Lib - cli 
+set(gpkih_cli_src "${GPKIH_SRC_DIR}/experimental")
+set(gpkih_cli_definition "${gpkih_cli_src}/cli.hpp")
+set(gpkih_cli_implementation "${gpkih_cli_src}/cli.cpp")
+add_library(gpkih_cli_lib STATIC "${gpkih_cli_implementation}")
+
+# Lib utils
+set(gpkih_utils_src "${GPKIH_SRC_DIR}/utils")
+set(gpkih_utils_definition "${gpkih_utils_src}/utils.hpp")
+set(gpkih_utils_implementation 
+    "${gpkih_utils_src}/env.cpp"
+    "${gpkih_utils_src}/str.cpp"
+)
+add_library(gpkih_utils_lib STATIC "${gpkih_utils_implementation}")
 
 # Binary - gpkih
 add_executable(gpkih
@@ -171,7 +186,7 @@ add_executable(gpkih
 
 set(GPKIH_LIBS gpkih_parse_lib gpkih_db_lib gpkih_actions_lib 
     gpkih_config_management_lib gpkih_help_lib
-    gpkih_logging_lib gpkih_experimental_lib gpkih_printing_lib)
+    gpkih_logging_lib gpkih_formatter_lib gpkih_printing_lib gpkih_cli_lib gpkih_utils_lib)
 
 if(FMT_LIBRARY)
     # Compile with FMT found in the system

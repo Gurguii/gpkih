@@ -72,11 +72,11 @@ static int load_file(fs::path path, ConfigMap &buff) {
 
 // [begin] static class Config
 
-
 ConfigMap Config::_conf_gpkih = {
   {"metadata",{}},
   {"behaviour",{}},
   {"logs",{}},
+  {"cli",{}},
 };
 
 int Config::load(strview filepath){ 

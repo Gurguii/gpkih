@@ -7,15 +7,6 @@
 
 using namespace gpkih;
 
-static bool compare(std::string_view s0, std::string_view s1, size_t nchars)
-{
-	for(int i = 0; i < nchars; ++i){
-		if(s0[i] != s1[i]){
-			return false;
-		}
-	}
-	return true;
-};
 
 static void print_scope_change(strview scope, const FormatInfo &ffinfo)
 {
@@ -308,7 +299,7 @@ int parsers::get(std::vector<str> opts)
 		}
 	}
 
-	for (int i = 0; i < opts.size(); ++i) {
+	for (size_t i = 0; i < opts.size(); ++i) {
 		strview opt = opts[i];
 		fmt::print(fg(fmt::terminal_color::bright_magenta) | EMPHASIS::bold, "{:^60}\n", fmt::format("parsing '{}'", opt));
 		if (opt[0] == '@') {

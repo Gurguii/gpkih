@@ -1,5 +1,6 @@
 #include "parser.hpp"
 #include "../help/help.hpp"
+#include "../experimental/cli.hpp"
 
 using namespace gpkih;
 
@@ -40,6 +41,11 @@ int parsers::parse(int argc, const char **_args) {
   }
 
   str action = args[0];
+
+  if(action == "cli"){
+    gpkih::cli::init();
+    return GPKIH_OK;
+  }
 
   // Check if user is requesting some sort of help
   if (action == "help" || action == "--help" || action == "-help" ||

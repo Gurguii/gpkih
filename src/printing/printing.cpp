@@ -58,6 +58,7 @@ void PROMPT(std::string_view msg, COLOR icon_color) {
 };
 
 void PROGRAMSTARTING() {
+	//06 Mar 2024 @ 19:13
 	PINFO("Starting gpkih - {:%d %h %Y @ %H:%M}\n",
 		std::chrono::system_clock::now());
 };
