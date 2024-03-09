@@ -1,7 +1,9 @@
 #pragma once
-#include "printing/printing.hpp"
 #include <filesystem>
 
+#include "printing/printing.hpp"
+#include "logger/logger.hpp"
+ 
 // Custom typenames
 using str     = std::string;
 using strview = std::string_view;

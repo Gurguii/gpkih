@@ -1,6 +1,7 @@
 #include "cli.hpp"
 #include "../parse/parser.hpp" // ACTION_PARSERS - map contaning actio names and appropiate parse function ptr e.g {"build", gpkih::parse::build} 
 #include "../utils/utils.hpp"
+#include "../printing/printing.hpp"
 
 #include <string>
 #include <cstring>
@@ -32,6 +33,10 @@ using namespace gpkih;
 // gpkih> @foo
 // [foo] gpkih> get
 
+static inline const char *fallback_PS(){
+	return "gpkih >";
+}
+
 static std::unordered_map <std::string, std::string(*)() > ph_map
 {
 	{"pn", []() {return std::string{"gpkih"};}},
@@ -52,15 +57,22 @@ static inline void __render_customPS() {
 	fwrite(&customPS[0], 1, customPS.size(), stdout); // write customPS to console
 }
 
-static inline void __setup() {
+static inline void __setup_PS() {
 	// Load configuration from gpkih.conf 
 	// TODO - add customizable style for profile
 	// map strings to custom COLOR or STYLE from printing.hpp
 	auto syntax = Config::get("cli", "customPS");
+
+	if(syntax.empty()){
+		customPS = fallback_PS();
+		return;
+	}
+
 	std::stringstream ss(syntax.data());
 
-	// '&h &un'
 	std::string ps{};
+	auto color_map = map_str_color();
+
 	for (auto iter = syntax.begin(); iter != syntax.end(); ++iter) {
 		char c = *iter;
 		if (c == '&') {	
@@ -78,18 +90,24 @@ static inline void __setup() {
 			if (ph_map.find(ph) != ph_map.end()) {
 				ps += std::move(ph_map[ph]());
 			}
+			else if (color_map.find(ph.c_str()) != color_map.end()) {
+				ps += std::move(ph);
+			}
 		}
 		else {
 			ps += c;
 		}
 	}
 	
+	// Example: REDC:\testingRESET BLUEgurguiRESET@GREENgpkihRESET > 
+	
+
 	customPS = std::move(ps);
 }
 
 void cli::init() {
 
-	__setup();
+	__setup_PS();
 
 	std::string user_input;
 	

@@ -70,7 +70,7 @@ static std::tuple<strview, strview, strview> __unpack_input(strview user_input)
 // called when using @<pki|vpn>
 // stops when @ is encountered, indicating next session
 // @returns index of next unprocessed opt in vector, last pos when done or -1 on error
-static size_t __handle_scope_printing (strview &scope_opt, std::vector<str> &opts, int next_pos, ProfileConfig& pconfig, gpkih::experimental::Formatter formatter)
+static size_t __handle_scope_printing (strview &scope_opt, std::vector<str> &opts, size_t next_pos, ProfileConfig& pconfig, gpkih::experimental::Formatter formatter)
 {
 	const char *scope = &scope_opt[1]; // scope opt without '@'
 		
@@ -100,7 +100,7 @@ static size_t __handle_scope_printing (strview &scope_opt, std::vector<str> &opt
 
 	if(section.empty()){
 		// iterate assuming given file scope until '@' is found
-		for(int i = next_pos; i < opts.size(); ++i){
+		for(size_t i = next_pos; i < opts.size(); ++i){
 			opt = opts[i];
 			if(opt[0] == '@'){
 				//fmt::print("returning {} which is {}\n", i, opts[i]);
@@ -140,7 +140,7 @@ static size_t __handle_scope_printing (strview &scope_opt, std::vector<str> &opt
 
 	formatter.print_headers(section);
 	// iterate assuming given file + section scope, e.g @pki.key
-	for(int i = next_pos; i < opts.size(); ++i){
+	for(size_t i = next_pos; i < opts.size(); ++i){
 		strview opt = opts[i];
 		if(opt[0] == '@'){
 			return i;

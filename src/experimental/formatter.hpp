@@ -1,6 +1,9 @@
 #pragma once
-#include "../logger/logger.hpp"
-#include <fmt/color.h>
+
+#include "../printing/printing.hpp"
+#include <sstream>
+#include <string>
+#include <string_view>
 
 namespace gpkih::experimental
 {
@@ -45,7 +48,7 @@ namespace gpkih::experimental
 		FormatInfo static gpkih_formatinfo(); // FormatInfo struct with predefined values that fit gpkih.conf
 
 		Formatter(FormatInfo format);
-		void print_keyval(strview key, strview val, bool newline = true) const;
+		void print_keyval(std::string_view key, std::string_view val, bool newline = true) const;
 		template <typename ...T> void print_headers(T&& ...header_names);
 
 		const FormatInfo& get_format();

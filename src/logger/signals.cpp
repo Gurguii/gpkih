@@ -4,11 +4,12 @@
 using namespace gpkih;
 
 #ifdef _WIN32
-BOOL Signals::ctrl_c_handler(DWORD signal) {
-    return TRUE;
-}
+    static BOOL ctrl_c_handler(DWORD signal) {
+        ExitProcess(0);
+        return TRUE;
+    }
 #else
-    void Signals::ctrl_c_handler(int sig){
+    static void ctrl_c_handler(int sig){
         //Logger::cleanup_with_exit();
     };
 #endif

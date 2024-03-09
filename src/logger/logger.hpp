@@ -1,28 +1,28 @@
 #pragma once
-#include "../gpki.hpp"
-#include "../config/config_management.hpp" // Config::get()
-#include <future> // std::vector<std::future<void>> Logger::tasks
-#include <queue> // Logger::message_queue
+#include "../printing/printing.hpp"
+#include <future> // std::vector<std::future<void>> tasks
+#include <queue> // 
+#include <fstream> // std::ifstream, std::ofstream
+#include <sstream> // std::stringstream, getline()
+
+#include <filesystem>
 
 namespace gpkih
 {
-
-class Logger
-{
-
-public:
-	enum class Level{
-		NONE = 0,
-#define L_NONE Logger::Level::NONE
+	enum class Level
+	{
+		_NONE = 0,
 		_INFO,
-#define L_INFO Logger::Level::_INFO
 		_WARNING,
-#define L_WARN Logger::Level::_WARNING
 		_ERROR,
-#define L_ERROR Logger::Level::_ERROR
 	};
 
-	enum class FormatField : ui16
+	constexpr static inline Level L_NONE = Level::_NONE;
+	constexpr static inline Level L_WARN = Level::_WARNING;
+	constexpr static inline Level L_INFO = Level::_INFO;
+	constexpr static inline Level L_ERROR = Level::_ERROR;
+
+	enum class FormatField : uint16_t
 	{
 		NONE = 0,
 		msg_type = 2,
@@ -31,83 +31,124 @@ public:
 		ALL = 15
 	};
 
-	str logpath; // only one actually used
-
-	void cleanup_with_exit();
-	 
-	const Logger&get();
-	const Logger* const get_ptr();
-
-	template<typename ...T> void add(Level level, strview fmt, T&& ...args);
-	
-	~Logger();
-	Logger(str logpath);
-
-	str format_msg(Level &level, str &msg);
-private:
-	bool start(); // called by CONSTRUCTOR() - opens log file and loads configuration from gpkih.conf
-	void wait();  // called by DESTRUCTOR() - waits for every task in `std::vector<void> Logger::tasks` to finish
-
-	std::queue<str> message_queue;        
-	std::mutex message_queue_mutex;
-			     		 
-	std::mutex logfile_mutex;
-	
-	int current_lines;					    // set by start() using gpkih.conf | current lines in log file
-	int max_lines;						    // set by start() using gpkih.conf[logs][max_lines] | maximum lines allowed in logfile
-	std::mutex maxlines_mutex;
-
-	Level included_levels;				    // set by start() using gpkih.conf | log levels that will be logged
-	std::mutex included_levels_mutex;
-
-	FormatField included_format_fields;	    // set by start() using gpkih.conf | log message fields that will be included | log syntax [date][level][msg]
-	std::mutex included_format_fields_mutex;
-
-	std::vector<std::future<void>> tasks{}; // holds tasks added by Logger::add()
-	std::mutex tasks_mutex;
-
-	
-
-}; // class Logger
-	
-	static inline Logger::FormatField operator|(Logger::FormatField lo, Logger::FormatField ro){
-		return static_cast<Logger::FormatField>(static_cast<ui16>(lo) | static_cast<ui16>(ro)); 
+	static inline FormatField operator|(FormatField lo, FormatField ro) {
+		return static_cast<FormatField>(static_cast<uint16_t>(lo) | static_cast<uint16_t>(ro));
 	} // FormatField operator |
 
-	static inline bool operator&(Logger::FormatField lo, Logger::FormatField ro){
-		return static_cast<bool>(static_cast<ui16>(lo) & static_cast<ui16>(ro));
+	static inline bool operator&(FormatField lo, FormatField ro) {
+		return static_cast<bool>(static_cast<uint16_t>(lo) & static_cast<uint16_t>(ro));
 	} // FormatField operator &
 
-	static inline Logger::Level operator|(Logger::Level lo, Logger::Level ro){
-		return static_cast<Logger::Level>(static_cast<ui16>(lo) | static_cast<ui16>(ro));
+	static inline Level operator|(Level lo, Level ro) {
+		return static_cast<Level>(static_cast<uint16_t>(lo) | static_cast<uint16_t>(ro));
 	} // Level operator |
 
-	static inline bool operator&(Logger::Level lo, Logger::Level ro){
-		return static_cast<bool>(static_cast<ui16>(lo) & static_cast<ui16>(ro));
+	static inline bool operator&(Level lo, Level ro) {
+		return static_cast<bool>(static_cast<uint16_t>(lo) & static_cast<uint16_t>(ro));
 	} // Level operator &
-	
-	template <typename ...T>  static inline void __add_log(gpkih::Logger &obj, gpkih::Logger::Level level, str &&msg) {
-		auto formatted = obj.format_msg(level, msg);
-		PRINT(formatted);
+
+
+	/* Level -> STYLE map*/
+	static std::unordered_map<Level,STYLE> __level_style_map
+	{
+		{L_ERROR, S_ERROR},
+		{L_WARN, S_WARNING},
+		{L_INFO, S_INFO}
 	};
 
-	template<typename ...T>
-	inline void Logger::add(Level level, strview fmt, T && ...args)
+	/* Level -> std::string map */
+	static std::unordered_map<Level, std::string> __level_str_map
 	{
-		switch (level) {
+		{L_INFO, "info"},
+		{L_WARN, "warning"},
+		{L_ERROR, "error"},
+	};
+
+	static inline std::string format_msg(Level& level, const FormatField& fields, std::string& msg) {
+		std::stringstream log;
+		// log syntax - [date] [level] [msg]
+		fields& FormatField::msg_time&& log << std::move(fmt::format("[{:%d %h %Y @ %H:%M}] ", std::chrono::system_clock::now()));
+		fields& FormatField::msg_type&& log << std::move(fmt::format(__level_style_map[level], "[{}] ", __level_str_map[level]));
+		fields& FormatField::msg_content&& log << msg << '\n';
+		return std::move(log.str());
+	} // Logger::format_msg();
+
+	class Logger
+	{
+	private:
+		std::filesystem::path basedir;
+		std::filesystem::path logpath;
+		std::filesystem::path linefile;
+
+		size_t current_lines;
+		size_t max_lines;
+		FormatField included_format_fields;
+		Level included_levels;
+
+		std::vector<std::future<void>> log_tasks{};
+		static inline Logger* program_logger;
+
+		//inline void __add_log(Logger& obj, Level level, std::string&& msg) {
+		//	auto formatted = format_msg(level, obj.ffields(), msg);
+		//	PWARN(formatted);
+		//};
+
+		template <typename ...T> inline void __add_log(Level level, const char *fmt, T&& ...args) {
+			
+			if (this->current_lines >= this->max_lines) {
+				PWARN("logger exceeded maximum lines, not adding anymore");
+				return;
+			}
+
+			auto formatted = format_msg(level, this->ffields(), fmt::format(fmt, std::forward<T>(args)...));
+			std::ofstream file(this->logpath, std::ios::app);
+
+			if (!file.is_open()) {
+				return;
+			}
+			
+			file << std::move(formatted);
+			file.close();
+			++this->current_lines;
+		}
+
+	public:
+		const FormatField& ffields();
+
+		~Logger();
+		Logger(std::string &&logpath);
+
+		// Program logger
+		static inline const bool initialize(std::string &basedir) {
+			static Logger pl = Logger(std::string(basedir));
+			Logger::program_logger = &pl;
+			return Logger::program_logger != nullptr;
+		};
+
+		static inline Logger* const get() {
+			return Logger::program_logger;
+		};
+
+		// Instance methods
+		template<typename ...T>
+		inline void add(const Level level, const char* fmt, T && ...args)
+		{
+			switch (level) {
 			case L_INFO:
-				__add_log(*this, L_INFO, std::move(fmt::format(fmt, std::forward<T>(args)...)));
+				__add_log(L_INFO, fmt, args...);
 				break;
 			case L_WARN:
-				__add_log(*this, L_WARN, std::move(fmt::format(fmt, std::forward<T>(args)...)));
+				__add_log(L_WARN, fmt, args...);
 				break;
 			case L_ERROR:
-				__add_log(*this, L_ERROR, std::move(fmt::format(fmt, std::forward<T>(args)...)));
+				__add_log(L_ERROR, fmt, args...);
 				break;
-			default:
-				__add_log(*this, L_ERROR, "invalid Level type on call to Logger::add");
+			default: 
+				__add_log(L_ERROR, "invalid Level type on call to add");
 				break;
+			}
 		}
-	}
+	
+	}; // class Logger
 
 } // namespace gpkih

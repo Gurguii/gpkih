@@ -1,5 +1,4 @@
 ﻿#include "printing.hpp"
-#include <string_view>
 
 /* Defined styles for printing */
 STYLE S_NONE = fg(BLACK);
@@ -71,3 +70,21 @@ void PROGRAMEXITING() {
 void UNKNOWN_OPTION_MESSAGE(std::string_view opt) {
 	fmt::print(fg(COLOR::antique_white), " [parsing] unknown option '{}'\n", opt);
 };
+
+std::unordered_map<const char*, COLOR> map_str_color(){
+	return {
+		{"BLUE", BLUE},
+		{"RED", RED},
+		{"GREEN", GREEN},
+		{"YELLOW",  YELLOW},
+		{"WHITE", WHITE},
+		{"ORANGE", ORANGE},
+		{"CYAN", CYAN},
+		{"BLACK", BLACK},
+		{"ALICIA", ALICIA},
+		{"LGREEN", LGREEN},
+		{"PGR", PALE_GOLDEN_ROD},
+		{"LPINK", LPINK},
+		{"PINK", PINK}
+	};
+}

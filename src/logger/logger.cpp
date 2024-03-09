@@ -1,70 +1,94 @@
 #include "logger.hpp"
-
-#include <fstream> // std::ifstream, std::ofstream
-#include <sstream> // std::stringstream, getline()
+#include "../config/config_management.hpp" // Config::get()
 
 using namespace gpkih;
 
-static std::unordered_map<Logger::Level,STYLE> __level_style_map
+/* std::string -> Level map */
+static std::unordered_map<str,Level> __str_level_map
 {
-	{Logger::Level::_ERROR, S_ERROR},
-	{Logger::Level::_WARNING, S_WARNING},
-	{Logger::Level::_INFO, S_INFO}
+	{"info", L_INFO},
+	{"warning", L_WARN},
+	{"error", L_ERROR},
 };
 
-/* std::string -> Logger::Level map */
-static std::unordered_map<str,Logger::Level> __str_level_map
+/* std::string -> FormatField map */
+static std::unordered_map<str, FormatField> __str_ffield_map
 {
-	{"info", Logger::Level::_INFO},
-	{"warning", Logger::Level::_WARNING},
-	{"error", Logger::Level::_ERROR},
+	{"type", FormatField::msg_type},
+	{"time", FormatField::msg_time},
+	{"content", FormatField::msg_content}
 };
 
-/* Logger::Level -> std::string map */
-static std::unordered_map<Logger::Level, std::string> __level_str_map
-{
-	{Logger::Level::_INFO, "info"},
-	{Logger::Level::_WARNING, "warning"},
-	{Logger::Level::_ERROR, "error"},
-};
+Logger::~Logger() {
+	// Save current lines to a file
+	std::ofstream(this->linefile) << current_lines;
+} // Logger::~Logger
 
-/* std::string -> Logger::FormatField map */
-static std::unordered_map<str, Logger::FormatField> __str_ffield_map
-{
-	{"type", Logger::FormatField::msg_type},
-	{"time", Logger::FormatField::msg_time},
-	{"content", Logger::FormatField::msg_content}
-};
+Logger::Logger(std::string &&logdir){
+	
+	this->basedir = std::move(logdir);
+	this->logpath = this->basedir / "gpkih.log";
+	this->linefile = this->basedir / ".line";
 
-bool Logger::start() {
-	// Set logpath on runtime to avoid declaring GPKIH_BASEDIR as static inline in the header with getenv() 
-	// and instead use getenv_s() in Windows
-	this->current_lines = 0;
-	if (!fs::exists(logpath)) {
-		PINFO("creating log file '{}'\n", logpath);
+	if (fs::exists(basedir) == false) {
+		PINFO("creating log directory '{}'\n", basedir.string());
+		// create log directory
+		if (fs::create_directories(basedir) == false) {
+			PWARN("couldn't create log directory\n");
+			return;
+		}
 		// create log file 
+		if (std::ofstream(logpath).is_open() == false) {
+			PWARN("couldn't create log file '{}'\n", logpath.string());
+			return;
+		}
+		// create line counting file
+		std::ofstream(this->linefile) << "0";
+		if (fs::exists(this->linefile) == false) {
+			PWARN("couldn't create line counting file '{}'\n", this->linefile.string());
+			return;
+		}
+		this->current_lines = 0;
+	}else if(!fs::exists(logpath)){
 		if (!std::ofstream(logpath).is_open()) {
-			return false;
+			PWARN("couldn't create log file '{}'\n", logpath.string());
+			return;
 		}
 	}
-	else {
-		std::ifstream file(logpath);
-		str line;
-		while (getline(file, line)) { ++current_lines; }
-		file.close();
+	else if (!fs::exists(this->linefile)) {
+		std::ofstream(this->linefile) << "0";
+		if (fs::exists(this->linefile) == false) {
+			PWARN("couldn't create line counting file '{}'\n", this->linefile.string());
+			return;
+		}
+		this->current_lines = 0;
 	}
+	else {
+		// Load current lines
+		std::ifstream file(this->linefile, std::ios::in);
 
-	// TODO - change this 
-	// set current lines
+		if (!file.is_open()) {
+			PWARN("couldn't open line tracking file '{}'\n", this->linefile.string());
+			if (std::filesystem::exists(this->linefile)) {
+				PWARN("but it exists tho\n");
+			}
+			return;
+		}
+
+		std::string n;
+		file >> n;
+
+		this->current_lines = std::move(strtol(&n[0], nullptr, 10));
+	}
 
 	// set max_lines
 	this->max_lines = strtol(Config::get("logs", "max_lines").data(), nullptr, 10);
 	if (current_lines >= max_lines) {
-		return false;
+		return;
 	}
 
 	// set included_format_fields
-	this->included_format_fields = Logger::FormatField::NONE;
+	this->included_format_fields = FormatField::NONE;
 	str token;
 	sstream ss(Config::get("logs", "included_format_fields").data());
 	while (getline(ss, token, ':')) {
@@ -78,7 +102,7 @@ bool Logger::start() {
 	ss.clear();
 
 	// set include_levels
-	this->included_levels = Logger::Level::NONE;
+	this->included_levels = L_NONE;
 
 	ss = std::move(sstream(Config::get("logs", "included_levels").data()));
 	while (getline(ss, token, ':')) {
@@ -87,38 +111,10 @@ bool Logger::start() {
 			included_levels = included_levels | __str_level_map[token];
 		}
 	}
+	
+	return;
+} // Logger::Logger()
 
-	return true;
-} // Logger::start()
-
-Logger::Logger(str path):logpath(path)
-{
-	start();
-}// Logger constructor
-
-
-Logger::~Logger() {
-	//PINFO("waiting for logger tasks to finish...\n");
-	Logger::wait();
-}// Logger destructor
-
-
-void Logger::wait() {
-	for (std::future<void>& f : tasks) {
-		f.wait();
-	}
-} // Logger::wait();
-
-
-str Logger::format_msg(Level &level, str& msg) {
-	sstream log;
-	// log syntax - [date] [level] [msg]
-	this->included_format_fields & Logger::FormatField::msg_time      && log << std::move(fmt::format("[{:%d %h %Y @ %H:%M}] ", std::chrono::system_clock::now()));
-	this->included_format_fields & Logger::FormatField::msg_type	  && log << std::move(fmt::format(__level_style_map[level],"[{}] ",__level_str_map[level]));
-	this->included_format_fields & Logger::FormatField::msg_content   && log << msg << EOL;
-	return std::move(log.str());
-} // Logger::format_msg();
-
-		void Logger::cleanup_with_exit() {
-			printlasterror(); exit(0);
-} // Logger::cleanup_with_exit()
+const FormatField& Logger::ffields(){
+	return this->included_format_fields;
+}

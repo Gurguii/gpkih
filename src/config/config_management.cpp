@@ -36,9 +36,9 @@ static int load_file(fs::path path, ConfigMap &buff) {
       // check that section is valid
       if (buff.find(line) == buff.end()) {
         PWARN("skipping unknown section '{}'\n", line);
-        continue;
-      
+        continue; 
       }
+
       // got a valid section, load it
       str section_name = line;
       while (getline(file, line)) {

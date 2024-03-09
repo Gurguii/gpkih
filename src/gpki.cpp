@@ -3,10 +3,14 @@
 #include "parse/parser.hpp"
 #include "utils/utils.hpp"
 
+
 #include "printing/printing.cpp"
 #include <cstdlib>
 #include <filesystem>
 #include <iostream>
+
+using namespace gpkih;
+
 /* Directory names */
 static constexpr const char* DB_DIRNAME  = "db";
 static constexpr const char* CFG_DIRNAME = "config";
@@ -76,14 +80,12 @@ static int check_gpkih_install_dir(str &path) {
   return GPKIH_OK;
 }
 
-
-
 static int __set_platform_dependant_variables()
 {
     #ifdef _WIN32
-    GPKIH_BASEDIR = gpkih::utils::env::get_environment_variable("LOCALAPPDATA");
+    GPKIH_BASEDIR = utils::env::get_environment_variable("LOCALAPPDATA");
     #else
-    GPKIH_BASEDIR = gpkih::utils::env::get_environment_variable("HOME");
+    GPKIH_BASEDIR = utils::env::get_environment_variable("HOME");
     #endif
 
     if(GPKIH_BASEDIR.empty()){
@@ -107,15 +109,15 @@ static int set_variables() {
         return GPKIH_FAIL;
     }
 
-    CURRENT_PATH = fs::current_path().string();
-    DB_DIRPATH   = fmt::format("{}{}{}", GPKIH_BASEDIR, DB_DIRNAME, SLASH);
-    CONF_DIRPATH = fmt::format("{}{}{}", GPKIH_BASEDIR, CFG_DIRNAME, SLASH);
-    LOG_DIRPATH  = fmt::format("{}{}{}", GPKIH_BASEDIR, LOG_DIRNAME, SLASH);
-    CONF_GPKIH   = fmt::format("{}{}", CONF_DIRPATH, gpkih_conf_filename);
+    CURRENT_PATH    = fs::current_path().string();
+    DB_DIRPATH      = fmt::format("{}{}{}", GPKIH_BASEDIR, DB_DIRNAME, SLASH);
+    CONF_DIRPATH    = fmt::format("{}{}{}", GPKIH_BASEDIR, CFG_DIRNAME, SLASH);
+    LOG_DIRPATH     = fmt::format("{}{}{}", GPKIH_BASEDIR, LOG_DIRNAME, SLASH);
+    CONF_GPKIH      = fmt::format("{}{}", CONF_DIRPATH, gpkih_conf_filename);
     DB_PROFILES_CSV = fmt::format("{}{}", CONF_DIRPATH, "profiles.csv");
 
     // db::profiles::dbpath
-    gpkih::db::profiles::dbpath = fmt::format("{}profiles.csv", DB_DIRPATH);
+    db::profiles::dbpath = fmt::format("{}profiles.csv", DB_DIRPATH);
     
     return GPKIH_OK;
 }
@@ -135,34 +137,37 @@ int main(int argc, const char **args) {
   }
 
   // Register signal handlers
-  gpkih::Signals::register_signals();
+  Signals::register_signals();
 
   // TODO - Add PROPER checks for openssl - openvpn existence (static lib with utils to check and execute commands on both win|lin)
 
   // Launch task to load `gpkih.conf` configuration
-  auto load_gpkih_config = std::async(std::launch::async, gpkih::Config::load, CONF_GPKIH);
+  auto load_gpkih_config = std::async(std::launch::async, Config::load, CONF_GPKIH);
 
   // Map profiles' csv to db::profiles::existing_profiles{}
-  size_t profile_count = gpkih::db::profiles::initialize(DB_DIRPATH + "profiles.csv");
+  size_t profile_count = db::profiles::initialize(DB_DIRPATH + "profiles.csv");
   if (profile_count < 0) {
     printlasterror();
     return -1;
   };
-  // wait for load_gpkih_config to finish
+
+  // wait for Config::load to finish
   if (load_gpkih_config.get() != GPKIH_OK) {
     printlasterror();
     return -1;
   }
   
-  // Create logger instance which will:
-  // 1. call Logger::start() upon construction
-  // 2. call Logger::wait() upon destruction
-  gpkih::Logger logger(fmt::format("{}logs{}gpkih.log",GPKIH_BASEDIR ,SLASH));
+  // Initialize the program logger
+  if (Logger::initialize(std::move((fs::path(GPKIH_BASEDIR)/"logs").string())) == false) {
+    printlasterror();
+    return GPKIH_FAIL;
+  };
 
+  auto logger = Logger::get();
   //PINFO("Loaded [{}] profiles\n", profile_count, DB_DIRPATH, SLASH);
 
   // Parse options
-  if (gpkih::parsers::parse(argc - 1, args + 1) != GPKIH_OK) {
+  if (parsers::parse(argc - 1, args + 1) != GPKIH_OK) {
     printlasterror();
     return GPKIH_FAIL;
   }

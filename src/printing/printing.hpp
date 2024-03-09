@@ -4,6 +4,7 @@
 #include <fmt/format.h>
 
 #include <string_view>
+#include <unordered_map>
 
 using COLOR = fmt::color;
 using STYLE = fmt::text_style;
@@ -85,3 +86,5 @@ extern void PROGRAMEXITING();
 
 // Message to print when an unknown option is found when parsing
 extern void UNKNOWN_OPTION_MESSAGE(std::string_view opt);
+
+extern std::unordered_map<const char*, COLOR> map_str_color();
