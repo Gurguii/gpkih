@@ -9,6 +9,8 @@ set(GPKIH_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(GPKIH_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(GPKIH_INCLUDE_DIR "${GPKIH_SRC_DIR}")  # Include directory for all components
 
+
+
 # Platform-specific settings
 function(configure_platform)
   if(WIN32)
@@ -20,6 +22,7 @@ function(configure_platform)
     set(FMT_LIBRARY_PATH "/usr/lib;/usr/local/lib")
     set(CMAKE_CXX_FLAGS "-O3")
     set(FMT_LIBRARY_NAMES "fmt")
+    set(FMT_LIBRARY_INCLUDE "/usr/local/lib/fmt")
   endif()
 endfunction()
 

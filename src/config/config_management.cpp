@@ -5,12 +5,12 @@
 #include <unordered_map>
 
 
-static inline str skip_chars = "#\n ";
+static inline std::string skip_chars = "#\n ";
 static inline char section_delim_open = '[';
 static inline char section_delim_close = ']';
-static str empty_chars = fmt::format("{}{} ", section_delim_open, section_delim_close);
+static std::string empty_chars = fmt::format("{}{} ", section_delim_open, section_delim_close);
 
-static inline void __clear_section_line(str &line){
+static inline void __clear_section_line(std::string &line){
   line.erase(std::remove_if(line.begin(), line.end(), [](const char &c){return empty_chars.find(c) != -1;}), line.end());
 }
 
@@ -22,8 +22,8 @@ static int load_file(fs::path path, ConfigMap &buff) {
     seterror("couldn't open gpkih.conf '{}'", path.string());
     return F_NOOPEN;
   }
-  str line;
-  ui64 next_section = file.tellg();
+  std::string line;
+  size_t next_section = file.tellg();
   while (getline(file, line)) {
     char first = line[0];
     if (first == section_delim_open) {
@@ -40,7 +40,7 @@ static int load_file(fs::path path, ConfigMap &buff) {
       }
 
       // got a valid section, load it
-      str section_name = line;
+      std::string section_name = line;
       while (getline(file, line)) {
         first = line[0];
         if (first == section_delim_open) {
@@ -51,7 +51,7 @@ static int load_file(fs::path path, ConfigMap &buff) {
           continue;
         }
         sstream ss(line);
-        str key, val;
+        std::string key, val;
         ss >> key;
         getline(ss, val);
         // val.erase(std::remove_if(val.begin(),val.end(),[](char c){return
@@ -62,7 +62,7 @@ static int load_file(fs::path path, ConfigMap &buff) {
         next_section = file.tellg();
 
         // got a valid keyval pair
-        buff[section_name].emplace(key, val);
+        buff[section_name].emplace(std::move(key), std::move(val));
       }
     }
   }
@@ -105,7 +105,7 @@ bool Config::section_exists(const char *section){
   return _conf_gpkih.find(section) != _conf_gpkih.end();
 }
 
-const std::unordered_map<str,str>* const Config::key_exists(const char *key){
+const std::unordered_map<std::string,std::string>* const Config::key_exists(const char *key){
   for(const auto &section : _conf_gpkih){
     if(section.second.find(key) != section.second.end()){
       // return pointer to section that contains the key

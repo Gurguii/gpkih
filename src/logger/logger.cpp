@@ -82,10 +82,25 @@ Logger::Logger(std::string &&logdir){
 	}
 
 	// set max_lines
-	this->max_lines = strtol(Config::get("logs", "max_lines").data(), nullptr, 10);
-	if (current_lines >= max_lines) {
-		return;
-	}
+	std::string_view msize = Config::get("logs", "max_size");
+	
+	size_t number = strtol(&msize[0],NULL,10);
+	char unit = msize[msize.size()-1];
+
+	switch(unit){
+	case 'G':
+		this->max_size = static_cast<size_t>(number * 1024 * 1024 * 1024);
+		break;
+	case 'M':
+		this->max_size = static_cast<size_t>(number * 1024 * 1024);
+		break;
+	case 'K':
+		this->max_size = static_cast<size_t>(number * 1024);
+		break;
+	default:
+		// assume bytes
+		this->max_size = static_cast<size_t>(number);
+	} 
 
 	// set included_format_fields
 	this->included_format_fields = FormatField::NONE;

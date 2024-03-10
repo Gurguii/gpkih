@@ -90,6 +90,13 @@ foreach($k in $exec.Keys){
 # run 'cmake ..' inside build directory
 $cmake_executable = $exec["cmake"]
 $cmake_command_args = ".."
+
+#if($debug){
+#    $cmake_command_args += " -DDEBUG=ON"
+#}else{
+#    $cmake_command_args += " -DDEBUG=OFF"
+#}
+
 $cmake_process = Start-Process -FilePath "$cmake_executable" -ArgumentList "$cmake_command_args" -PassThru -Wait -NoNewWindow
 
 if($cmake_process.ExitCode -ne 0){

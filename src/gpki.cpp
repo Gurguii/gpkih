@@ -124,19 +124,31 @@ static int set_variables() {
 
 // PROGRAM ENTRY POINT
 int main(int argc, const char **args) {
-  // Print starting msg
-  PROGRAMSTARTING();
-  if(set_variables() != GPKIH_OK){
-      printlasterror();
-      return GPKIH_FAIL;
-  };
 
-  if (check_gpkih_install_dir(GPKIH_BASEDIR) != GPKIH_OK) {
-      printlasterror();
-      return GPKIH_FAIL;
+  for(int i = 0; i < argc; ++i){
+    if(!strcmp(args[i], "--debug")){
+        ENABLE_DEBUG_MESSAGES = true;
+        args[i] = NULL;
+        --argc;
+    }
   }
 
-  // Register signal handlers
+  PDEBUG("setting global variables");
+  if(set_variables() != GPKIH_OK){
+    printlasterror();
+    return GPKIH_FAIL;
+  };
+
+  
+  
+  PDEBUG("checking base dir");
+  if (check_gpkih_install_dir(GPKIH_BASEDIR) != GPKIH_OK) {
+    printlasterror();
+    return GPKIH_FAIL;
+  }
+
+
+  // Register signal handlers   
   Signals::register_signals();
 
   // TODO - Add PROPER checks for openssl - openvpn existence (static lib with utils to check and execute commands on both win|lin)
@@ -164,7 +176,8 @@ int main(int argc, const char **args) {
   };
 
   auto logger = Logger::get();
-  //PINFO("Loaded [{}] profiles\n", profile_count, DB_DIRPATH, SLASH);
+
+  PDEBUG("Loaded [{}] profiles", profile_count, DB_DIRPATH, SLASH);
 
   // Parse options
   if (parsers::parse(argc - 1, args + 1) != GPKIH_OK) {

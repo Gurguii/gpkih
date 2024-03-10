@@ -50,7 +50,7 @@ static std::unordered_map <std::string, std::string(*)() > ph_map
 
 static inline void __set_active_profile(const char* profile_name) {
 	active_profile = profile_name;
-	customPS = std::move(fmt::format("{}{}", fmt::format(fg(LGREEN) | EMPHASIS::bold, "[{}] ", profile_name), std::move(customPS)));
+	customPS = std::move(fmt::format("{}{}", fmt::format(fg(PALE_GOLDEN_ROD) | EMPHASIS::bold, "[{}] ", profile_name), std::move(customPS)));
 };
 
 static inline void __render_customPS() {
@@ -63,52 +63,70 @@ static inline void __setup_PS() {
 	// map strings to custom COLOR or STYLE from printing.hpp
 	auto syntax = Config::get("cli", "customPS");
 
-	if(syntax.empty()){
+	if (syntax.empty()) {
 		customPS = fallback_PS();
 		return;
 	}
-
-	std::stringstream ss(syntax.data());
 
 	std::string ps{};
 	auto color_map = map_str_color();
 
 	for (auto iter = syntax.begin(); iter != syntax.end(); ++iter) {
 		char c = *iter;
-		if (c == '&') {	
-			if (++iter == syntax.end()) {
-				break;
+		if (c == '&') {
+			std::string placeholder{};
+			// iterate with ++iter to pass the opening '&'
+			while (++iter != syntax.end() && *iter != '&') {
+				placeholder += *iter;
 			}
-			
-			std::string ph{};
-			
-			while (iter != syntax.end() && *iter != '&') {
-				ph += *iter;
-				++iter;
+			++iter; // pass the closing '&'
+			if (ph_map.find(placeholder) != ph_map.end()) {
+				ps += std::move(ph_map[placeholder]());
+				placeholder.assign("");
+				continue;
 			}
-
-			if (ph_map.find(ph) != ph_map.end()) {
-				ps += std::move(ph_map[ph]());
-			}
-			else if (color_map.find(ph.c_str()) != color_map.end()) {
-				ps += std::move(ph);
+			else if (color_map.find(placeholder) != color_map.end()) {
+				// Look for RESET or until syntax.end() is reached
+				std::string coloured_string{};
+				for (iter; iter != syntax.end(); ++iter) {
+					if (*iter == '&') {
+						std::string token{};
+						while (++iter != syntax.end() && *iter != '&') {
+							token += *iter;
+						}
+						if (ph_map.find(token) != ph_map.end()) {	
+							coloured_string += std::move(ph_map[token]());
+							continue;
+						}
+						else if (token == "RESET") {
+							ps += std::move(fmt::format(fg(color_map[placeholder.c_str()]), std::move(coloured_string)));
+							placeholder.assign("");
+							break;
+						}
+					}
+					else {
+						coloured_string += *iter;
+					}
+				}
+				if (iter == syntax.end()) {
+					PWARN("found color placeholder '{}' without matching RESET\n", placeholder);
+					ps += std::move(coloured_string);
+					break;
+				}
 			}
 		}
 		else {
 			ps += c;
 		}
 	}
-	
-	// Example: REDC:\testingRESET BLUEgurguiRESET@GREENgpkihRESET > 
-	
 
 	customPS = std::move(ps);
 }
 
 void cli::init() {
-
+	PDEBUG("initializing cli\n");
 	__setup_PS();
-
+	PDEBUG("PS settled up\n");
 	std::string user_input;
 	
 	for (;;)

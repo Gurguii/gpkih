@@ -47,15 +47,6 @@ namespace gpkih
 		return static_cast<bool>(static_cast<uint16_t>(lo) & static_cast<uint16_t>(ro));
 	} // Level operator &
 
-
-	/* Level -> STYLE map*/
-	static std::unordered_map<Level,STYLE> __level_style_map
-	{
-		{L_ERROR, S_ERROR},
-		{L_WARN, S_WARNING},
-		{L_INFO, S_INFO}
-	};
-
 	/* Level -> std::string map */
 	static std::unordered_map<Level, std::string> __level_str_map
 	{
@@ -68,7 +59,7 @@ namespace gpkih
 		std::stringstream log;
 		// log syntax - [date] [level] [msg]
 		fields& FormatField::msg_time&& log << std::move(fmt::format("[{:%d %h %Y @ %H:%M}] ", std::chrono::system_clock::now()));
-		fields& FormatField::msg_type&& log << std::move(fmt::format(__level_style_map[level], "[{}] ", __level_str_map[level]));
+		fields& FormatField::msg_type&& log << std::move(fmt::format("[{}] ", __level_str_map[level]));
 		fields& FormatField::msg_content&& log << msg << '\n';
 		return std::move(log.str());
 	} // Logger::format_msg();
@@ -81,7 +72,7 @@ namespace gpkih
 		std::filesystem::path linefile;
 
 		size_t current_lines;
-		size_t max_lines;
+		size_t max_size;
 		FormatField included_format_fields;
 		Level included_levels;
 
@@ -95,8 +86,9 @@ namespace gpkih
 
 		template <typename ...T> inline void __add_log(Level level, const char *fmt, T&& ...args) {
 			
-			if (this->current_lines >= this->max_lines) {
-				PWARN("logger exceeded maximum lines, not adding anymore");
+			if(this->max_size <= std::filesystem::file_size(logpath)){
+				PWARN("log reached max size {} bytes\n", max_size);
+				// TODO - free old lines to keep adding
 				return;
 			}
 

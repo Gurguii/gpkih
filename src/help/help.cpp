@@ -1,15 +1,10 @@
-//#include "get.cpp"
-//#include "help_build.cpp"
-//#include "help_create_pack.cpp"
-//#include "help_gencrl.cpp"
-//#include "help_init.cpp"
-//#include "help_list.cpp"
-//#include "help_remove.cpp"
-//#include "set.cpp"
 #include "help.hpp"
 #include <unordered_map>
 
 using namespace gpkih;
+
+static constexpr const char *GPKIH_VERSION = "1.0";
+
 void help::usage() {
   fmt::print(R"(
 == Public key infraestructure helper ==
@@ -44,7 +39,7 @@ Generate crl
 [ remove ]
 Remove profile files and database entry
   ./gpki remove [profile/s]
-)", Config::get("metadata", "author"), Config::get("metadata", "description"), Config::get("metadata", "version"));
+)", Config::get("metadata", "author"), Config::get("metadata", "description"), GPKIH_VERSION);
 }
 
 std::unordered_map<str, void(*)()> help::help_funcs{
@@ -79,5 +74,5 @@ Actions: init build revoke gencrl list remove
 
 For extra help on any action, do:
     ./gpki help [action]
-)", Config::get("metadata", "author"), Config::get("metadata", "description"), Config::get("metadata", "version"));
+)", Config::get("metadata", "author"), Config::get("metadata", "description"), GPKIH_VERSION);
 }

@@ -6,6 +6,8 @@
 #include <string_view>
 #include <unordered_map>
 
+static inline bool ENABLE_DEBUG_MESSAGES = false;
+
 using COLOR = fmt::color;
 using STYLE = fmt::text_style;
 using EMPHASIS = fmt::emphasis;
@@ -75,16 +77,24 @@ template <typename ...T> static inline void PHINT(std::string_view fmt, T&& ...a
 	fmt::print(S_HINT, "[hint] {}", fmt::format(fmt, std::forward<T>(args)...));
 };
 
+/* debug */
+template <typename ...T> static inline void PDEBUG(std::string_view fmt, T&& ...args) {
+	if(ENABLE_DEBUG_MESSAGES){
+		fmt::print("-- {}\n", fmt::format(fmt, std::forward<T>(args)...));
+	}
+}
+
 /* prompt */
 extern void PROMPT(std::string_view msg, std::string_view ans, COLOR icon_color = LGREEN);
 extern void PROMPT(std::string_view msg, COLOR icon_color = LGREEN);
 
 // Message to print when starting
 extern void PROGRAMSTARTING();
+
 // Message to print when exiting
 extern void PROGRAMEXITING();
 
 // Message to print when an unknown option is found when parsing
 extern void UNKNOWN_OPTION_MESSAGE(std::string_view opt);
 
-extern std::unordered_map<const char*, COLOR> map_str_color();
+extern std::unordered_map<std::string, COLOR> map_str_color();

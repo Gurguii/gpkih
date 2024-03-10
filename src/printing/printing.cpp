@@ -71,7 +71,7 @@ void UNKNOWN_OPTION_MESSAGE(std::string_view opt) {
 	fmt::print(fg(COLOR::antique_white), " [parsing] unknown option '{}'\n", opt);
 };
 
-std::unordered_map<const char*, COLOR> map_str_color(){
+std::unordered_map<std::string, COLOR> map_str_color(){
 	return {
 		{"BLUE", BLUE},
 		{"RED", RED},

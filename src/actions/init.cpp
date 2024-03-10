@@ -118,7 +118,7 @@ static int check_profile_info(strview profile_name, strview profile_source, Prof
   if (profile_name.empty() ||
       db::profiles::exists(profile_name)) {
     do {
-      PROMPT("Desired profile name: ");
+      PROMPT("Desired profile name");
       std::getline(std::cin, profile.name);
       if (db::profiles::exists(profile.name)) {
         PWARN("profile '{}' already exists\n", profile.name);
@@ -135,7 +135,7 @@ static int check_profile_info(strview profile_name, strview profile_source, Prof
 
   if (profile_source.empty() || !IS_VALID_PATH(profile_source)) {
     do {
-      PROMPT("Profile source dir (absolute path): ");
+      PROMPT("Profile source dir (absolute path)");
       std::getline(std::cin, profile.source);
     } while (!IS_VALID_PATH(profile.source));
   } else {
