@@ -2,7 +2,7 @@
 
 using namespace gpkih;
 
-int parsers::init(std::vector<std::string> opts) {
+int parsers::init(std::vector<std::string> &opts) {
   opts.push_back("\0");
   strview profile_name, profile_source;
   for (int i = 0; i < opts.size() - 1; ++i) {

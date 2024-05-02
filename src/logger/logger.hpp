@@ -1,7 +1,7 @@
 #pragma once
 #include "../printing/printing.hpp"
-#include <future> // std::vector<std::future<void>> tasks
-#include <queue> // 
+#include <future>  // std::vector<std::future<void>> tasks
+#include <queue>   // 
 #include <fstream> // std::ifstream, std::ofstream
 #include <sstream> // std::stringstream, getline()
 
@@ -55,7 +55,7 @@ namespace gpkih
 		{L_ERROR, "error"},
 	};
 
-	static inline std::string format_msg(Level& level, const FormatField& fields, std::string& msg) {
+	static inline std::string format_msg(Level& level, const FormatField& fields, std::string&& msg) {
 		std::stringstream log;
 		// log syntax - [date] [level] [msg]
 		fields& FormatField::msg_time&& log << std::move(fmt::format("[{:%d %h %Y @ %H:%M}] ", std::chrono::system_clock::now()));
@@ -67,17 +67,18 @@ namespace gpkih
 	class Logger
 	{
 	private:
-		std::filesystem::path basedir;
+		static inline std::filesystem::path basedir = "";
+		
 		std::filesystem::path logpath;
 		std::filesystem::path linefile;
 
-		size_t current_lines;
-		size_t max_size;
+		size_t current_lines = 0;
+		size_t max_size = 0;
+
 		FormatField included_format_fields;
 		Level included_levels;
 
 		std::vector<std::future<void>> log_tasks{};
-		static inline Logger* program_logger;
 
 		//inline void __add_log(Logger& obj, Level level, std::string&& msg) {
 		//	auto formatted = format_msg(level, obj.ffields(), msg);
@@ -85,7 +86,6 @@ namespace gpkih
 		//};
 
 		template <typename ...T> inline void __add_log(Level level, const char *fmt, T&& ...args) {
-			
 			if(this->max_size <= std::filesystem::file_size(logpath)){
 				PWARN("log reached max size {} bytes\n", max_size);
 				// TODO - free old lines to keep adding
@@ -108,20 +108,21 @@ namespace gpkih
 		const FormatField& ffields();
 
 		~Logger();
-		Logger(std::string &&logpath);
+		// @brief constructs new Logger instance
+		// @param logpath sets the name of the logging file
+		Logger(std::string &&filename);
 
-		// Program logger
-		static inline const bool initialize(std::string &basedir) {
-			static Logger pl = Logger(std::string(basedir));
-			Logger::program_logger = &pl;
-			return Logger::program_logger != nullptr;
-		};
+		// @brief sets Logger::basedir - directory where every logger will store its' logs
+		// @param basedir path to set
+		static void set_basedir(std::string &&basedir);
 
-		static inline Logger* const get() {
-			return Logger::program_logger;
-		};
+		// @brief returns a copy of Logger::basedir
+		static std::string get_basedir();
 
-		// Instance methods
+		// @brief adds a log to file
+		// @param level Level enum indicating log level (L_INFO,L_WARN,L_ERROR)
+		// @param fmt fmt string that will be formatted
+		// @param ...args arguments to use on `fmt` to format the string
 		template<typename ...T>
 		inline void add(const Level level, const char* fmt, T && ...args)
 		{
@@ -139,8 +140,9 @@ namespace gpkih
 				__add_log(L_ERROR, "invalid Level type on call to add");
 				break;
 			}
-		}
-	
+		}	
 	}; // class Logger
-
 } // namespace gpkih
+
+extern gpkih::Logger *gpkih_logger;
+#define ADD_LOG gpkih_logger->add

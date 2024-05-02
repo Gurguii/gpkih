@@ -4,96 +4,110 @@
 enum class PRINT_MODE {
   table,
 #define PRINT_TABLE PRINT_MODE::table
-  csv
+  csv,
 #define PRINT_CSV PRINT_MODE::csv
 };
 
+static FormatInfo ffinfo{
+  .key_val_delim = "=",
+  .delim_styling = fg(WHITE) | EMPHASIS::bold,
+  .delim_allign = C_ALLIGN,
+  .delim_width = 3,
+  
+  .header_styling = fg(fmt::terminal_color::bright_blue) | bg(fmt::terminal_color::bright_white) | EMPHASIS::bold,
+  .header_allign = C_ALLIGN,
+  .header_width = 40,
+  
+  .key_styling = fg(WHITE) | EMPHASIS::bold,
+  .key_allign = L_ALLIGN,
+  .key_width = 30,
+  
+  .val_styling = fg(LGREEN) | EMPHASIS::bold,
+  .val_allign = L_ALLIGN,
+  .val_width = 30,
+};
+
+static Formatter fmter(ffinfo);
+
 using namespace gpkih;
 
-void print_profile(str profile, PROFILE_FIELDS fields, COLOR color = CYAN) {
-  sstream label;
-  auto &ref = db::profiles::existing_profiles;
-  fields &P_NAME &&label << S_PLABEL("Profile name: ")
-                         << S_PLABEL_V(ref[profile].name) << "\n";
-  fields &P_SRC &&label << S_PLABEL("Profile source: ")
-                        << S_PLABEL_V(ref[profile].source) << "\n";
-  PRINT(label.str(), S_NONE);
-}
+int actions::list(std::string_view profile_name, PROFILE_FIELDS pfields, ENTITY_FIELDS efields) {
+  // Check if existing_profiles is empty
+  auto existing_profiles = db::profiles::get();
 
-void print_entity(Entity entity, ENTITY_FIELDS &fields) {
-  sstream label;
-  auto &subj = entity.subject;
-  // Populate label and print
-  label << fmt::format(fg(WHITE), "------------------------------------")
-        << "\n";
-  fields &E_COMMON &&label << S_ELABEL("Common name: ") << S_ELABEL_V(subj.cn)
-                           << "\n";
-  fields &E_TYPE &&label << S_ELABEL("Type: ")
-                         << S_ELABEL_V(to_str(entity.type)) << "\n";
-  fields &E_SERIAL &&label << S_ELABEL("Serial: ") << S_ELABEL_V(entity.serial)
-                           << "\n";
-  fields &E_COUNTRY &&label << S_ELABEL("Country: ") << S_ELABEL_V(subj.country)
-                            << "\n";
-  fields &E_ORG &&label << S_ELABEL("Organisation: ")
-                        << S_ELABEL_V(subj.organisation) << "\n";
-  fields &E_LOCATION &&label << S_ELABEL("Location: ")
-                             << S_ELABEL_V(subj.location) << "\n";
-  fields &E_MAIL &&label << S_ELABEL("Mail: ") << S_ELABEL_V(subj.email)
-                         << "\n";
-  // label << fmt::format(  fg(WHITE),"------------------------------------") <<
-  // "\n\n";
-  PRINT(label.str(), S_NONE);
-}
-
-void print_profile_entities(str profile, ENTITY_FIELDS &fields) {
-  std::vector<Entity> ebuff;
-  db::profiles::get_entities(profile, ebuff);
-  for (const Entity &entity : ebuff) {
-    print_entity(entity, fields);
-  }
-}
-
-int actions::list(std::vector<str> &profiles, std::vector<str> &entities, PROFILE_FIELDS pfields, ENTITY_FIELDS efields) {
-  if (db::profiles::existing_profiles.empty()) {
-    PINFO("No profiles added yet\n");
-    return -1;
-  }
-  if (profiles.empty()) {
-    if (entities.empty()) {
-      /* OPTION 1 */
-      // all profiles
-      for (auto p : db::profiles::existing_profiles) {
-        print_profile(p.first, pfields);
-        fmt::print("{}",EOL);
-      }
-      return GPKIH_OK;
-    } else {
-      /* OPTION 2 */
-      // all profiles certain entities
-      for (auto p : db::profiles::existing_profiles) {
-        std::vector<Entity> entities;
-        print_profile(p.first, pfields);
-        if (db::profiles::get_entities(p.first, entities)) {
-          return -1;
-        };
-        for (auto &e : entities) {
-          print_entity(e, efields);
-        }
-      }
-      return GPKIH_OK;
+  if (profile_name.empty()) {
+    /* OPTION 1 - print all profiles */
+    /* id:4 name:6 source:8 creation_date:20 last_modification:20 ca:6 server_certificates:4 client_certificates:4 */
+    
+    std::vector<int> hw{4,6}; // name - source header widths - the rest is size-fixed
+    for(const auto &kv : *existing_profiles){
+      const Profile &p = kv.second;
+      hw[0] = std::max(hw[0],static_cast<int>(p.namelen));
+      hw[1] = std::max(hw[1],static_cast<int>(p.sourcelen));
     }
-  }
-  if (entities.empty()) {
-    /* OPTION 3 */
-    // certain profiles all entities
-    for (auto p : profiles) {
-      print_profile(p, pfields);
-      print_profile_entities(p, efields);
+
+    std::stringstream ss{};
+    ss << "{:^4}" << "{:^" << hw[0] << "}" << "{:^" << hw[1] << "}" << "{:^20}{:^20}{:^12}{:^21}{:^21}";
+
+    // Print headers
+    fmt::print(S_SUCCESS,ss.str(),"id","name","source","creation_date","last_modification","ca_created","server_certificates","client_certificates");
+    fmt::print("\n");
+
+    for(const auto &kv : *existing_profiles){
+      const Profile &p = kv.second;
+      fmt::print(ss.str(),p.id,p.name,p.source,fmt::format("{:%d-%m-%Y @ %H:%M}",p.creation_date),fmt::format("{:%d-%m-%Y @ %H:%M}",p.last_modification),(p.ca_created ? "yes" : "no"),p.sv_count,p.cl_count);
+      fmt::print("\n");
     }
+
     return GPKIH_OK;
-  } else {
-    /* OPTION 4 */
-    // certain profiles certain entities
+  }else{
+    /* OPTION 2 - print profile entities */
+    //fmter.print_headers("serial","common_name","type","country","state","organisation","email","key_path","csr_path","crt_path","creation_date");
+    EntityManager eman(profile_name);
+    
+    if(eman.size() == 0){
+      PINFO("profile '{}' has no entities yet\n", profile_name);
+      return GPKIH_OK;
+    }
+    auto entity_list = *eman.retrieve();
+    //fmter.print_headers("serial","common_name","type","country","state","organisation","email","key","csr","crt");
+    // serial = width 10
+    // type = width 10
+    // country = width 5
+    // creation_date = 15
+    // 02/02/2023 -> 10 +2 = 12
+    int cnlen = 13,countrylen = 9,stlen = 7, loclen = 10, orglen = 14,maillen = 7;
+    // keylen = 5,csrlen = 5,crtlen = 5;
+    for(const auto &kv : entity_list){
+      const Entity &e = kv.second;
+      const Subject &s = e.subject;
+      cnlen = std::max(cnlen, static_cast<int>(s.cnlen) + 2 );
+      stlen = std::max(stlen, static_cast<int>(s.statelen) + 2);
+      orglen = std::max(orglen, static_cast<int>(s.organisationlen) + 2);
+      maillen = std::max(maillen, static_cast<int>(s.emaillen) + 2);
+      //keylen = std::max(keylen, static_cast<int>(e.key_path_len) + 2);
+      //csrlen = std::max(csrlen, static_cast<int>(e.csr_path_len) + 2);
+      //crtlen = std::max(crtlen, static_cast<int>(e.crt_path_len) + 2);
+    }
+    std::stringstream ss{};
+    // serial, cn, creation_date, type, country ...
+    ss << "{:^8}" << "{:^" << cnlen << "}" << "{:^20}" << "{:^6}" << "{:^9}" << "{:^" << stlen << "}" << "{:^" << loclen << "}" << "{:^" << orglen << "}" << "{:^" << maillen << "}";
+
+    // TODO - think about this:
+    // if ( add_paths == true) { ss << "{:^" << keylen << "}" << "{:^" << csrlen <<"}" << "{:^" << crtlen << "}"; }
+    
+    /* Print headers with proper column width */
+    fmt::print(S_SUCCESS, ss.str(), "serial","common_name","creation_date","type","country","state","location","organisation","email","key","csr","crt");
+    fmt::print("\n");
+
+    /* Start printing entities per line */
+    for(const auto &kv : entity_list){
+      const Entity &e = kv.second;
+      const Subject &s = e.subject;
+      fmt::print(ss.str(), e.serial, s.cn, fmt::format("{:%d-%m-%Y @ %H:%M}",e.creation_date), str_conversion(e.type), s.country, s.state, s.location, s.organisation, s.email, e.key_path, e.csr_path, e.crt_path);
+      fmt::print("\n");
+    }
   }
+  // certain profiles all entities
   return GPKIH_OK;
 }

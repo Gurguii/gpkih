@@ -1,11 +1,13 @@
 #include "help.hpp"
 using namespace gpkih;
 void help::list::usage() {
-  fmt::print(R"(
-== list ==
+  fmt::print(R"(== list ==
 
 [ syntax ]
   ./gpki list [profile/s] [subopts]
+
+note: profile name/s can be omitted, in that case 
+all profiles will be assumed
 
 [ subopts ]
   -cn <common_name> : list entity with given common name, if no value given all entities will be printed 
@@ -18,16 +20,18 @@ void help::list::usage() {
 
 [ entity fields ]
   - Subject -
-  cn:  subject common name
-  country: subject country
-  state: subject state
-  location: subject location
-  org: subject org
-  mail: subject email
+  cn: common name
+  country: country
+  state: state
+  location: location
+  org: org
+  mail: email
+  
   - Paths -
   key: path to key 
-  req: path to request (csr)
+  req: path to certificate request
   crt: path to certificate
+
   - Other -
   type: the type of entity, ca|client|server
 )");

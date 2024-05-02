@@ -2,7 +2,7 @@
 #include <sstream>
 using namespace gpkih;
 
-int parsers::remove(std::vector<std::string> opts) {
+int parsers::remove(std::vector<std::string> &opts) {
   /* Parse subopts */
   if (opts.empty()) {
     PERROR("profile name or '-all' must be given\n");
@@ -13,6 +13,7 @@ int parsers::remove(std::vector<std::string> opts) {
   std::vector<str> profiles_to_remove{};
   if (iter != opts.end()) {
     // There is a -all param in the arguments
+    PDEBUG(1,"removing all profiles");
     return actions::remove(profiles_to_remove,1);
   }
   

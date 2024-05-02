@@ -1,4 +1,4 @@
-﻿#pragma once
+#pragma once
 #include <fmt/chrono.h>
 #include <fmt/color.h>
 #include <fmt/format.h>
@@ -6,11 +6,21 @@
 #include <string_view>
 #include <unordered_map>
 
-static inline bool ENABLE_DEBUG_MESSAGES = false;
+#include <iostream>
+
+extern bool ENABLE_DEBUG_MESSAGES;
+extern int DEBUG_LEVEL;
 
 using COLOR = fmt::color;
 using STYLE = fmt::text_style;
 using EMPHASIS = fmt::emphasis;
+using TCOLOR = fmt::terminal_color;
+
+constexpr TCOLOR TBLUE = TCOLOR::blue;
+constexpr TCOLOR TRED = TCOLOR::red;
+constexpr TCOLOR TGREEN = TCOLOR::green;
+constexpr TCOLOR TYELLOW = TCOLOR::yellow;
+constexpr TCOLOR TWHITE = TCOLOR::white;
 
 constexpr COLOR BLUE = COLOR::blue;
 constexpr COLOR RED = COLOR::red;
@@ -52,9 +62,12 @@ extern std::string S_PLABEL_V(std::string_view st);
 extern void PRINT(std::string_view msg, COLOR color);
 extern void PRINT(std::string_view msg, STYLE style = S_NONE);
 
+template <typename T> void foo(){}
+extern template void foo<int>();
+
 /* success */
 template <typename ...T> static inline void PSUCCESS(std::string_view fmt, T&& ...args){
-	fmt::print(S_SUCCESS, "[success] {}", fmt::format(fmt, std::forward<T>(args)...));
+	fmt::print("{} {}", fmt::format(S_SUCCESS, "[success]"), fmt::format(fmt, std::forward<T>(args)...));
 };
 
 /* error */
@@ -78,15 +91,15 @@ template <typename ...T> static inline void PHINT(std::string_view fmt, T&& ...a
 };
 
 /* debug */
-template <typename ...T> static inline void PDEBUG(std::string_view fmt, T&& ...args) {
-	if(ENABLE_DEBUG_MESSAGES){
+template <typename ...T> static inline void PDEBUG(int dlevel, std::string_view fmt, T&& ...args) {
+	if(ENABLE_DEBUG_MESSAGES && (dlevel <= DEBUG_LEVEL)){
 		fmt::print("-- {}\n", fmt::format(fmt, std::forward<T>(args)...));
 	}
 }
 
 /* prompt */
-extern void PROMPT(std::string_view msg, std::string_view ans, COLOR icon_color = LGREEN);
-extern void PROMPT(std::string_view msg, COLOR icon_color = LGREEN);
+extern std::string PROMPT(std::string_view msg, std::string_view ans, bool lower_input = false, COLOR icon_color = LGREEN);
+extern std::string PROMPT(std::string_view msg, bool lower_input = false, COLOR icon_color = LGREEN);
 
 // Message to print when starting
 extern void PROGRAMSTARTING();

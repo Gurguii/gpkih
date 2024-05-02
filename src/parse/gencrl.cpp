@@ -1,7 +1,7 @@
 #include "parser.hpp"
 
 using namespace gpkih;
-int parsers::gencrl(std::vector<std::string> opts) {
+int parsers::gencrl(std::vector<std::string> &opts) {
   // ./gpki gencrl <profile> [subopts]
   if (opts.empty()) {
     PERROR("profile must be given\n");

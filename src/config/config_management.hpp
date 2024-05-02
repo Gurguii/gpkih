@@ -1,5 +1,7 @@
 #pragma once
+#include "../gpki.hpp"
 #include "../structs.hpp" // struct Profile | struct Entity | struct Subject
+#include "../memmgmt.hpp"
 
 namespace gpkih {
 using ConfigMap = std::unordered_map<str, std::unordered_map<str, str>>;
@@ -22,12 +24,10 @@ namespace Config
 {
   extern ConfigMap _conf_gpkih;
 
-  extern int load(strview filepath);
+  extern int load(std::string_view filepath);
 
-  extern strview get(strview section, strview key);
-  extern void set(strview section, strview key, strview val);
-
-  extern void print();
+  extern std::string_view get(std::string_view section, std::string_view key);
+  extern void set(std::string_view section, std::string_view key, std::string_view val);
 
   // to avoid std::find() duplications
   extern bool section_exists(const char * section);
@@ -36,7 +36,7 @@ namespace Config
 }; // namespace Config
 
 
-// Class to manage profile specific configuration - pki.conf vpn.conf
+// @brief Class to manage profile specific configuration - pki.conf vpn.conf
 class ProfileConfig
 {
 private:
@@ -57,8 +57,8 @@ private:
       {"crt", {}},    // * * certificate
       {"csr", {}},    // * * certificate requests
       {"crl", {}},    // * * certificate revocation list
-      {"subject", {}} // * * subject defaults (country, state, location,
-                      // organisation, common name, email)
+      {"subject", {}},// * * subject defaults (country, state, location, organisation, email)
+      {"output",{}},  // certain behaviour when building certificates (create_inline, create_pfx)  
   }
 ;    
 public:
@@ -67,24 +67,27 @@ public:
 
   // Set to true by ProfileConfig() constructor if files are sucesfully loaded
   bool succesfully_loaded = false;
+
   // Constructor
   ProfileConfig(Profile &profile, CONFIG_FILE file_to_load = CONFIG_ALL);
   Subject default_subject();
 
+  // @brief Dumps common vpn config + client|server specific configuration (depending on ENTITY_TYPE) to outpath.
+  // @return true|false indicating dumping success|failure
+  // @note: this function DOES NOT add any inlined certificate/key to the outpath
   bool dump_vpn_conf(fs::path &outpath, ENTITY_TYPE type);
-  bool dump(strview outpath, CONFIG_FILE files);
+  
+  bool dump(std::string_view outpath, CONFIG_FILE files);
 
   ConfigMap* const get(CONFIG_FILE file);
   ConfigMap& _get(CONFIG_FILE file);
 
-  void set(CONFIG_FILE file, strview section, strview key, strview val);
+  void set(CONFIG_FILE file, std::string_view section, std::string_view key, std::string_view val);
   
-  bool exists(strview key, CONFIG_FILE files);
+  bool exists(std::string_view key, CONFIG_FILE files);
 
-  // Sets the contents on config files to the ones
-  // in the ConfigMap mapped values, effectively updating
-  // the configuration CONFIG_FILE in case the map got edited
-  // after being loaded
+  // @return true:success false:failure
+  // @brief Synchronizes files' contents to values in ConfigMap, effectively updating the values
   bool sync(CONFIG_FILE files);
 }; // class ProfileConfig
 

@@ -1,26 +1,44 @@
 #pragma once
 #include "gpki.hpp" // typename aliases + fmtlib
 #include <unordered_map>
+#include <ctime>
+#include "utils/utils.hpp"
+#include <chrono>
 
 namespace gpkih {
 enum class PROFILE_FIELDS : uint16_t {
-  all = 6,
+  all = 511,
 #define P_ALL PROFILE_FIELDS::all
   none = 0,
 #define P_NONE PROFILE_FIELDS::none
   name = 2,
 #define P_NAME PROFILE_FIELDS::name
-  source = 4
+  source = 4,
 #define P_SRC PROFILE_FIELDS::source
+  creation_date = 8,
+#define P_CREATION_DATE PROFILE_FIELDS::creation_date
+  last_modification = 16,
+#define P_LAST_MODIFICATION PROFILE_FIELDS::last_modification
+  id = 32,
+#define P_ID PROFILE_FIELDS::id
+  ca_created = 64,
+#define P_CA_CREATED PROFILE_FIELDS::ca_created
+  sv_count = 128,
+#define P_SV_COUNT PROFILE_FIELDS::sv_count
+  cl_count = 256,
+#define P_CL_COUNT PROFILE_FIELDS::cl_count 
 };
+
 /* PROFILE OPERATORS */
 static PROFILE_FIELDS operator|(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
-  return static_cast<PROFILE_FIELDS>((ui16)lo | (ui16)ro);
+  return static_cast<PROFILE_FIELDS>((uint16_t)lo | (uint16_t)ro);
 };
+
 static bool operator&(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
-  return static_cast<bool>((ui16)lo & (ui16)ro);
+  return static_cast<bool>((uint16_t)lo & (uint16_t)ro);
 }
-/* PROFILE STRING -> PROFILE_FIELD MAP*/
+
+/* PROFILE STRING -> PROFILE_FIELD MAP */
 static inline std::unordered_map<std::string, PROFILE_FIELDS>
 profile_fields_map() {
   return {
@@ -28,6 +46,7 @@ profile_fields_map() {
       {"source", PROFILE_FIELDS::source},
   };
 }
+
 enum class ENTITY_TYPE {
   none = 0,
 #define ET_NONE ENTITY_TYPE::none
@@ -38,17 +57,18 @@ enum class ENTITY_TYPE {
   server = 8,
 #define ET_SV ENTITY_TYPE::server
 };
-static inline std::unordered_map<str, ENTITY_TYPE> entity_type_map{
+
+static inline std::unordered_map<std::string, ENTITY_TYPE> entity_type_map{
     {"ca", ET_CA}, {"server", ET_SV}, {"client", ET_CL}, {"sv",ET_SV}, {"cl",ET_CL}};
-static inline int operator&(ENTITY_TYPE lo, ENTITY_TYPE ro) { return (ui16)lo & (ui16)ro; }
+static inline int operator&(ENTITY_TYPE lo, ENTITY_TYPE ro) { return (uint16_t)lo & (uint16_t)ro; }
 
 enum class ENTITY_FIELDS : uint16_t {
   all = 8191,
 #define E_ALL ENTITY_FIELDS::all
   none = 0,
 #define E_NONE ENTITY_FIELDS::none
-  profile = 2,
-#define E_PROFILE ENTITY_FIELDS::profile
+  creation_date = 2,
+#define E_CREATION_DATE ENTITY_FIELDS::creation_date
   subject_cn = 4,
 #define E_COMMON ENTITY_FIELDS::subject_cn
   type = 8,
@@ -71,19 +91,22 @@ enum class ENTITY_FIELDS : uint16_t {
 #define E_REQPATH ENTITY_FIELDS::req_path
   cert_path = 4096,
 #define E_CRTPATH ENTITY_FIELDS::cert_path
+
 };
+
 /* ENTITY OPERATORS */
 static ENTITY_FIELDS operator|(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
-  return static_cast<ENTITY_FIELDS>(static_cast<ui16>(lo) |
-                                    static_cast<ui16>(ro));
+  return static_cast<ENTITY_FIELDS>(static_cast<uint16_t>(lo) |
+                                    static_cast<uint16_t>(ro));
 }
 static bool operator&(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
-  return static_cast<ui16>(lo) & static_cast<ui16>(ro);
+  return static_cast<uint16_t>(lo) & static_cast<uint16_t>(ro);
 }
+
 /* ENTITY STRING -> ENTITY_FIELD MAP*/
 static inline std::unordered_map<std::string, ENTITY_FIELDS>
 entity_fields_map() {
-  return {{"profile", ENTITY_FIELDS::profile},
+  return {{"date", E_CREATION_DATE},
           {"cn", ENTITY_FIELDS::subject_cn},
           {"type", ENTITY_FIELDS::type},
           {"serial", ENTITY_FIELDS::serial},
@@ -97,90 +120,150 @@ entity_fields_map() {
           {"crt", ENTITY_FIELDS::cert_path}};
 }
 
-struct Profile {
-  str name;
-  str source;
-  ui8 ca_created = 0;
-  ui16 sv_count = 0;
-  ui16 cl_count = 0;
-
-  inline str gopenssl() {
-    return fmt::format("{}{}{}", source, SLASH, "gopenssl.conf");
-  }
-  inline str dir_crl() {
-    return fmt::format("{}{}pki{}crl{}", source, SLASH, SLASH, SLASH);
-  }
-  inline str dir_crt(){
-    return fmt::format("{}{}pki{}certs{}",source, SLASH, SLASH, SLASH);
-  }
-  inline str dir_key(){
-    return fmt::format("{}{}pki{}keys{}", source, SLASH, SLASH, SLASH);
-  }
-  inline str dir_req(){
-    return fmt::format("{}{}pki{}reqs{}", source, SLASH, SLASH, SLASH);
-  }
-  inline str csv_entry() {
-    return fmt::format("{},{},{},{},{}", name, source, ca_created, sv_count,
-                       cl_count);
-  }
-  inline str ca_crt() {
-    return fmt::format("{}{}pki{}ca{}crt", source, SLASH, SLASH, SLASH);
-  }
-  inline str ca_key() {
-    return fmt::format("{}{}pki{}ca{}key", source, SLASH, SLASH, SLASH);
-  }
-
-};
-
-
-static inline str str_conversion(PROFILE_FIELDS field) {
+static inline std::string str_conversion(PROFILE_FIELDS field) {
   return (field & P_NAME ? "name" : "source");
 }
 
-static inline str str_conversion(ENTITY_TYPE type) {
+static inline std::string str_conversion(ENTITY_TYPE type) {
   return (type & ET_CA
               ? "ca"
               : (type & ET_SV ? "server" : (type & ET_CL ? "client" : "none")));
 };
 
-template <typename T> str to_str(T enumclass) {
+template <typename T> std::string to_str(T enumclass) {
   return str_conversion(enumclass);
+};
+
+struct Profile {
+  uint64_t id;
+  
+  char *name = NULL;
+  uint8_t namelen;
+
+  char *source = NULL;
+  uint8_t sourcelen;
+
+  std::chrono::time_point<std::chrono::system_clock> creation_date = std::chrono::system_clock::now();
+  std::chrono::time_point<std::chrono::system_clock> last_modification;
+
+  uint8_t ca_created = 0;
+  uint16_t sv_count = 0;
+  uint16_t cl_count = 0;
 };
 
 // #define SUBJECT_TEMPLATE "/C=%s/ST=%s/L=%s/O=%s/CN=%s/emailAddress=%s"
 struct Subject {
-  str country;
-  str state;
-  str location;
-  str organisation;
-  str cn;
-  str email;
-  inline str oneliner() {
-    str _subj;
-    if(!country.empty()){_subj+="/C="+country;};
-    if(!state.empty()){_subj+="/ST="+state;};
-    if(!location.empty()){_subj+="/L="+location;};
-    if(!organisation.empty()){_subj+="/O="+organisation;};
-    if(!cn.empty()){_subj+="/CN="+cn;};
-    if(!email.empty()){_subj+="/emailAddress="+email;};
-    return std::move(_subj);
-  }
-  inline void print(){
-    fmt::print(fg(LGREEN), "common name: {}\ncountry: {}\nstate: {}\nlocation: {}\norganisation: {}\nemail: {}\n",cn,country,state,location,organisation,email);
-  }
+  char country[3]{0};
+
+  char *state = NULL;
+  uint8_t statelen = 0;
+
+  char *location = NULL;
+  uint8_t locationlen = 0; 
+
+  char *organisation = NULL;
+  uint8_t organisationlen = 0;
+  
+  char *cn = NULL;
+  uint8_t cnlen = 0;
+  
+  char *email = NULL;
+  uint8_t emaillen = 0;
 };
+
 struct Entity {
-  Subject subject;
-  ENTITY_TYPE type; // ca-sv-cl
-  str serial;
-  str key_path;
-  str csr_path;
-  str crt_path;
-  inline str csv_entry() {
-    return subject.cn + "," + to_str(type) + "," + serial +
-           "," + subject.country + "," + subject.state + "," +
-           subject.location + "," + subject.organisation + "," + subject.email + "," + key_path + "," + csr_path + "," + crt_path + ",";
-  };
+  Subject subject{};
+  
+  ENTITY_TYPE type = ENTITY_TYPE::none; // ca-sv-cl
+  
+  size_t serial = 0;
+
+  std::chrono::time_point<std::chrono::system_clock> creation_date = std::chrono::system_clock::now();
+  
+  char *key_path = NULL;
+  uint8_t key_path_len = 0;
+
+  char *csr_path = NULL;
+  uint8_t csr_path_len = 0;
+
+  char *crt_path = NULL;
+  uint8_t crt_path_len = 0;
 };
 
 }; // namespace gpkih
+
+
+namespace gpkih::profile
+{
+  static inline std::string ca_key(Profile& ref) {
+    return fmt::format("{}{}pki{}ca{}key",ref.source, SLASH, SLASH, SLASH);
+  }
+  static inline fs::path ca_key_fs(Profile& ref) {
+    fs::path p{ref.source};
+    p/"pki"/"ca"/"key";
+    return p;
+  }
+
+  static inline std::string ca_crt(Profile& ref) {
+      return fmt::format("{}{}pki{}ca{}crt",ref.source, SLASH, SLASH, SLASH);
+  }
+  
+  static inline fs::path ca_crt_fs(Profile& ref) {
+    fs::path p(ref.source);
+    p/"pki"/"ca"/"crt";
+    return p;
+  }
+
+  static inline std::string gopenssl(Profile &ref){
+    return fmt::format("{}{}{}", ref.source, SLASH, "gopenssl.conf");
+  }
+
+  static inline std::string dir_crl(Profile &ref){
+    return fmt::format("{}{}pki{}crl{}", ref.source, SLASH, SLASH, SLASH);
+  }
+
+  static inline std::string dir_key(Profile &ref){
+    return fmt::format("{}{}pki{}keys{}", ref.source, SLASH, SLASH, SLASH);
+  }
+
+  static inline fs::path dir_key_fs(Profile& ref) {
+    fs::path p(ref.source);
+    p/"pki"/"keys";
+    return p;
+  }
+
+  static inline std::string dir_req(Profile &ref){
+    return fmt::format("{}{}pki{}reqs{}", ref.source, SLASH, SLASH, SLASH);
+  }
+  static inline fs::path dir_req_fs(Profile& ref) {
+    fs::path p(ref.source);
+    p/"pki"/"reqs";
+    return p;
+  }
+
+  static inline std::string dir_crt(Profile& ref) {
+    return fmt::format("{}{}pki{}certs{}", ref.source, SLASH, SLASH, SLASH);
+  }
+  static inline fs::path dir_crt_fs(Profile &ref){
+    fs::path p(ref.source);
+    p/"pki"/"certs";
+    return p;
+  }
+} // namespace gpkih::profile
+
+namespace gpkih::subject
+{
+  static inline std::string openssl_oneliner(Subject &ref){
+    std::string _subj;
+    
+    if (len(ref.country) != 0){_subj += std::move(fmt::format("/C={}",ref.country)); };
+    if (ref.state != NULL){_subj += std::move(fmt::format("/ST={}",ref.state)); };
+    if (ref.location != NULL){_subj += std::move(fmt::format("/L={}", ref.location));  };
+    if (ref.organisation != NULL){_subj += std::move(fmt::format("/O={}",ref.organisation));};
+    if (ref.cn != NULL){_subj += std::move(fmt::format("/CN={}",ref.cn));};
+    if (ref.email != NULL){_subj += std::move(fmt::format("/emailAddress={}",ref.email));};
+
+    PDEBUG(3,"openssl oneliner ['{}']", _subj);
+    return std::move(_subj);
+  }
+} // namespace gpkih::subject

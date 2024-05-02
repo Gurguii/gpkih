@@ -2,7 +2,7 @@
 
 using namespace gpkih;
 
-int parsers::set(std::vector<str> opts)
+int parsers::set(std::vector<std::string> &opts)
 {
 	// Check profile
 	if (opts.empty()) {

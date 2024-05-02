@@ -7,15 +7,15 @@
 
 using namespace gpkih;
 
-
 static void print_scope_change(strview scope, const FormatInfo &ffinfo)
 {
 	sstream ss;
 	ss << "{:^" << (ffinfo.header_width) << "}";
 
-	fmt::print(fg(fmt::terminal_color::yellow) | bg(fmt::terminal_color::bright_black) | EMPHASIS::bold, std::move(ss.str()), scope);	
+	fmt::print(fg(fmt::terminal_color::yellow) | bg(fmt::terminal_color::bright_black) | EMPHASIS::bold, fmt::format("{}{}{}", "{:^",ffinfo.header_width,"}"), scope);
 	fmt::print("\n");
 }
+
 // get <profile> <config>.<section>.<prop>
 // if no profile given - gpkih is assumed
 // if @ is used, the context is changed until
@@ -241,7 +241,7 @@ static void __handle_gpkih_full_printing()
 	}
 }
 
-int parsers::get(std::vector<str> opts)
+int parsers::get(std::vector<str> &opts)
 {
 	if (opts.empty()) {
 		// print gpkih general configuration

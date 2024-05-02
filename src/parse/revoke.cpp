@@ -2,7 +2,7 @@
 #include <sstream>
 // SYNTAX ./gpki revoke <profile> <cn1,cn2 ... cnX> [subopts]
 using namespace gpkih;
-int parsers::revoke(std::vector<std::string> opts) {
+int parsers::revoke(std::vector<std::string> &opts) {
   if (opts.size() == 0) {
     PERROR("profile name must be given\n");
     PHINT("try gpki help revoke\n");
@@ -37,7 +37,7 @@ int parsers::revoke(std::vector<std::string> opts) {
       while(getline(ss,cn,',')){
         common_names_to_revoke.emplace_back(cn);
       }  
-    }else if(opt == "-s" || opt == "-serial"){
+    }else if(opt == "-s" || opt == "--serial"){
       str serial;
       sstream ss(opts[++i]);
       while(getline(ss,serial,',')){

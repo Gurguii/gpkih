@@ -1,13 +1,14 @@
 
 #include "config_management.hpp"
+#include <cstring>
 #include <sstream>
 #include <fstream>
 #include <unordered_map>
 
 
 static inline std::string skip_chars = "#\n ";
-static inline char section_delim_open = '[';
-static inline char section_delim_close = ']';
+static inline constexpr char section_delim_open = '[';
+static inline constexpr char section_delim_close = ']';
 static std::string empty_chars = fmt::format("{}{} ", section_delim_open, section_delim_close);
 
 static inline void __clear_section_line(std::string &line){
@@ -28,11 +29,10 @@ static int load_file(fs::path path, ConfigMap &buff) {
     char first = line[0];
     if (first == section_delim_open) {
       // got a POSSIBLE section
-
       // remove section delimiters and spaces from line to 
       // have the section name only
       __clear_section_line(line);
-
+      
       // check that section is valid
       if (buff.find(line) == buff.end()) {
         PWARN("skipping unknown section '{}'\n", line);
@@ -79,27 +79,21 @@ ConfigMap Config::_conf_gpkih = {
   {"cli",{}},
 };
 
-int Config::load(strview filepath){ 
+int Config::load(std::string_view filepath){ 
   return load_file(filepath, _conf_gpkih); 
 } // Config::load()
 
-strview Config::get(strview section, strview key){
-  return _conf_gpkih[section.data()][key.data()]; 
+std::string_view Config::get(std::string_view section, std::string_view key){
+  if(_conf_gpkih.find(section.data()) != _conf_gpkih.end() && _conf_gpkih.at(section.data()).find(key.data()) != _conf_gpkih.at(section.data()).end()){
+    return _conf_gpkih[section.data()][key.data()];     
+  }else{
+    return "N/A";
+  }
 } // Config::get()
 
-void Config::set(strview section, strview key, strview val){
+void Config::set(std::string_view section, std::string_view key, std::string_view val){
       _conf_gpkih[section.data()][key.data()] =  val.data();
 } // Config::set()
-
-void Config::print(){
-  for (auto &kv : _conf_gpkih) 
-  {
-    fmt::print("== {} ==\n",kv.first);
-    for (auto &kvv : kv.second) {
-      fmt::print("{} {}\n",kvv.first, kvv.second);
-    }
-  }
-} // Config::print()
 
 bool Config::section_exists(const char *section){
   return _conf_gpkih.find(section) != _conf_gpkih.end();
@@ -127,60 +121,39 @@ bool Config::key_exists(const char *section, const char *key){
 // [end] namespace Config
 
 
-
-// [begin] class ProfileConfig
-
 ProfileConfig::ProfileConfig(Profile &profile, CONFIG_FILE files_to_load) {
   
-  if (files_to_load & CONFIG_PKI) {
-    // Load pki.conf
-    
+  /* Load pki.conf */
+  if (files_to_load & CONFIG_PKI) {  
     //auto path = std::move(fmt::format("{}{}{}", profile.source, SLASH, pki_conf_filename));
     fs::path path = profile.source;
     path /= pki_conf_filename; 
     succesfully_loaded = load_file(path, this->_conf_pki) ? false : true;
   }
 
+  /* Load openvpn.conf */
   if (files_to_load & CONFIG_VPN) {
-    // Load openvpn.conf
-    
     //auto path = std::move(fmt::format("{}{}{}", profile.source, SLASH, vpn_conf_filename));
     fs::path path = profile.source;
     path /= vpn_conf_filename;
     succesfully_loaded = load_file(path, this->_conf_vpn) ? false : true;
   }
+
 } // ProfileConfig::ProfileConfig()
 
-void ProfileConfig::print(CONFIG_FILE files)
-{
-    if (files & CONFIG_VPN) {
-        // print vpn config
-        fmt::print("== vpn config ==\n");
-        for (const auto& section : _conf_vpn) {
-            for (const auto &kv : section.second) {
-                fmt::print("{} -> {}\n", kv.first, kv.second);
-            }
-        }
-    }
-    if (files & CONFIG_PKI) {
-        // print pki config
-        fmt::print("== pki config ==\n");
-        for (const auto& section : _conf_pki) {
-            for (const auto& kv : section.second) {
-                fmt::print("{} -> {}\n", kv.first, kv.second);
-            }
-        }
-    }
-} // ProfileConfig::print()
-
 Subject ProfileConfig::default_subject() {
+  PDEBUG(1,"ProfileConfig::default_subject()");
+  
   Subject subj;
-  subj.country = _conf_pki["subject"]["country"];
-  subj.state = _conf_pki["subject"]["state"];
-  subj.location = _conf_pki["subject"]["location"];
-  subj.organisation = _conf_pki["subject"]["organisation"];
-  subj.cn = "";
-  subj.email = _conf_pki["subject"]["email"];
+
+  memcpy(subj.country,(_conf_pki["subject"]["country"]).data(),2);
+  CALLOCATE(subj.state,reinterpret_cast<size_t*>(&subj.statelen),_conf_pki["subject"]["state"]);
+  CALLOCATE(subj.location,reinterpret_cast<size_t*>(&subj.locationlen),_conf_pki["subject"]["location"]);
+  CALLOCATE(subj.organisation,reinterpret_cast<size_t*>(&subj.organisationlen),_conf_pki["subject"]["organisation"]);
+  CALLOCATE(subj.cn,reinterpret_cast<size_t*>(&subj.cnlen),_conf_pki["subject"]["cn"]);
+  CALLOCATE(subj.email,reinterpret_cast<size_t*>(&subj.emaillen),_conf_pki["subject"]["email"]);
+  PDEBUG(3,"returning default subject : [country={},state={},location={},organisation={},common_name={},email={}]", subj.country,subj.state,subj.location,subj.organisation,subj.cn,subj.email);
+  
   return subj;
 };
 
@@ -205,7 +178,7 @@ ConfigMap& ProfileConfig::_get(CONFIG_FILE file){
       return this->_conf_pki;
   }
 }
-void ProfileConfig::set(CONFIG_FILE file, strview section, strview key, strview val){
+void ProfileConfig::set(CONFIG_FILE file, std::string_view section, std::string_view key, std::string_view val){
   switch(file){
     case CONFIG_PKI:
       _conf_pki[section.data()][key.data()] = val;
@@ -218,7 +191,7 @@ void ProfileConfig::set(CONFIG_FILE file, strview section, strview key, strview 
   }
 }
 
-bool ProfileConfig::exists(strview key, CONFIG_FILE file) {
+bool ProfileConfig::exists(std::string_view key, CONFIG_FILE file) {
   auto ptr = get(file);
   if (ptr == nullptr) {
     return false;
@@ -232,9 +205,7 @@ bool ProfileConfig::exists(strview key, CONFIG_FILE file) {
   return conf.find(key.data()) != conf.end();
 }
 
-// Dumps common vpn config + client|server specific configuration
-// (depending on ENTITY_TYPE) to outpath.
-// note: this function DOES NOT add any inlined certificate/key to the outpath
+
 bool ProfileConfig::dump_vpn_conf(fs::path &outpath, ENTITY_TYPE type) {
   if (fs::exists(outpath)) {
     seterror("already existing file '{}'\n", outpath.string());

@@ -1,21 +1,22 @@
 #include "parser.hpp"
 #include "../help/help.hpp"
-#include "../experimental/cli.hpp"
+#include "../cli/cli.hpp"
 
 using namespace gpkih;
 
 // [!] parse() does not expect to receive program name in args
-int parsers::parse(int argc, const char **_args) {
-  if (argc == 0) {
+int parsers::parse(std::vector<std::string> &args) {
+  PDEBUG(1,"parsers::parse()");
+
+  if (args.size() == 0) {
     help::usage_brief();
     // TODO - add a gpkih cli mode where the call to gpkih 
     // can be omitted, something like 'virsh'
     return GPKIH_OK;
   }
-
-  std::vector<str> args(_args, _args + argc);
-
+  
   // Override global config options
+  size_t argc = args.size();
   for (int i = 0; i < argc; ++i) {
     strview op = args[i];
     if (op == "-y") {
@@ -28,7 +29,7 @@ int parsers::parse(int argc, const char **_args) {
       --argc;
     }
     else if (op == "--noprint") {
-      Config::set("behaviour", "print_generated_certificate", "no");
+      Config::set("behaviour","print_generated_certificate", "no");
       args.erase(args.begin() + i);
       --argc;
     }
@@ -65,5 +66,6 @@ int parsers::parse(int argc, const char **_args) {
   }
   
   args.erase(args.begin());
-  return ACTION_PARSERS[action](std::move(args));
+  
+  return ACTION_PARSERS[action](args);
 }

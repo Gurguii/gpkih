@@ -3,8 +3,7 @@
 using namespace gpkih;
 
 void help::remove::usage() {
-  fmt::print(R"(
-== remove ==
+  fmt::print(R"(== remove ==
 
 [ syntax ]
  ./gpki remove <profile> [subopts]

@@ -89,7 +89,7 @@ foreach($k in $exec.Keys){
 
 # run 'cmake ..' inside build directory
 $cmake_executable = $exec["cmake"]
-$cmake_command_args = ".."
+$cmake_command_args = "-DCMAKE_EXPORT_COMPILE_COMMANDS=1 .."
 
 #if($debug){
 #    $cmake_command_args += " -DDEBUG=ON"

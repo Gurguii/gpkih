@@ -31,4 +31,3 @@ void Formatter::print_keyval (std::string_view key, std::string_view val, bool n
 		fmt::print("\n");
 	}
 }
-

@@ -4,7 +4,8 @@ using namespace gpkih;
 
 void help::set::usage()
 {
-	fmt::print(R"(
+	fmt::print(R"(== set ==
+		
 [ syntax ]
   ./gpkih set <profile> <file>.<section>.<property>=<new_value>
 )");

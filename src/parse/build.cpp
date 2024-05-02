@@ -1,91 +1,129 @@
 #include "parser.hpp"
+#include <chrono>
+#include <cstring>
+#include <filesystem>
 #include <iostream>
 #include <fstream>
+#include <thread>
 
-static inline str badchars = "~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?¿\t\n\r";
+static inline std::string badchars = "~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?¿\t\n\r";
+static inline std::string mail_badchars = "~`!#$%^&*()-_=+[{]}\\|;:'\",<>/?¿\t\n\r";
 
 using namespace gpkih;
 
-// returns true | false indicating if the given 
-// buffer contains a badchar
-static bool has_badchar (str& buff) {
-    for (const char& c : buff) {
-        if (badchars.find(c) != -1) {
-            PWARN("found unaccepted char '{}' - please avoid using any of these '{}'\n", c, R"(~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?\t\n\r)");
-            return true;
-        }
-    }
-    return false;
+static inline size_t __get_and_set_prop(std::string &&prompt_msg, char *&default_val, char *&st, size_t* stlen, std::string &badcharlist = badchars, size_t max_st_len = 254) {
+  std::string input = PROMPT(prompt_msg);
+
+  if (input.empty()) {
+    CALLOCATE(st, stlen, default_val);
+    return 0;
+  }
+
+  if(REMOVE_BADCHAR(input, badcharlist)){
+    PWARN("badchars were removed\n");
+  };
+
+  if(input.size() <= max_st_len){
+    CALLOCATE(st, stlen, input);
+  }else{
+    PWARN("max length '{}' exceeded\n", max_st_len);
+  }
+
+  return 0;
+}
+
+static inline size_t __load_serial(Profile *profile, Entity &entity){
+  PDEBUG(1,"__load_serial()");
+  CALLOCATE(serial_path, &serial_path_len, fmt::format("{}{}pki{}serial{}serial", profile->source, SLASH, SLASH, SLASH));
+
+  if(!fs::exists(serial_path)){
+    seterror("serial file for profile '{}' not found\n", profile->name);
+    return GPKIH_FAIL;
+  }
+
+  std::ifstream file(serial_path);
+
+  if(!file.is_open()){
+    seterror("couldn't open file '{}'\n",serial_path);
+    return GPKIH_FAIL;
+  }
+  std::string serial{};
+  file >> serial;
+  file.close();
+
+  entity.serial = std::stoi(serial);
+
+  printf("loaded serial: %lu\n", entity.serial);
+
+  return GPKIH_OK;
 };
 
-// removes any badchars from buff effectively calling std::string::erase() to the
-// actual size of the buffer will be affected to, 
-// e.g input size 6 - 2 badchars - size after func call = 4
-static void remove_badchar(str& buff) {
-    buff.erase(std::remove_if(buff.begin(), buff.end(), [](char& c) {return badchars.find(c) != -1;}), buff.end());
-}
-
-static inline void _get_and_set_prop(std::string &st) {
-  std::string input;
-  std::getline(std::cin, input);
-  if (!input.empty()) {
-    if (has_badchar(input)) {
-      remove_badchar(input);
-      PINFO("fixed: {}\n", input);
-    }
-    st = std::move(input);
-  }
-}
-
-static inline int _prompt_for_subject(strview profile_name, Subject &buffer)
+static inline int __prompt_for_subject(std::string_view profile_name, Subject &buffer, ProfileConfig &config, EntityManager &eman)
 {
-  str input{};
-  PROMPT("Country Name (2 letter code) [" + buffer.country + "]: ");
-  std::getline(std::cin, input);
-  if (!input.empty() && input.size() == 2) {
-    buffer.country = input;
+  PDEBUG(1,"__prompt_for_subject()");
+
+  Subject defaults = config.default_subject();
+
+  std::string input{};
+
+  // Set country if not set already
+  if(len(buffer.country) == 0){
+    PROMPT(fmt::format("Country Name (2 letter code) [{}]",defaults.country));
+    if (!input.empty() && input.size() == 2) {
+      memcpy(buffer.country, input.c_str(), input.size() + 1);
+    }else{
+      memcpy(buffer.country, defaults.country, 2);
+    }
   }
-  // Set state name
-  PROMPT("State or Province Name (full name) [" + buffer.state + "]: ");
-  _get_and_set_prop(buffer.state);
-  // Set location
-  PROMPT("Locality Name [" + buffer.location + "]: ");
-  _get_and_set_prop(buffer.location);
-  // Set organisation
-  PROMPT("Organisation Name [" + buffer.organisation + "]: ");
-  _get_and_set_prop(buffer.organisation);
-  // *MANDATORY Set common name
+
+  // Set state name if not set already
+  if(buffer.state == nullptr){
+    __get_and_set_prop(fmt::format("State or Province Name (full name) [{}]",defaults.state),defaults.state,buffer.state,reinterpret_cast<size_t*>(&buffer.statelen));  
+  }
+
+  // Set location if not set already
+  if(buffer.location == nullptr){
+    __get_and_set_prop(fmt::format("Locality Name [{}]",defaults.location),defaults.location, buffer.location,reinterpret_cast<size_t*>(&buffer.locationlen));
+  }
+  
+  // Set organisation if not set already
+  if(buffer.organisation == nullptr){
+    __get_and_set_prop(fmt::format("Organisation Name [{}]",defaults.organisation),defaults.organisation, buffer.organisation,reinterpret_cast<size_t*>(&buffer.organisationlen));
+  }
+  
   input.assign("");
-  int keepgoing = 1;
-  while (keepgoing) {
-    PROMPT("Common Name: ", RED);
-    std::getline(std::cin, input);
+
+  // *MANDATORY Set common name
+  for(;;) {
+    input = PROMPT("Common Name", false, RED);
     if (input.empty()) {
       // Common name can't be empty
       PWARN("common name can't be empty\n");
       continue;
-    } else if (db::entities::exists(profile_name, input) == ENTITY_FOUND) {
+    } else if (eman.exists(input)) {
       // Common name can't be duplicated
       PWARN("Entity with CN '{}' already exists in profile '{}'\n",
       input, profile_name);
       continue;
-    }else {
-      keepgoing = has_badchar(input);
+    }else if(HAS_BADCHAR(input, badchars)) {
+      continue;
     }
+
+    // Got proper cn
+    CALLOCATE(buffer.cn, reinterpret_cast<size_t*>(&buffer.cnlen), input);
+    input.assign("");
+    break;
   }
   
-  // Got proper cn
-  buffer.cn = input;
-  input.assign("");
-  
-  // Set email
-  PROMPT("Email Address: ");
-  _get_and_set_prop(buffer.email);
+  // Set email if not set already
+  if(buffer.email == nullptr){
+    __get_and_set_prop("Email Address",defaults.email, buffer.email, reinterpret_cast<size_t*>(&buffer.emaillen), mail_badchars);  
+  }
 
   return GPKIH_OK;
 }
 
-static inline std::unordered_map<ENTITY_TYPE,int(*)(Profile&,ProfileConfig&,Entity&)> build_functions
+static inline std::unordered_map<ENTITY_TYPE,int(*)(Profile&,ProfileConfig&,Entity&,EntityManager&)> build_functions
 {
   {ET_CA,actions::build_ca},
   {ET_CL,actions::build},
@@ -94,7 +132,9 @@ static inline std::unordered_map<ENTITY_TYPE,int(*)(Profile&,ProfileConfig&,Enti
 
 using namespace gpkih;
 
-int parsers::build(std::vector<std::string> opts) {
+int parsers::build(std::vector<std::string> &opts) {
+  PDEBUG(1, "parsers::build()");
+
   // ./gpki build <profile> <ca|sv|cl> [subopts]
   if (opts.empty()) {
     PERROR("profile must be given\n");
@@ -102,54 +142,56 @@ int parsers::build(std::vector<std::string> opts) {
     return 0;
   }
 
-  strview profilename = opts[0];
+  std::string_view profilename = opts[0];
   
-  Profile profile; // profile to build entity for
+  Profile *profile; // profile to build entity for
   Entity entity;  // entity info
 
-  if(db::profiles::load(profilename, profile)){
+  
+  profile = db::profiles::get(profilename);
+  if(profile == nullptr){
+    seterror("profile '{}' doesn't exist", profilename);
     return GPKIH_FAIL;
-  };
+  }
 
+  PDEBUG(3, "loaded profile [id={},name={},source={},creation_time={:%d_%m_%Y@%H:%M},last_modification={:%d_%m_%Y@%H:%M},ca_created={},sv_count={},cl_count={}]",
+    profile->id, profile->name, profile->source, profile->creation_date, profile->last_modification, profile->ca_created, profile->sv_count, profile->cl_count);
+  
   if(opts.size() == 1){
     PERROR("entity type must be specified - ca|sv|cl\n");
     return GPKIH_OK;
   }
 
-  strview etype = opts[1];
+  std::string_view etype = opts[1];
   if(entity_type_map.find(etype.data()) == entity_type_map.end()){
     seterror("invalid entity type '{}'",etype);
     return GPKIH_FAIL;
   }
+  
   entity.type = entity_type_map[etype.data()];
-
   opts.erase(opts.begin(),opts.begin()+2);
-
-  ProfileConfig config(profile);
-  entity.subject = std::move(config.default_subject());
+  
+  /* Profile configuration + Entity manager */
+  ProfileConfig config(*profile);
+  EntityManager eman(profile->name);
 
   if(!config.succesfully_loaded){
     return GPKIH_FAIL;
   }
 
-  // e.g /profiles/pki/serial/serial
+  if((entity.type & ET_CL || entity.type & ET_SV) && profile->ca_created == false)
+  {
+    PWARN("CA must be created before creating server/client entities\n");
+    PHINT("{}/gpkih build {} ca -cn MyCA\n",fs::current_path().c_str(), profile->name);
+    return GPKIH_OK;
+  }
+
   // Load next serial
-  str serial_path = profile.source + SLASH + "pki" + SLASH + "serial" + SLASH + "serial";
-  if(!fs::exists(serial_path)){
-    seterror("serial file for profile '{}' not found\n", profile.name);
-    return F_NOEXIST;
-  }
-  std::ifstream file(serial_path);
-  if(!file.is_open()){
-    seterror("couldn't open file '{}'\n",serial_path);
-    return F_NOOPEN;
-  }
-  file >> entity.serial;
-  file.close();
+  __load_serial(profile, entity);
   
   // override default build params with user arguments
   for (int i = 0; i < opts.size(); ++i) {
-    strview opt = opts[i];
+    std::string_view opt = opts[i];
     if(opt == "-algo" || opt == "--algorithm"){
       // check its a valid algorithm
       config.set(CONFIG_PKI,"key","algorithm",std::move(opts[++i]));
@@ -161,31 +203,50 @@ int parsers::build(std::vector<std::string> opts) {
     } else if (opt == "-outformat") {
       config.set(CONFIG_PKI,"csr","creation_format",std::move(opts[++i]));
     } else if(opt == "-cn" || opt == "--common-name"){
-      entity.subject.cn = std::move(opts[++i]);
+      CALLOCATE(entity.subject.cn, reinterpret_cast<size_t*>(&entity.subject.cnlen), opts[++i]);
+      if(eman.exists(entity.subject.cn)){
+        PWARN("entity '{}' already exists in profile '{}'\n", entity.subject.cn, profile->name);
+        return GPKIH_FAIL;
+      }
     } else if(opt == "-serial" || opt == "--serial"){
       // todo - check if desired serial exists in an existing entity - add function db::entities::exists(int serial)
-      entity.serial = std::move(opts[++i]);
+      size_t serial = std::move(stoi(opts[++i]));
+      if(eman.exists(serial)){
+        PWARN("entity with serial '{}' already exists\n");
+      }else{
+        entity.serial = serial;  
+      }
     } else if(opt == "-loc" || opt == "--location"){
-      entity.serial = std::move(opts[++i]);
+      CALLOCATE(entity.subject.location, reinterpret_cast<size_t*>(&entity.subject.locationlen), opts[++i]);
     } else if(opt == "-co" || opt == "--country"){
-      // todo - ensure its a 2 char
-      entity.subject.country = std::move(opts[++i]);
+      if(len(opts[++i].c_str()) == 2){
+        memcpy(entity.subject.country,opts[i].c_str(),2); 
+      }else{
+        PWARN("country must be a 2 letter code, e.g ES,EN,DE,FR ... omitting user value '{}'\n",opts[i]);
+      }
     }else if(opt == "-org" || opt == "--organisation"){
-      entity.subject.country = std::move(opts[++i]);
+      CALLOCATE(entity.subject.organisation,reinterpret_cast<size_t*>(&entity.subject.organisationlen),opts[++i]);
     }else if(opt == "-st" || opt == "--state"){
-      entity.subject.state = std::move(opts[++i]);
+      CALLOCATE(entity.subject.state, reinterpret_cast<size_t*>(&entity.subject.statelen), opts[++i]);
+    }else if(opt == "-email" || opt == "--email"){
+      CALLOCATE(entity.subject.email, reinterpret_cast<size_t*>(&entity.subject.email), opts[++i]);
     }else if(opt == "\0"){
       continue;
+    }else if(opt == "-pfx" || "--pfx"){
+      config.set(CONFIG_PKI, "output", "create_pfx","yes");
+    }else if(opt == "-inline" || "--inline"){
+      config.set(CONFIG_PKI, "output", "create_inline", "yes");
     }
     else {
       UNKNOWN_OPTION_MESSAGE(opt);
     }
   }
-  if(entity.subject.cn.empty()){
+
+  if(entity.subject.cn == nullptr){
     // User didn't give common_name (mandatory) with cli opts  
     // prompt the user for subject info
-    _prompt_for_subject(profile.name, entity.subject);
+    __prompt_for_subject(profile->name, entity.subject, config, eman);
   }
 
-  return build_functions[entity.type](profile,config,entity);
+  return build_functions[entity.type](*profile,config,entity,eman);
 }

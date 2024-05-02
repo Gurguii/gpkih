@@ -2,8 +2,7 @@
 
 using namespace gpkih;
 void help::init::usage() {
-  fmt::print(R"(
-== init ==
+  fmt::print(R"(== init ==
 
 [ syntax ]
   ./gpki init [subopts]

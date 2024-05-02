@@ -1,7 +1,10 @@
-﻿#include "printing.hpp"
+#include "printing.hpp"
+
+bool ENABLE_DEBUG_MESSAGES = false;
+int DEBUG_LEVEL = 1;
 
 /* Defined styles for printing */
-STYLE S_NONE = fg(BLACK);
+STYLE S_NONE = fg(WHITE);
 STYLE S_WARNING = fg(ORANGE) | EMPHASIS::bold | EMPHASIS::italic;
 STYLE S_INFO = fg(PALE_GOLDEN_ROD) | EMPHASIS::italic;
 STYLE S_ERROR = fg(RED) | EMPHASIS::bold | EMPHASIS::italic;
@@ -49,12 +52,29 @@ static inline std::string PROMPT_answers(std::string_view ans) {
 	return fmt::format(fg(WHITE) | EMPHASIS::italic | EMPHASIS::bold, "{}", ans);
 };
 
-void PROMPT(std::string_view msg, std::string_view ans, COLOR icon_color) {
-	fmt::print("{} {} {}: ", PROMPT_icon(icon_color), PROMPT_body(msg), PROMPT_answers(ans));
-};
-void PROMPT(std::string_view msg, COLOR icon_color) {
+std::string PROMPT(std::string_view msg, bool lower_input, COLOR icon_color) {
+	std::string input = "";
 	fmt::print("{} {}: ", PROMPT_icon(icon_color), PROMPT_body(msg));
+	std::getline(std::cin, input);
+	if(lower_input){
+		for(char &c : input){
+			c = tolower(c);
+		}
+	}
+	return std::move(input);
 };
+
+std::string PROMPT(std::string_view msg, std::string_view ans, bool lower_input, COLOR icon_color){
+	std::string input = "";
+	fmt::print("{} {} {}: ", PROMPT_icon(icon_color), PROMPT_body(msg), PROMPT_answers(ans));
+	std::getline(std::cin, input);
+	if(lower_input){
+		for(char &c : input){
+			c = tolower(c);
+		}
+	}		
+	return std::move(input);
+}
 
 void PROGRAMSTARTING() {
 	//06 Mar 2024 @ 19:13

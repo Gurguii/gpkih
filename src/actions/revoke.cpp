@@ -9,19 +9,24 @@ static inline std::vector<std::pair<std::string, std::string>> crl_reasons() {
           {"entity operation ceased", "cessationOfOperation"},
           {"certificate is on hold", "certificateHold"}};
 }
+
 using namespace gpkih;
-int actions::revoke(Profile &profile, std::vector<str> &common_names, std::vector<str> &serials) {
+int actions::revoke(Profile &profile, std::vector<std::string> &common_names, std::vector<std::string> &serials) {
   auto reasons = crl_reasons();
-  str base_dir = profile.dir_crt();
-  
-  for (str &cn : common_names) {
+  std::string base_dir = profile::dir_crt(profile);
+  EntityManager eman(profile.name);
+
+  for (std::string &cn : common_names) {
     Entity entity;
-    str selected_reason{};
-    str cert_path = base_dir + SLASH + cn + "-crt.pem";
+    std::string selected_reason{};
+    std::string cert_path = base_dir + SLASH + cn + "-crt.PEM";
+
+    // CHANGETHIS
+    std::string pname = profile.name;
     
-    if (db::entities::load(profile.name, cn, entity)) {
-      PERROR("entity with common name '{}' doesn't exist\n", cn);
-      return -1;
+    if(eman.exists(cn) == false){
+      PWARN("entity '{}' doesn't exist\n", cn);
+      continue;
     }
 
     for (int i = 0; i < reasons.size(); ++i) {
@@ -29,26 +34,24 @@ int actions::revoke(Profile &profile, std::vector<str> &common_names, std::vecto
     }
 
     int choice = 0;
-    std::string ans;
-    PROMPT("choice: ");
-    std::getline(std::cin, ans);
+    auto ans = PROMPT("choice: ");
     choice = strtol(&ans[0], nullptr, 10);
+
     if (choice < reasons.size()) {
       selected_reason = reasons[choice].second;
     }
-    str command =
+    
+    std::string command =
         fmt::format("openssl ca -config {} -revoke {} -crl_reason {}",
-                    profile.gopenssl(), cert_path, selected_reason);
+                    profile::gopenssl(profile), cert_path, selected_reason);
 
     if (system(command.c_str())) {
       seterror("command '{}' failed\n", command);
       return GPKIH_FAIL;
     }
 
-    PROMPT("Generate new crl?", "[y/n:]");
-    ans.assign("");
-    std::getline(std::cin, ans);
-    if (ans == "y" || ans == "Y") {
+    ans = PROMPT("Generate new crl?", "[y/n:]", true);
+    if (ans == "y" || ans == "yes") {
       actions::gencrl(profile);
     }
   }

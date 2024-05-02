@@ -1,9 +1,8 @@
 #pragma once
-#include <filesystem>
-
-#include "printing/printing.hpp"
 #include "logger/logger.hpp"
- 
+
+constexpr static inline size_t gpkih_magic_number = 0x5f67706b69685f;
+
 // Custom typenames
 using str     = std::string;
 using strview = std::string_view;
@@ -16,6 +15,7 @@ using ui64    = uint64_t;
 
 // Custom namespace names
 namespace fs = std::filesystem;
+
 constexpr char EOL = '\n';
 
 #ifdef _WIN32
@@ -32,10 +32,29 @@ constexpr char SLASH = '/';
 constexpr const char *VPN_CONFIG_EXTENSION = "conf";
 #endif
 
-extern str vpn_conf_filename;
-extern str pki_conf_filename;
-extern str CONF_DIRPATH;
+/* External globals - initialized in gpkih.cpp */
+extern std::string vpn_conf_filename;
+extern std::string pki_conf_filename;
 
+/* External globals - initialized by main() */
+extern std::string GPKIH_BASEDIR;
+extern std::string CONF_DIRPATH;
+extern std::string DB_DIRPATH;
+
+/* External globals - initialized as NULL, value given on appropiate context (action) */
+extern char *serial_path;
+extern uint64_t serial_path_len;
+
+/* Error */
+extern std::string last_gpkih_error;
+extern void printlasterror();
+
+template<typename ...Args>
+static inline void seterror(std::string fmt, Args&&... args){
+  last_gpkih_error = std::move(fmt::format(fmt,std::forward<Args>(args)...));
+}
+
+/* Custom return codes */
 enum class GPKIH_RETURN_CODES {
   /* ALL GOOD */
   __we_good = 0,
@@ -62,19 +81,3 @@ enum class GPKIH_RETURN_CODES {
 #define ENTITY_FOUND static_cast<int>(GPKIH_RETURN_CODES::__found_entity)
   /* */
 };
-
-// TODO - split error management to its own file + class
-static inline str last_gpki_error = "no error";
-
-template<typename ...Args>
-static inline void seterror(std::string fmt, Args&&... args){
-  last_gpki_error = std::move(fmt::format(fmt,std::forward<Args>(args)...));
-}
-static inline str lasterror() { return last_gpki_error; }
-static inline void printlasterror() {
-	if (last_gpki_error == "no error" || last_gpki_error.empty()) {
-		fmt::print(fg(LGREEN) | EMPHASIS::bold, "no error\n");
-	}else {
-		fmt::print(fg(RED), last_gpki_error); 
-	}
-}

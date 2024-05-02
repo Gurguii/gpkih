@@ -3,43 +3,41 @@
 
 using namespace gpkih;
 
-static constexpr const char *GPKIH_VERSION = "1.0";
+static constexpr const char *VERSION = "1.0";
+static constexpr const char *AUTHOR = "Airán 'gurgui' Gómez";
+static constexpr const char *DESCRIPTION = "Simple cli tool to create and manage self signed PKI";
 
 void help::usage() {
-  fmt::print(R"(
-== Public key infraestructure helper ==
+  fmt::print(R"(== Gurgui's Public Key Infraestructure helper ==
 
-Author: {} 
-Description: {}
 Version: {}
+Description {}
 
+** Actions **
+init    | Create a new profile 
+build   | Create certificates
+revoke  | Revoke certificates
+gencrl  | Generate crl (certificate revocation list)
+list    | List profiles and entities
+remove  | Remove profile
+rename  | Rename profile
+reset   | Reset gpkih (remove all logs + profiles)
+get     | Inspect global/profile-specific configuration
+set     | Modify global/profile-specific configuration
+
+
+** Global flags ** (See './gpkih help flags' for details - UNIMPLEMENTED)
+--debug <int> : print debug info to stdout, int=1-3
+--noprompt    : don't prompt for optional stuff (e.g creating CA when a profile is created)
+--noprint     : don't print certificates to stdout
+
+-y | --yes    : autoanswer yes to questions
+
+
+** Detailed help **
 For extra help on any action, do:
-    ./gpki help [action]
-
-[init]
-Used to create a new profile
-  ./gpki init [subopts]
-
-[list]
-Used to display info about profiles and entities
-  ./gpki list [profile/s] [subopts]
-
-[build] 
-Create certificates
-  ./gpki build [profile] [subopts]
-
-[revoke]
-Revoke certicates
-  ./gpki revoke [profile/s] [subopts]
-
-[gencrl]
-Generate crl
-  ./gpki gencrl [profile] [subopts]
-
-[ remove ]
-Remove profile files and database entry
-  ./gpki remove [profile/s]
-)", Config::get("metadata", "author"), Config::get("metadata", "description"), GPKIH_VERSION);
+    ./gpki help <action>
+)", VERSION, DESCRIPTION);
 }
 
 std::unordered_map<str, void(*)()> help::help_funcs{
@@ -63,16 +61,15 @@ void help::call_helper(strview action){
 }
 
 void help::usage_brief() {
-        fmt::print(R"(
-== Public key infraestructure helper ==
+        fmt::print(R"(== Gurgui's Public Key Infraestructure helper ==
 
-Author: {} 
-Description: {}
 Version: {}
+Description {}
 
-Actions: init build revoke gencrl list remove
+Actions: init build revoke gencrl list remove rename reset get set
 
+** Detailed help **
 For extra help on any action, do:
-    ./gpki help [action]
-)", Config::get("metadata", "author"), Config::get("metadata", "description"), GPKIH_VERSION);
+    ./gpki help <action>
+)", VERSION, DESCRIPTION);
 }
