@@ -265,7 +265,7 @@ int actions::init(strview &profile_name, strview &profile_source) {
       }
 
     }else{
-      PINFO("generating dhparam with size {}\n", 1024);
+      PINFO("generating dhparam of {} bits\n", 1024);
       // QUESTION 1
       utils::openssl::create_dhparam(fmt::format("{}{}pki{}tls{}dhparam1024",profile.source, SLASH, SLASH, SLASH));
       

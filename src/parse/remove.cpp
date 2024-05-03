@@ -5,16 +5,17 @@ using namespace gpkih;
 int parsers::remove(std::vector<std::string> &opts) {
   /* Parse subopts */
   if (opts.empty()) {
-    PERROR("profile name or '-all' must be given\n");
+    PERROR("profile name or '-all|--all' must be given\n");
     PHINT("try gpki help remove\n");
     return -1;
   }
-  auto iter = std::find(opts.begin(), opts.end(), "-all");
+
   std::vector<str> profiles_to_remove{};
-  if (iter != opts.end()) {
+  if (std::find(opts.begin(), opts.end(), "-all") != opts.end() || std::find(opts.begin(), opts.end(), "--all") != opts.end()) {
     // There is a -all param in the arguments
-    PDEBUG(1,"removing all profiles");
-    return actions::remove(profiles_to_remove,1);
+    size_t deleted_profiles = db::profiles::remove_all();
+    PSUCCESS("deleted [{}] profiles\n", deleted_profiles);
+    return GPKIH_OK;
   }
   
   sstream profiles(opts[0]);

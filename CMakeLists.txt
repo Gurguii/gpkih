@@ -114,10 +114,12 @@ set(gpkih_db_src "${GPKIH_SRC_DIR}/db")
 set(gpkih_db_definition 
     "${gpkih_db_src}/profiles.hpp" 
     "${gpkih_db_src}/entities.hpp"
+    "${gpkih_db_src}/mnck.hpp"
 )
 set(gpkih_db_implementation 
     "${gpkih_db_src}/profiles.cpp"
     "${gpkih_db_src}/entities.cpp"
+    "${gpkih_db_src}/mnck.cpp"
 )
 
 add_library(gpkih_db_lib STATIC "${gpkih_db_implementation}")

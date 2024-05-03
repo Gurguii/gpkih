@@ -21,9 +21,15 @@ EntityManager::EntityManager(std::string_view profile_name){
 	PDEBUG(1, "constructing EntityManager instance - {}", dbpath);
 
 	if(fs::exists(dbpath) == false){
-		if(!std::ofstream(dbpath).is_open()){
+		std::ofstream file(dbpath, std::ios::binary);
+		if(!file.is_open()){
 			throw "couldn't create entities' dbpath";
 		}
+		file.write(reinterpret_cast<char *>(gpkih_magic_number), sizeof(decltype(gpkih_magic_number)));
+		size_t st = 0;
+		file.write(reinterpret_cast<const char*>(&st), sizeof(decltype(st)));
+		file.write(":",1);
+		file.close();
 		return;
 	}
 	
@@ -36,18 +42,27 @@ EntityManager::EntityManager(std::string_view profile_name){
 
 	if(!file.is_open()){
 		throw "couldn't open entities' dbpath to load data";
-		
 	}
 
-	// Read file and start loading Entities to the private umap
-	uint8_t first = file.get();
-	if(first == '\0'){
-		PWARN("first == NULL\n");
+	// Check magic number
+	size_t mn = 0, entity_count = 0;
+	file.read(reinterpret_cast<char *>(&mn), sizeof(decltype(gpkih_magic_number)));
+	if(mn == gpkih_magic_number){
+		file.read(reinterpret_cast<char*>(&entity_count), sizeof(decltype(entity_count)));
+		if(entity_count <= 0){
+			return;
+		}
+		uint8_t next = file.get();
+		if(next != ':'){
+			PWARN("file doesn't seem like a 'gpkih' data file");
+			return;
+		}
+	}else{
+		PWARN("file doesn't seem a 'gpkih' data file\n");
 		return;
 	}
 
-	file.seekg(SEEK_SET);
-	for(;;){
+	for(int i = 0;i < entity_count; ++i){
 		Entity tmp{};
 		Subject &sub = tmp.subject;
 
@@ -109,21 +124,6 @@ EntityManager::EntityManager(std::string_view profile_name){
 
 		// Add entity to umap
 		entities.emplace(sub.cn, tmp);
-
-		uint8_t next = file.get();
-		auto pos = file.tellg();
-		
-		if(next == '\n'){
-			next = file.get();
-			if(next == '\0'){
-				break;
-			}else{
-				file.seekg(pos);
-				continue;
-			}
-		}else if(next == '\0'){
-			break;
-		}		
 	}
 }
 
@@ -135,7 +135,13 @@ int EntityManager::sync(){
 		seterror("couldn't open entities db '{}'",dbpath);
 		return GPKIH_FAIL;
 	}
-	PDEBUG(1, "entities size: {}", entities.size());
+
+	// _gpkih_23:<entidad1>%<entidad2>%...<entidad23>\0
+	file.write(reinterpret_cast<const char*>(&gpkih_magic_number), sizeof(decltype(gpkih_magic_number)));
+	size_t entity_count = entities.size();
+	file.write(reinterpret_cast<const char *>(&entity_count), sizeof(decltype(entity_count)));
+	file.write(":",1);
+	PDEBUG(1, "entities size: {}", entity_count);
 
 	for(const auto &kv : entities){
 		const gpkih::Entity &entity = kv.second;
@@ -154,11 +160,11 @@ int EntityManager::sync(){
 		file.write(subject.country,sizeof(subject.country));
 	
 		file.write(reinterpret_cast<const char*>(&subject.locationlen),sizeof(decltype(subject.locationlen)));
-		PDEBUG(3, "subject.location = {}\n", subject.location);
+		//PDEBUG(3, "subject.location = {}\n", subject.location);
 		file.write(subject.location,subject.locationlen);
 	
 		file.write(reinterpret_cast<const char *>(&subject.organisationlen),sizeof(decltype(subject.organisationlen)));
-		PDEBUG(3, "subject.organisation = {} len = {}\n", subject.organisation, subject.organisationlen);
+		//PDEBUG(3, "subject.organisation = {} len = {}\n", subject.organisation, subject.organisationlen);
 		file.write(subject.organisation,subject.organisationlen);
 	
 		file.write(reinterpret_cast<const char*>(&subject.statelen), sizeof(decltype(subject.statelen)));
@@ -176,7 +182,7 @@ int EntityManager::sync(){
 		file.write(reinterpret_cast<const char*>(&entity.crt_path_len),sizeof(decltype(entity.crt_path_len)));
 		file.write(entity.crt_path,entity.crt_path_len);
 	
-		file.write("\n", 1);
+		file.write("%", 1);
 	}
 
 	file.write("\0", 1);

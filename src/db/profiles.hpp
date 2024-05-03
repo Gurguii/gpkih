@@ -9,6 +9,7 @@
 #include "../structs.hpp"
 #include "../utils/utils.hpp"
 #include "../memmgmt.hpp"
+#include "mnck.hpp"
 
 namespace gpkih::db::profiles 
 {

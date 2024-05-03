@@ -44,42 +44,37 @@ std::map <std::string_view, Profile>* const db::profiles::get(){
 int db::profiles::sync(){
 	PDEBUG(1,"db::profiles::sync()");
 
-	std::ofstream file(dbpath, std::ios::binary | std::ios::out);
+	std::ofstream file(dbpath, std::ios::binary);
 	if(!file.is_open()){
 		seterror("couldn't open db file for writing '{}' - db::prosfiles::sync()\n", dbpath);
 		return GPKIH_FAIL;
 	}
 
-	// _gpkih_23:<perfil1>%<perfil2>%...<perfil23>\0
-	file.write(reinterpret_cast<const char*>(&gpkih_magic_number), sizeof(decltype(gpkih_magic_number)));
-	size_t profile_count = size();
-	file.write(reinterpret_cast<const char *>(&profile_count), sizeof(decltype(profile_count)));
-	file.write(":",1);
+	size_t s = size();
+	if(mnck::dump(file,s) == false){
+		return GPKIH_FAIL;
+	};
 
 	for(const auto &kv : existing_profiles){
 		const Profile &p = kv.second;
-		//printf("id: %lu\nname: %s\nsource: %s\ncreation: %lu\nmodification: %lu\nca_created: %d\nsv_count: %d\ncl_count: %d\n", p.id, p.name, p.source, p.creation_date, p.last_modification, p.ca_created, p.sv_count, p.cl_count);
-		//fflush(stdout);
-		// kv.first ->  std::string_view - profile name
-		// kv.second -> Profile - profile struct 
-		const Profile &ref = kv.second;
-		file.write(reinterpret_cast<const char*>(&ref.id), sizeof(decltype(ref.id)));
 
-		file.write(reinterpret_cast<const char*>(&ref.namelen), sizeof(decltype(ref.namelen)));
-		file.write(ref.name, ref.namelen);
+		file.write(reinterpret_cast<const char*>(&p.id), sizeof(decltype(p.id)));
+
+		file.write(reinterpret_cast<const char*>(&p.namelen), sizeof(decltype(p.namelen)));
+		file.write(p.name, p.namelen);
 		
-		file.write(reinterpret_cast<const char *>(&ref.sourcelen), sizeof(decltype(ref.sourcelen)));
-		file.write(ref.source, ref.sourcelen);	
+		file.write(reinterpret_cast<const char *>(&p.sourcelen), sizeof(decltype(p.sourcelen)));
+		file.write(p.source, p.sourcelen);	
 		
-		file.write(reinterpret_cast<const char*>(&ref.creation_date), sizeof(decltype(ref.creation_date)));
+		file.write(reinterpret_cast<const char*>(&p.creation_date), sizeof(decltype(p.creation_date)));
 
-		file.write(reinterpret_cast<const char*>(&ref.last_modification), sizeof(decltype(ref.last_modification)));
+		file.write(reinterpret_cast<const char*>(&p.last_modification), sizeof(decltype(p.last_modification)));
 
-		file.write(reinterpret_cast<const char*>(&ref.ca_created), sizeof(decltype(ref.ca_created)));
+		file.write(reinterpret_cast<const char*>(&p.ca_created), sizeof(decltype(p.ca_created)));
 
-		file.write(reinterpret_cast<const char*>(&ref.sv_count), sizeof(decltype(ref.sv_count)));
+		file.write(reinterpret_cast<const char*>(&p.sv_count), sizeof(decltype(p.sv_count)));
 
-		file.write(reinterpret_cast<const char*>(&ref.cl_count), sizeof(decltype(ref.cl_count)));
+		file.write(reinterpret_cast<const char*>(&p.cl_count), sizeof(decltype(p.cl_count)));
 
 		file.write("%",1);
 	}
@@ -94,25 +89,24 @@ int db::profiles::initialize(size_t &loaded_profiles){
 
 	if(fs::exists(dbpath) == false){
 		// Create database file
-		auto file = std::ofstream(dbpath,std::ios::binary);
+		std::ofstream file(dbpath, std::ios::binary);
 		if(!file.is_open()){
-			seterror("couldn't create db file '{}'", dbpath);
-			return GPKIH_FAIL;	
-		}
-		file.write(reinterpret_cast<const char*>(&gpkih_magic_number), sizeof(decltype(gpkih_magic_number)));
-		size_t n = 0;
-		file.write(reinterpret_cast<const char*>(&n), sizeof(decltype(n)));
-		file.write(":",1);
-		file.close();
-
-		// Create id_tracking file
-		uint64_t starting = 0;
-		if(!std::ofstream(idfile,std::ios::binary).write(reinterpret_cast<const char*>(&starting), sizeof(decltype(starting))).good()){
-			seterror("couldn't create missing file '{}'", idfile);
 			return GPKIH_FAIL;
 		}
+		mnck::dump(file, 0);
+		file.close();
 
-		return GPKIH_OK;
+		size_t beg = 0;
+
+		// Create id file
+		std::ofstream idf(idfile, std::ios::binary);
+		if(idf.is_open()){
+			idf.write(reinterpret_cast<const char*>(&beg), sizeof(decltype(beg)));
+			idf.close();
+			return GPKIH_OK;
+		}else{
+			return GPKIH_FAIL;
+		};
 	}
 
 	// File already exists, load profiles
@@ -129,21 +123,8 @@ int db::profiles::initialize(size_t &loaded_profiles){
 	}
 	
 	// Check magic number
-	size_t mn = 0;
-	file.read(reinterpret_cast<char *>(&mn), sizeof(decltype(gpkih_magic_number)));
-	if(mn == gpkih_magic_number){
-		file.read(reinterpret_cast<char*>(&loaded_profiles), sizeof(decltype(loaded_profiles)));
-		if(loaded_profiles <= 0){
-			return GPKIH_OK;
-		}
-		uint8_t next = file.get();
-		if(next != ':'){
-			PWARN("file doesn't seem like a 'gpkih' data file");
-			return GPKIH_OK;
-		}
-	}else{
-		PWARN("file doesn't seem a 'gpkih' data file\n");
-		return GPKIH_OK;
+	if(mnck::check(file, loaded_profiles) == false){
+		return GPKIH_FAIL;
 	}
 
 	for(int i = 0;i < loaded_profiles; ++i){
@@ -179,7 +160,6 @@ int db::profiles::initialize(size_t &loaded_profiles){
      	PDEBUG(2,"loaded profile '{}'",p.name);
      	uint8_t next = file.get();
      	if(next != '%'){
-     		PWARN("IM OUT BITCH");
      		break;
      	}
 	}
@@ -198,7 +178,7 @@ int db::profiles::add(Profile &buff){
 		seterror("profile with name '{}' already exists", buff.name);
 		return GPKIH_FAIL;
 	}
-	PDEBUG(3, "adding profile [name:{},source:{},ca_created:{},sv_count:{},cl_count:{}]", buff.name, buff.source, buff.ca_created, buff.sv_count, buff.cl_count);
+	PDEBUG(3, "adding profile [id:{},name:{},source:{},ca_created:{},sv_count:{},cl_count:{}]", buff.id, buff.name, buff.source, buff.ca_created, buff.sv_count, buff.cl_count);
 
 	buff.id = get_id();
 	existing_profiles.emplace(&buff.name[0], buff);
@@ -223,9 +203,9 @@ int db::profiles::remove_all() {
 	for(auto &kv : existing_profiles){
 		if(fs::exists(kv.second.source)){
 			PDEBUG(3, "deleting source file - {}",kv.second.source);
-			if(fs::remove_all(kv.second.source) > 0 && fs::remove_all(fmt::format("{}{}_entities.data",DB_DIRPATH,kv.first))){
-				++pcount;
-			}
+			fs::remove_all(kv.second.source);
+			fs::remove_all(fmt::format("{}{}_entities.data",DB_DIRPATH,kv.first));
+			++pcount;
 		}
 	}
 
