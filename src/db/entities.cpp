@@ -1,34 +1,23 @@
 #include "entities.hpp"
-#include <cstdio>
-#include <cstring>
-#include <exception>
-#include <filesystem>
-#include <sstream> // std::stringstream
-#include <fstream> // std::ifstream | std::ofstream
-#include <thread>
-#include <unordered_map>
+#include "mnck.hpp"
+#include "../memmgmt.hpp"
 
-
-#include <unistd.h>
 using namespace gpkih;
 
 static inline std::string _dbpath(std::string_view profile) {
-  return fmt::format("{}{}_entities.data",EntityManager::db,profile);
+  return fmt::format("{}{}_entities.data",EntityManager::dbdir,profile);
 }
 
 EntityManager::EntityManager(std::string_view profile_name){
 	dbpath = _dbpath(profile_name);
-	PDEBUG(1, "constructing EntityManager instance - {}", dbpath);
+	PDEBUG(1, "EntityManager::EntityManager({})", dbpath);
 
 	if(fs::exists(dbpath) == false){
 		std::ofstream file(dbpath, std::ios::binary);
 		if(!file.is_open()){
 			throw "couldn't create entities' dbpath";
 		}
-		file.write(reinterpret_cast<char *>(gpkih_magic_number), sizeof(decltype(gpkih_magic_number)));
-		size_t st = 0;
-		file.write(reinterpret_cast<const char*>(&st), sizeof(decltype(st)));
-		file.write(":",1);
+		mnck::dump(file, current_size);
 		file.close();
 		return;
 	}
@@ -45,24 +34,11 @@ EntityManager::EntityManager(std::string_view profile_name){
 	}
 
 	// Check magic number
-	size_t mn = 0, entity_count = 0;
-	file.read(reinterpret_cast<char *>(&mn), sizeof(decltype(gpkih_magic_number)));
-	if(mn == gpkih_magic_number){
-		file.read(reinterpret_cast<char*>(&entity_count), sizeof(decltype(entity_count)));
-		if(entity_count <= 0){
-			return;
-		}
-		uint8_t next = file.get();
-		if(next != ':'){
-			PWARN("file doesn't seem like a 'gpkih' data file");
-			return;
-		}
-	}else{
-		PWARN("file doesn't seem a 'gpkih' data file\n");
+	if(mnck::check(file, current_size) == false){
 		return;
 	}
 
-	for(int i = 0;i < entity_count; ++i){
+	for(int i = 0;i < current_size; ++i){
 		Entity tmp{};
 		Subject &sub = tmp.subject;
 
@@ -77,6 +53,8 @@ EntityManager::EntityManager(std::string_view profile_name){
 		file.read(reinterpret_cast<char*>(&tmp.type), sizeof(decltype(Entity::type)));
 
 		file.read(reinterpret_cast<char*>(&tmp.creation_date), sizeof(decltype(Entity::creation_date)));
+
+		file.read(reinterpret_cast<char*>(&tmp.status), sizeof(decltype(Entity::status)));
 
 		file.read(sub.country, sizeof(sub.country));
 
@@ -123,7 +101,16 @@ EntityManager::EntityManager(std::string_view profile_name){
 		file.read(tmp.crt_path, tmp.crt_path_len);
 
 		// Add entity to umap
-		entities.emplace(sub.cn, tmp);
+		const auto [iter, success] = entities.emplace(sub.cn, tmp);
+		if(success == false){
+			PERROR("couldn't emplace entity [serial:{},cn:{}]",tmp.serial,sub.cn);
+			continue;
+		}
+
+		uint8_t next = file.get();
+		if(next != '%'){
+			break;
+		}		
 	}
 }
 
@@ -136,12 +123,9 @@ int EntityManager::sync(){
 		return GPKIH_FAIL;
 	}
 
-	// _gpkih_23:<entidad1>%<entidad2>%...<entidad23>\0
-	file.write(reinterpret_cast<const char*>(&gpkih_magic_number), sizeof(decltype(gpkih_magic_number)));
-	size_t entity_count = entities.size();
-	file.write(reinterpret_cast<const char *>(&entity_count), sizeof(decltype(entity_count)));
-	file.write(":",1);
-	PDEBUG(1, "entities size: {}", entity_count);
+	if(mnck::dump(file, current_size) == false){
+		return GPKIH_FAIL;
+	}
 
 	for(const auto &kv : entities){
 		const gpkih::Entity &entity = kv.second;
@@ -156,7 +140,9 @@ int EntityManager::sync(){
 		file.write(reinterpret_cast<const char*>(&entity.type), sizeof(decltype(entity.type)));
 	
 		file.write(reinterpret_cast<const char*>(&entity.creation_date), sizeof(decltype(entity.creation_date)));
-	
+		
+		file.write(reinterpret_cast<const char*>(&entity.status), sizeof(decltype(entity.status)));
+
 		file.write(subject.country,sizeof(subject.country));
 	
 		file.write(reinterpret_cast<const char*>(&subject.locationlen),sizeof(decltype(subject.locationlen)));
@@ -193,23 +179,28 @@ int EntityManager::sync(){
 
 int EntityManager::add(gpkih::Entity &entity){
 	PDEBUG(1, "EntityManager::add()");
-	PDEBUG(1, "{}-{}-{:%h-%m-%Y}-{}-{}-{}",entity.serial, entity.subject.cn, entity.creation_date, entity.subject.country,entity.subject.state, entity.subject.organisation);
 
 	if(entities.find(entity.subject.cn) == entities.end()){
-		return (entities.emplace(entity.subject.cn, entity).second) ? GPKIH_OK : GPKIH_FAIL;
+		const auto [iter, success] = entities.emplace(entity.subject.cn, entity);
+		if(success){
+			++current_size;
+			return GPKIH_OK;
+		}
 	}
 
 	return GPKIH_FAIL;
 }
 
 bool EntityManager::exists(std::string_view cn){
+	PDEBUG(1,"EntityManager::exists({})",cn);
+
 	return entities.find(cn) != entities.end() ? true : false;
 }
 
 bool EntityManager::exists(size_t serial){
-	PDEBUG(3, "looking for serial {}", serial);
+	PDEBUG(1, "EntityManager::exists({})", serial);
+
 	for(const auto &kv : entities){
-		PDEBUG(3, "checking {}", kv.second.serial);
 		if(kv.second.serial == serial){
 			return true;
 		}
@@ -217,9 +208,20 @@ bool EntityManager::exists(size_t serial){
 	return false;
 }
 
+bool EntityManager::exists(std::string_view cn, Entity *&buff){
+	PDEBUG(1, "EntityManager::exists({})",cn);
+	auto iter = entities.find(cn);
+	if(iter != entities.end()){
+		// It exists
+		buff = &(iter->second);
+		return true;
+	}
+	buff = nullptr;
+	return false;
+}
+
 int EntityManager::del(std::string_view cn){
 	PDEBUG(1, "EntityManager::del()");
-
 	auto iter = entities.find(cn);
 	if( iter != entities.end()){
 		entities.erase(iter);
@@ -230,18 +232,19 @@ int EntityManager::del(std::string_view cn){
 
 gpkih::Entity *const EntityManager::get(std::string_view cn){
 	PDEBUG(1, "EntityManager::get()");
-
 	auto iter = entities.find(cn);
 	if(iter != entities.end()){
 		return &(iter->second);
 	}
-	return NULL;
+	return nullptr;
 }
 
 size_t EntityManager::size(){
-	return entities.size();
+	PDEBUG(1, "EntityManager::size()");
+	return current_size;
 }
 
 const std::unordered_map<std::string_view, gpkih::Entity>* const EntityManager::retrieve(){
+	PDEBUG(1, "EntityManager::retrieve()");
 	return &entities;
 }

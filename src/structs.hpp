@@ -63,8 +63,6 @@ static inline std::unordered_map<std::string, ENTITY_TYPE> entity_type_map{
 static inline int operator&(ENTITY_TYPE lo, ENTITY_TYPE ro) { return (uint16_t)lo & (uint16_t)ro; }
 
 enum class ENTITY_FIELDS : uint16_t {
-  all = 8191,
-#define E_ALL ENTITY_FIELDS::all
   none = 0,
 #define E_NONE ENTITY_FIELDS::none
   creation_date = 2,
@@ -91,7 +89,10 @@ enum class ENTITY_FIELDS : uint16_t {
 #define E_REQPATH ENTITY_FIELDS::req_path
   cert_path = 4096,
 #define E_CRTPATH ENTITY_FIELDS::cert_path
-
+  status = 8192,
+#define E_STATUS ENTITY_FIELDS::status
+  all = 16383,
+#define E_ALL ENTITY_FIELDS::all
 };
 
 /* ENTITY OPERATORS */
@@ -120,15 +121,37 @@ entity_fields_map() {
           {"crt", ENTITY_FIELDS::cert_path}};
 }
 
+enum class ENTITY_STATUS : uint8_t {
+  none = 0,
+  active = 2,
+#define ES_ACTIVE ENTITY_STATUS::active
+  revoked = 4,
+#define ES_REVOKED ENTITY_STATUS::revoked
+  marked = 8,
+#define ES_MARKED ENTITY_STATUS::marked
+  all = 15,
+#define ES_ALL ENTITY_STATUS::all
+};
+
+static inline std::unordered_map<ENTITY_STATUS, std::string> entity_status_to_str{
+  {ENTITY_STATUS::active,"active"},
+  {ENTITY_STATUS::revoked,"revoked"},
+  {ENTITY_STATUS::marked,"marked"},
+};
+
+
 static inline std::string str_conversion(PROFILE_FIELDS field) {
   return (field & P_NAME ? "name" : "source");
 }
-
 static inline std::string str_conversion(ENTITY_TYPE type) {
   return (type & ET_CA
               ? "ca"
               : (type & ET_SV ? "server" : (type & ET_CL ? "client" : "none")));
 };
+static inline std::string str_conversion(ENTITY_STATUS status){
+  auto iter = entity_status_to_str.find(status);
+  return iter != entity_status_to_str.end() ? iter->second : "n/a"; 
+}
 
 template <typename T> std::string to_str(T enumclass) {
   return str_conversion(enumclass);
@@ -144,7 +167,7 @@ struct Profile {
   uint8_t sourcelen;
 
   std::chrono::time_point<std::chrono::system_clock> creation_date = std::chrono::system_clock::now();
-  std::chrono::time_point<std::chrono::system_clock> last_modification;
+  std::chrono::time_point<std::chrono::system_clock> last_modification = std::chrono::system_clock::now();
 
   uint8_t ca_created = 0;
   uint16_t sv_count = 0;
@@ -175,11 +198,12 @@ struct Entity {
   Subject subject{};
   
   ENTITY_TYPE type = ENTITY_TYPE::none; // ca-sv-cl
+  ENTITY_STATUS status = ENTITY_STATUS::active;
   
   size_t serial = 0;
 
   std::chrono::time_point<std::chrono::system_clock> creation_date = std::chrono::system_clock::now();
-  
+
   char *key_path = NULL;
   uint8_t key_path_len = 0;
 

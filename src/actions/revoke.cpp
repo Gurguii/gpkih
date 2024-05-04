@@ -1,5 +1,4 @@
 #include "actions.hpp"
-#include <iostream> // std::cin
 
 static inline std::vector<std::pair<std::string, std::string>> crl_reasons() {
   return {{"entity key got compromised", "keyCompromised"},
@@ -16,21 +15,21 @@ int actions::revoke(Profile &profile, std::vector<std::string> &common_names, st
   std::string base_dir = profile::dir_crt(profile);
   EntityManager eman(profile.name);
 
+  std::vector<std::string_view> revoked_cns{};
+  std::string gopenssl_path = profile::gopenssl(profile);
+
   for (std::string &cn : common_names) {
-    Entity entity;
+    Entity *entity = nullptr;
     std::string selected_reason{};
     std::string cert_path = base_dir + SLASH + cn + "-crt.PEM";
-
-    // CHANGETHIS
-    std::string pname = profile.name;
     
-    if(eman.exists(cn) == false){
+    if(eman.exists(cn, entity) == false){
       PWARN("entity '{}' doesn't exist\n", cn);
       continue;
     }
 
     for (int i = 0; i < reasons.size(); ++i) {
-      fmt::print("  {}.- \n",reasons[i].first);
+      fmt::print(" {} - {}\n",i,reasons[i].first);
     }
 
     int choice = 0;
@@ -43,18 +42,43 @@ int actions::revoke(Profile &profile, std::vector<std::string> &common_names, st
     
     std::string command =
         fmt::format("openssl ca -config {} -revoke {} -crl_reason {}",
-                    profile::gopenssl(profile), cert_path, selected_reason);
+                    gopenssl_path, cert_path, selected_reason);
 
     if (system(command.c_str())) {
       seterror("command '{}' failed\n", command);
       return GPKIH_FAIL;
     }
-
-    ans = PROMPT("Generate new crl?", "[y/n:]", true);
-    if (ans == "y" || ans == "yes") {
-      actions::gencrl(profile);
-    }
+    
+    entity->status = ES_REVOKED;
+    revoked_cns.emplace_back(cn);
   }
 
-  return 0;
+  if(revoked_cns.empty()){
+    PINFO("No entities revoked\n");
+    return GPKIH_OK;
+  }
+
+  // Sync to update Entities' statuses
+  eman.sync();
+
+  std::stringstream ss{};
+  ss << "Revoked certificates: ";
+  for(const auto &view : revoked_cns){
+    ss << view << ",";
+  }
+  std::string s{ss.str()};
+  s.erase(s.end()-1, s.end());
+
+  PSUCCESS("{}\n", s);
+
+  /* Extra questions */
+  bool prompt = Config::get("behaviour","prompt") == "yes" ? true : false;
+  if(prompt){
+    auto ans = PROMPT("Generate new crl?", "[y/n:]", true);
+    if (ans == "y" || ans == "yes") {
+      return actions::gencrl(profile);
+    }
+  }
+  
+  return GPKIH_OK;
 };

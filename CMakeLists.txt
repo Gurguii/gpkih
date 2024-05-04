@@ -138,6 +138,8 @@ set(gpkih_help_implementation
     "${gpkih_help_src}/help_remove.cpp"
     "${gpkih_help_src}/help_revoke.cpp"
     "${gpkih_help_src}/help_list.cpp"
+    "${gpkih_help_src}/help_rename.cpp"
+    "${gpkih_help_src}/help_reset.cpp"
 )
 
 add_library(gpkih_help_lib STATIC "${gpkih_help_implementation}")

@@ -3,9 +3,6 @@
 #include <cstring>
 #include <string>
 #include <string_view>
-#include <stack>
-#include <vector>
-
 #include <fmt/format.h>
 
 namespace gpkih::utils::env
@@ -22,10 +19,9 @@ namespace gpkih::utils::str
 	#define slen gpkih::utils::str::slength
 
 	extern bool compare_views(std::string_view &s0, std::string_view &s1, size_t nchars);
-	#define cmpviews gpkih::utils::str::compare_views
-
 	extern bool compare_views(std::string_view s0, std::string_view s1, size_t nchars);
-	
+	#define COMPARE_VIEWS gpkih::utils::str::compare_views
+
 	extern char *replace_if(char *st, size_t nchars, char find, char replace);
 
 	// @brief checks if buff contains any char from badcharlist
@@ -53,6 +49,9 @@ namespace gpkih::utils::fs
 namespace gpkih::utils::openssl
 {
 	extern void genkey();
-	extern int gendhparam(std::string_view path, int size);
+
+	// @brief generates dhparam with `size` bits to path `path`
+	// @param path output path
+	// @param size n bits in order to create dhparam
 	extern int create_dhparam(std::string_view outpath, size_t size = 1024);
 }

@@ -45,3 +45,6 @@ namespace gpkih::help::set {
 namespace gpkih::help::rename{
 	extern void usage();
 }
+namespace gpkih::help::reset{
+	extern void usage();
+}

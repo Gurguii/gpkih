@@ -28,9 +28,9 @@ set     | Modify global/profile-specific configuration
 
 ** Global flags ** (See './gpkih help flags' for details - UNIMPLEMENTED)
 --debug <int> : print debug info to stdout, int=1-3
---noprompt    : don't prompt for optional stuff (e.g creating CA when a profile is created)
---noprint     : don't print certificates to stdout
 
+-noprompt | --noprompt    : don't prompt for optional stuff (e.g creating dhparam when profile is created)
+-noprint  | --noprint     : don't print certificates to stdout
 -y | --yes    : autoanswer yes to questions
 
 
@@ -49,6 +49,8 @@ std::unordered_map<str, void(*)()> help::help_funcs{
   {"remove", gpkih::help::remove::usage},
   {"set"   , gpkih::help::set::usage},
   {"get"   , gpkih::help::get::usage},
+  {"rename", gpkih::help::rename::usage},
+  {"reset", gpkih::help::reset::usage}
 };
 
 void help::call_helper(strview action){
@@ -66,7 +68,7 @@ void help::usage_brief() {
 Version: {}
 Description {}
 
-Actions: init build revoke gencrl list remove rename reset get set
+Actions: init build revoke gencrl list rename get set remove reset 
 
 ** Detailed help **
 For extra help on any action, do:

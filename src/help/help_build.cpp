@@ -4,7 +4,8 @@ using namespace gpkih;
 
 void help::build::usage() {
   fmt::print(R"(== build ==
-  
+build certificates for a profile
+
 [ syntax ]
   ./gpki build <profile> <entity_type> [subopts]
   

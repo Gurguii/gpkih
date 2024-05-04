@@ -132,7 +132,7 @@ static int __set_variables() {
     // simple id tracking file (increased by 1)
     db::profiles::idfile = fmt::format("{}id.data", DB_DIRPATH);
 
-    EntityManager::db = DB_DIRPATH;
+    EntityManager::dbdir = DB_DIRPATH;
     
     return GPKIH_OK;
 }

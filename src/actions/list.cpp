@@ -1,4 +1,5 @@
 #include "actions.hpp"
+#include "fmt/color.h"
 #include <sstream>
 /* UNUSED, left to see if i ever get to develop something around this idea */
 enum class PRINT_MODE {
@@ -7,27 +8,6 @@ enum class PRINT_MODE {
   csv,
 #define PRINT_CSV PRINT_MODE::csv
 };
-
-static FormatInfo ffinfo{
-  .key_val_delim = "=",
-  .delim_styling = fg(WHITE) | EMPHASIS::bold,
-  .delim_allign = C_ALLIGN,
-  .delim_width = 3,
-  
-  .header_styling = fg(fmt::terminal_color::bright_blue) | bg(fmt::terminal_color::bright_white) | EMPHASIS::bold,
-  .header_allign = C_ALLIGN,
-  .header_width = 40,
-  
-  .key_styling = fg(WHITE) | EMPHASIS::bold,
-  .key_allign = L_ALLIGN,
-  .key_width = 30,
-  
-  .val_styling = fg(LGREEN) | EMPHASIS::bold,
-  .val_allign = L_ALLIGN,
-  .val_width = 30,
-};
-
-static Formatter fmter(ffinfo);
 
 using namespace gpkih;
 
@@ -91,20 +71,37 @@ int actions::list(std::string_view profile_name, PROFILE_FIELDS pfields, ENTITY_
     }
     std::stringstream ss{};
     // serial, cn, creation_date, type, country ...
-    ss << "{:^8}" << "{:^" << cnlen << "}" << "{:^20}" << "{:^6}" << "{:^9}" << "{:^" << stlen << "}" << "{:^" << loclen << "}" << "{:^" << orglen << "}" << "{:^" << maillen << "}";
+    ss << "{:^8}" << "{:^" << cnlen << "}" << "{:^20}" << "{:^8}" << "{:^9}" << "{:^9}" << "{:^" << stlen << "}" << "{:^" << loclen << "}" << "{:^" << orglen << "}" << "{:^" << maillen << "}";
 
     // TODO - think about this:
     // if ( add_paths == true) { ss << "{:^" << keylen << "}" << "{:^" << csrlen <<"}" << "{:^" << crtlen << "}"; }
     
     /* Print headers with proper column width */
-    fmt::print(S_SUCCESS, ss.str(), "serial","common_name","creation_date","type","country","state","location","organisation","email","key","csr","crt");
+    fmt::print(S_SUCCESS, ss.str(), "serial","common_name","creation_date","type","status","country","state","location","organisation","email");
     fmt::print("\n");
 
     /* Start printing entities per line */
     for(const auto &kv : entity_list){
       const Entity &e = kv.second;
       const Subject &s = e.subject;
-      fmt::print(ss.str(), e.serial, s.cn, fmt::format("{:%d-%m-%Y @ %H:%M}",e.creation_date), str_conversion(e.type), s.country, s.state, s.location, s.organisation, s.email, e.key_path, e.csr_path, e.crt_path);
+      std::string status;
+      
+      switch(e.status){
+      case ES_ACTIVE:
+        status = fmt::format(fg(fmt::terminal_color::bright_green) | EMPHASIS::bold, "active");
+        break;
+      case ES_REVOKED:
+        status = fmt::format(fg(fmt::terminal_color::bright_red) | EMPHASIS::bold, "revoked");
+        break;
+      case ES_MARKED:
+        status = fmt::format(fg(fmt::terminal_color::bright_yellow) | EMPHASIS::bold, "marked");
+        break;
+      default:
+        status = fmt::format(fg(fmt::terminal_color::bright_blue) | EMPHASIS::bold, "unknown");
+        break;;
+      }
+
+      fmt::print(ss.str(), e.serial, s.cn, fmt::format("{:%d-%m-%Y @ %H:%M}",e.creation_date), str_conversion(e.type), fmt::format("{:^22}",status), s.country, s.state, s.location, s.organisation, s.email, e.key_path, e.csr_path, e.crt_path);
       fmt::print("\n");
     }
   }

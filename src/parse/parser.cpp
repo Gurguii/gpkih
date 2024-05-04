@@ -19,16 +19,16 @@ int parsers::parse(std::vector<std::string> &args) {
   size_t argc = args.size();
   for (int i = 0; i < argc; ++i) {
     strview op = args[i];
-    if (op == "-y") {
+    if (op == "-y" || op == "--yes") {
       Config::set("behaviour","autoanswer","yes");
       args.erase(args.begin() + i);
       --argc;
-    } else if (op == "--noprompt") {
+    } else if (op == "-noprompt" || op == "--noprompt") {
       Config::set("behaviour","prompt","no");
       args.erase(args.begin() + i);
       --argc;
     }
-    else if (op == "--noprint") {
+    else if (op == "-noprint" || op == "--noprint") {
       Config::set("behaviour","print_generated_certificate", "no");
       args.erase(args.begin() + i);
       --argc;

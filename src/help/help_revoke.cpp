@@ -3,11 +3,13 @@
 using namespace gpkih;
 void help::revoke::usage() {
   fmt::print(R"(== revoke ==
-  
+revoke entitie/s
+
 [ syntax ]
-  ./gpki revoke <profile> <comma,separated,CN's> [subopts]
+  ./gpki revoke <profile> [subopts]
   
 [ subopts ]
-  --reason : revocation reason
+  -s  | --serial : entity serial to revoke
+  -cn | --cn     : entity common name to revoke
 )");
 }

@@ -33,9 +33,12 @@ int actions::remove(std::vector<str> &profiles_to_remove, int remove_all) {
     ss << st << ",";
   }
 
+  /* Remove trailing comma */
   std::string s{ss.str()};
   s.erase(s.end()-1, s.end());
 
   PSUCCESS("{}\n", s);
+  ADD_LOG(L_INFO, s.c_str());
+ 
   return removed.size();
 }

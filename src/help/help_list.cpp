@@ -2,6 +2,7 @@
 using namespace gpkih;
 void help::list::usage() {
   fmt::print(R"(== list ==
+list profiles/entities
 
 [ syntax ]
   ./gpki list [profile/s] [subopts]

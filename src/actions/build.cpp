@@ -231,6 +231,7 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
 
     ecrt.close();
     ekey.close();
+    // FREEBLOCK(ca_crt_str);
   }
   return GPKIH_OK;
 }
@@ -293,7 +294,8 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity, E
   
   eman.sync();
 
-  PSUCCESS("entity '{}' created\n", entity.subject.cn);
+  PSUCCESS("Certificate authority '{}' created\n", entity.subject.cn);
+  ADD_LOG(L_INFO, "Added CA to profile '{}'", profile.name);
   return GPKIH_OK;
 } // actions::build_ca()
 

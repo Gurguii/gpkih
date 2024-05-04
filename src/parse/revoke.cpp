@@ -1,5 +1,4 @@
 #include "parser.hpp"
-#include <sstream>
 // SYNTAX ./gpki revoke <profile> <cn1,cn2 ... cnX> [subopts]
 using namespace gpkih;
 int parsers::revoke(std::vector<std::string> &opts) {
@@ -13,7 +12,6 @@ int parsers::revoke(std::vector<std::string> &opts) {
   Profile profile;
   std::vector<str> common_names_to_revoke;
   std::vector<str> serials_to_revoke;
-  str extra_reason;
 
   if (db::profiles::load(profilename, profile)) {
     return GPKIH_FAIL;
@@ -47,15 +45,6 @@ int parsers::revoke(std::vector<std::string> &opts) {
   }
 
   opts.erase(opts.begin(), opts.begin() + 2);
-  opts.push_back("\0");
-  for (int i = 0; i < opts.size() - 1; ++i) {
-    std::string_view opt = opts[i];
-    if (opt == "--reason") {
-      extra_reason = opts[++i];
-    } else {
-      UNKNOWN_OPTION_MESSAGE(opt);
-    }
-  }
 
   return actions::revoke(profile, common_names_to_revoke, serials_to_revoke);
 }

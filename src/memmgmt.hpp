@@ -28,9 +28,9 @@ public:
   size_t dump(const char *path, uint32_t block_size = 4096);
 };
 
-// Buffer instance to manage dinamically allocated memory
+// Buffer instance to manage dynamically allocated memory
 // used by any part of the program that would require allocating dynamic memory (malloc())
-// started by main() to allow modification of the buffer size from configuration file
+// started by main() to 'MAYBE, NOT YET' allow modification of the buffer size from configuration file
 // 'gpkih.conf'
 extern Buffer *__buff;
 

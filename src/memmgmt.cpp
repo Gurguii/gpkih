@@ -46,7 +46,8 @@ char *Buffer::allocate(size_t bytes){
     				// note im ignoring that single byte difference on purpose cause 
     				// the Buffer class always add '\0' at the end of the allocated
     				// data so that subsequent allocated data doesn't get printed 
-    				// unintentionally on a call to printf()
+    				// unintentionally on a call to printf() or any trouble with functions
+    				// that rely on the closing \0
     				char *ptr = freed_ptrs[i];
     				freed_ptrs.erase(freed_ptrs.begin() +i);
     				freed_sizes.erase(freed_sizes.begin() +i);
@@ -99,7 +100,7 @@ char *Buffer::freeblock(char *&ptr){
 	size_t length = slen(ptr);
 	memset(ptr, 0, length);
 	
-	PDEBUG(1,"memblock: {:p} - freed memory: {:p} - size freed: {} - inmediate next: {:p}",memblock,ptr, length, ptr+length);
+	PDEBUG(3,"memblock head: {:p} - freed memory: {:p} - bytes freed: {}",memblock,ptr,length);
 	
 	freed_sizes.emplace_back(length);
 	freed_ptrs.emplace_back(ptr);

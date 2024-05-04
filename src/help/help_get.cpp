@@ -5,6 +5,7 @@ using namespace gpkih;
 void help::get::usage()
 {
 	fmt::print(R"(== get ==
+get generic/profile-specific configuration
 
 [ syntax ]
   ./gpkih get <profile> <file>.<section>.<property> 
@@ -13,7 +14,7 @@ note: when working with gpkih.conf, profile its not required since this
 configuration its global, e.g '/.gpkih get behaviour'
 
 [ files and sections ]
-  gpkih : metadata, behaviour, logs, cli
+  gpkih : behaviour, logs, cli
   pki   : key, csr, crt, subject
   vpn   : common, client, server
 

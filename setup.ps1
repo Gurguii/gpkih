@@ -64,6 +64,7 @@ foreach($executable in $required_tools){
             }
             else{
                 Write-Host "$executable not found, exiting..."
+                exit 0
             }
         }
     }

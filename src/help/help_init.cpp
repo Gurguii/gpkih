@@ -3,6 +3,7 @@
 using namespace gpkih;
 void help::init::usage() {
   fmt::print(R"(== init ==
+Create a new profile with its according PKI file structure
 
 [ syntax ]
   ./gpki init [subopts]

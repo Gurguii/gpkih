@@ -4,6 +4,7 @@ using namespace gpkih;
 
 void help::remove::usage() {
   fmt::print(R"(== remove ==
+remove profile/s
 
 [ syntax ]
  ./gpki remove <profile1>,<profile2>...<profileN> [subopts]

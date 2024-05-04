@@ -17,6 +17,12 @@ int parsers::list(std::vector<std::string> &opts) {
   }
 
   std::string_view profile_name = opts[0];
+
+  if(db::profiles::exists(profile_name) == false){
+    PWARN("profile '{}' doesn't exist\n", profile_name);
+    return GPKIH_FAIL;
+  }
+
   opts.push_back("\0");
   auto emap = entity_fields_map();
 
