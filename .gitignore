@@ -9,3 +9,4 @@ CMakeSettings.json
 out
 .tools
 .cache
+docker/*results

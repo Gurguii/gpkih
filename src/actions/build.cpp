@@ -356,7 +356,7 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity, Enti
   db::profiles::sync();
   eman.sync();
 
-  PSUCCESS("{} entity '{}' created\n", str_conversion(entity.type),entity.subject.cn);
+  PSUCCESS("{} entity '{}' created\n", to_str(entity.type),entity.subject.cn);
   ADD_LOG(L_INFO, "added entity [profile:{},serial:{},cn:{},type:ca]",profile.name, entity.serial, entity.subject.cn);
   
   // Create inline config file

@@ -131,7 +131,7 @@ int EntityManager::sync(){
 		const gpkih::Entity &entity = kv.second;
 		const gpkih::Subject &subject = kv.second.subject;
 
-		PDEBUG(1, "adding entity to file [serial = {}, cn = {}:{}, co = {}:{}, st = {}:{}, type = {}]",entity.serial,entity.subject.cn,subject.cnlen, subject.country,3, subject.state,subject.statelen, str_conversion(entity.type));
+		PDEBUG(1, "adding entity to file [serial = {}, cn = {}:{}, co = {}:{}, st = {}:{}, type = {}]",entity.serial,entity.subject.cn,subject.cnlen, subject.country,3, subject.state,subject.statelen, to_str(entity.type));
 		file.write(reinterpret_cast<const char*>(&entity.serial),sizeof(decltype(entity.serial)));
 		
 		file.write(reinterpret_cast<const char*>(&subject.cnlen), sizeof(decltype(subject.cnlen)));

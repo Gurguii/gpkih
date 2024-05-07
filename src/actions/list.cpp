@@ -101,7 +101,7 @@ int actions::list(std::string_view profile_name, PROFILE_FIELDS pfields, ENTITY_
         break;;
       }
 
-      fmt::print(ss.str(), e.serial, s.cn, fmt::format("{:%d-%m-%Y @ %H:%M}",e.creation_date), str_conversion(e.type), fmt::format("{:^22}",status), s.country, s.state, s.location, s.organisation, s.email, e.key_path, e.csr_path, e.crt_path);
+      fmt::print(ss.str(), e.serial, s.cn, fmt::format("{:%d-%m-%Y @ %H:%M}",e.creation_date), to_str(e.type), fmt::format("{:^22}",status), s.country, s.state, s.location, s.organisation, s.email, e.key_path, e.csr_path, e.crt_path);
       fmt::print("\n");
     }
   }

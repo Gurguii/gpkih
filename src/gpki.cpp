@@ -52,7 +52,7 @@ static int __check_gpkih_install_dir(std::string &path) {
             }
         }
 
-        if (!fs::create_directory(path)) {
+        if (!fs::create_directories(path)) {
             seterror("Couldn't create gpkih's root directory '{}'\n", path);
             return F_NOEXIST;
         };

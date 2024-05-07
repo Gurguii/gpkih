@@ -1,0 +1,33 @@
+name: gpkih
+
+services:
+  # Debian container
+  debian:
+    build: ./docker/debian
+    volumes:
+      - ./:/home/gpkih
+    working_dir: /home/gpkih/docker
+  # Ubuntu container
+  ubuntu:
+    build: ./docker/ubuntu
+    volumes:
+      - ./:/home/gpkih
+    working_dir: /home/gpkih/docker
+  # ArchLinux container
+  archlinux:
+    build: ./docker/archlinux
+    volumes:
+      - ./:/home/gpkih
+    working_dir: /home/gpkih/docker
+  # Fedora container
+  fedora:
+    build: ./docker/fedora
+    volumes:
+    - ./:/home/gpkih
+    working_dir: /home/gpkih/docker
+  # Alpine container
+  alpine:
+    build: ./docker/alpine
+    volumes:
+      - ./:/home/gpkih
+    working_dir: /home/gpkih/docker
