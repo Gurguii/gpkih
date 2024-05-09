@@ -1,5 +1,6 @@
 #pragma once
 #include "gpki.hpp" // typename aliases + fmtlib
+#include <cstdint>
 #include <unordered_map>
 #include <ctime>
 #include "utils/utils.hpp"
@@ -33,17 +34,30 @@ enum class PROFILE_FIELDS : uint16_t {
 static PROFILE_FIELDS operator|(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
   return static_cast<PROFILE_FIELDS>((uint16_t)lo | (uint16_t)ro);
 };
-
 static bool operator&(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
   return static_cast<bool>((uint16_t)lo & (uint16_t)ro);
+}
+static bool operator&(uint16_t lo, PROFILE_FIELDS ro) {
+  return static_cast<bool>(static_cast<uint16_t>(lo) & static_cast<uint16_t>(ro));
 }
 
 /* PROFILE STRING -> PROFILE_FIELD MAP */
 static inline std::unordered_map<std::string, PROFILE_FIELDS>
 profile_fields_map() {
   return {
+      {"id",PROFILE_FIELDS::id},
       {"name", PROFILE_FIELDS::name},
       {"source", PROFILE_FIELDS::source},
+      
+      {"cdate", PROFILE_FIELDS::creation_date},
+      {"creation_date", PROFILE_FIELDS::creation_date},
+
+      {"lmod", PROFILE_FIELDS::last_modification},
+      {"last_modification", PROFILE_FIELDS::last_modification},
+
+      {"ca", PROFILE_FIELDS::ca_created},
+      {"sv", PROFILE_FIELDS::sv_count},
+      {"cl", PROFILE_FIELDS::cl_count}
   };
 }
 
@@ -103,6 +117,9 @@ static ENTITY_FIELDS operator|(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
 static bool operator&(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
   return static_cast<uint16_t>(lo) & static_cast<uint16_t>(ro);
 }
+static bool operator&(uint16_t lo, ENTITY_FIELDS ro){
+  return static_cast<bool>(static_cast<uint16_t>(lo) & static_cast<uint16_t>(ro));
+}
 
 /* ENTITY STRING -> ENTITY_FIELD MAP*/
 static inline std::unordered_map<std::string, ENTITY_FIELDS>
@@ -118,7 +135,8 @@ entity_fields_map() {
           {"mail", ENTITY_FIELDS::subject_email},
           {"key", ENTITY_FIELDS::key_path},
           {"req", ENTITY_FIELDS::req_path},
-          {"crt", ENTITY_FIELDS::cert_path}};
+          {"crt", ENTITY_FIELDS::cert_path},
+          {"status", ENTITY_FIELDS::status}};
 }
 
 enum class ENTITY_STATUS : uint8_t {

@@ -5,24 +5,28 @@
 #        exit 0
 #fi
 
+### User args ###
+args=($@)
+argc=$#
+##################
+
+################################# Variables #################################
 base_dir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 src_dir="$base_dir/src"
 build_dir="$base_dir/build"
 binary_outpath="$base_dir/gpkih"
 cmakelists="$base_dir/CMakeLists.txt"
 log_stderr="$base_dir/.error.log"
+verbose=true
+#############################################################################
 
 # Commands to run in order to build the executable
 # note: this will be executed inside build/ 
 commands=("cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 .." "make -j" "cp gpkih $binary_outpath")
-verbose=true
 
 if [ -e "$log_stderr" ]; then
         rm "$log_stderr"
 fi
-
-args=($@)
-argc=$#
 
 if ! [ -e "$build_dir" ]; then
         mkdir "$build_dir"
@@ -48,13 +52,15 @@ EOF
 elif [[ "$arg" == "-q" || "$arg" == "--quiet" ]]; then
         verbose=false
 elif [[ "$arg" == "-docker" || "$arg" == "--docker" ]]; then
+        docker_result_file="/home/gpkih/docker/results"
+        
         # Check that service is running
         if ! systemctl is-active docker --quiet; then
                 # Try to manually start it
                 if systemctl start docker --quiet; then
-                        printf "[+] Docker service started"
+                        printf "[+] Docker service started\n"
                 else
-                        printf "[!] Couldn't start service docker, exiting..."
+                        printf "[!] Couldn't start service docker, exiting...\n"
                         exit $?
                 fi
         fi
@@ -64,25 +70,27 @@ elif [[ "$arg" == "-docker" || "$arg" == "--docker" ]]; then
                 exit 1
         fi
 
+        # Empty any previous `results` contents
+        > "$base_dir/docker/results"
+
         for os in debian ubuntu archlinux fedora alpine; do
                 pids=()
                 # -T : no TTY, required to avoid 'no input TTY available' problems
                 # --rm : deletes the container when stopped, which will be after the command returns
-                compile_command="docker-compose run -T --rm $os bash ./entry.sh compile /home/gpkih/docker/"$os"_results"
-                
-                printf "[+] OS: %s - %s\n" "$os" "$compile_command" 
+                compile_command="docker-compose run -T --rm $os bash ./entry.sh compile $docker_result_file"
+                printf "[+] OS: %s - %s\n" "$os" "$compile_command"
                 $compile_command &
+                #printf "waiting process to finish...\n"
+                waitpid $!
 
-                pids+=($!)
+                #pids+=($!)
         done 
         
-
-        printf "[+] Waiting for processes to finish...\n"
-        waitpid ${pids[@]}
+        #printf "[+] Waiting for [%i] processes to finish...\n" "${#pids[@]}"
+        #waitpid ${pids[@]}
 
         exit 0
-fi
-        
+fi      
 done
 
 for command in "${commands[@]}"; do

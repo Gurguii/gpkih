@@ -244,7 +244,7 @@ size_t EntityManager::size(){
 	return current_size;
 }
 
-const std::unordered_map<std::string_view, gpkih::Entity>* const EntityManager::retrieve(){
+const std::map<std::string_view, gpkih::Entity>* const EntityManager::retrieve(){
 	PDEBUG(1, "EntityManager::retrieve()");
 	return &entities;
 }

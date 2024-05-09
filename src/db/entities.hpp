@@ -2,11 +2,12 @@
 
 #include <string>
 #include <string_view>
+#include <map>
 #include "../structs.hpp"
 
 class EntityManager{
 private:
-  std::unordered_map<std::string_view, gpkih::Entity> entities{};
+  std::map<std::string_view, gpkih::Entity> entities{};
   std::string dbpath;
   size_t current_size = 0;
 public:
@@ -57,6 +58,6 @@ public:
 
   // @brief get the private umap
   // @return constant pointer to umap<strview,Entity>
-  const std::unordered_map<std::string_view, gpkih::Entity>* const retrieve();
+  const std::map<std::string_view, gpkih::Entity>* const retrieve();
   
 };

@@ -76,6 +76,7 @@ ConfigMap Config::_conf_gpkih = {
   {"behaviour",{}},
   {"logs",{}},
   {"cli",{}},
+  {"formatting",{}}
 };
 
 int Config::load(std::string_view filepath){ 

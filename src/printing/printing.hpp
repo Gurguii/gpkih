@@ -6,8 +6,6 @@
 #include <string_view>
 #include <unordered_map>
 
-#include <iostream>
-
 extern bool ENABLE_DEBUG_MESSAGES;
 extern int DEBUG_LEVEL;
 
@@ -16,11 +14,15 @@ using STYLE = fmt::text_style;
 using EMPHASIS = fmt::emphasis;
 using TCOLOR = fmt::terminal_color;
 
-constexpr TCOLOR TBLUE = TCOLOR::blue;
-constexpr TCOLOR TRED = TCOLOR::red;
-constexpr TCOLOR TGREEN = TCOLOR::green;
-constexpr TCOLOR TYELLOW = TCOLOR::yellow;
-constexpr TCOLOR TWHITE = TCOLOR::white;
+constexpr TCOLOR T_BLUE = TCOLOR::blue;
+constexpr TCOLOR TB_BLUE = TCOLOR::bright_blue;
+constexpr TCOLOR T_RED = TCOLOR::red;
+constexpr TCOLOR TB_RED = TCOLOR::bright_red;
+constexpr TCOLOR T_GREEN = TCOLOR::green;
+constexpr TCOLOR TB_GREEN = TCOLOR::bright_green;
+constexpr TCOLOR T_YELLOW = TCOLOR::yellow;
+constexpr TCOLOR TB_YELLOW = TCOLOR::bright_yellow;
+constexpr TCOLOR T_WHITE = TCOLOR::white;
 
 constexpr COLOR BLUE = COLOR::blue;
 constexpr COLOR RED = COLOR::red;
@@ -61,9 +63,6 @@ extern std::string S_PLABEL_V(std::string_view st);
 /* Normal printing */
 extern void PRINT(std::string_view msg, COLOR color);
 extern void PRINT(std::string_view msg, STYLE style = S_NONE);
-
-template <typename T> void foo(){}
-extern template void foo<int>();
 
 /* success */
 template <typename ...T> static inline void PSUCCESS(std::string_view fmt, T&& ...args){

@@ -10,7 +10,7 @@ int gpkih::parsers::rename(std::vector<std::string> &opts){
 
 	std::string_view profile_name = opts[0];
 	if(db::profiles::exists(profile_name) == false){
-		PWARN("profile '{}' doesn't exist\n", profile_name);
+		PWARN("Profile '{}' doesn't exist\n", profile_name);
 		return GPKIH_OK;
 	}
 

@@ -1,4 +1,5 @@
 #include "printing.hpp"
+#include <iostream>
 
 bool ENABLE_DEBUG_MESSAGES = false;
 int DEBUG_LEVEL = 1;

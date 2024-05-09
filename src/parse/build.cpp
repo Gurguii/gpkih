@@ -150,7 +150,7 @@ int parsers::build(std::vector<std::string> &opts) {
   
   profile = db::profiles::get(profilename);
   if(profile == nullptr){
-    seterror("profile '{}' doesn't exist", profilename);
+    seterror("Profile '{}' doesn't exist\n", profilename);
     return GPKIH_FAIL;
   }
 

@@ -5,19 +5,33 @@ void help::list::usage() {
 list profiles/entities
 
 [ syntax ]
-  ./gpki list [profile/s] [subopts]
+  ./gpkih list <profile> [subopts] | print entities from profile
+  ./gpkih list [subopts]           | print all profiles
 
-note: profile name/s can be omitted, in that case 
+note: profile name can be omitted, in that case 
 all profiles will be assumed
 
 [ subopts ]
-  -cn <common_name> : list entity with given common name, if no value given all entities will be printed 
-  -ef <csv> : delimiter(,) entity fields to print, default all
-  -pf <csv> : delimiter(,) profile fields to print, default all
+note: -cn|-ef will only affect when a profile is given, else only profiles will be printed
+  
+  -cn <csv> : list entity with given common name/s 
+  -ef <csv> : entity fields to print, default all
+  -pf <csv> : profile fields to print, default all
 
 [ profile fields ]
- name: profile name
- source: source dir
+  - Basic info -
+  id: profile id
+  name: profile name
+  source: source dir
+
+  - Dates -
+  cdate | creation_date: creation
+  lmod | last_modification: last modification
+  
+  - Entities -
+  ca : ca created (bool)
+  sv : server count
+  cl : client count
 
 [ entity fields ]
   - Subject -
@@ -34,6 +48,7 @@ all profiles will be assumed
   crt: path to certificate
 
   - Other -
-  type: the type of entity, ca|client|server
+  type: entity type, ca|client|server
+  status: current status, active|marked|revoked
 )");
 }
