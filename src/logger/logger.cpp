@@ -40,11 +40,8 @@ Logger::Logger(std::string &&filename){
 	this->logpath = Logger::basedir / filename += ".log";
 	this->linefile = Logger::basedir / filename += ".line";
 
-	PDEBUG(1,"logpath: {}", logpath.string());
-
 	/* BEG - file checking */
 	if (fs::exists(Logger::basedir) == false) {
-		PDEBUG(3,"creating log directory '{}'\n", Logger::basedir.string());
 		// create log directory
 		if (fs::create_directories(Logger::basedir) == false) {
 			PWARN("couldn't create log directory\n");

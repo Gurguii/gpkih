@@ -2,6 +2,7 @@
 #include "logger/signals.hpp"
 #include "parse/parser.hpp"
 #include "db/entities.hpp"
+#include "printing/printing.hpp"
 
 using namespace gpkih;
 
@@ -40,7 +41,7 @@ char *serial_path = NULL;
 uint64_t serial_path_len = 0;
 
 static int __check_gpkih_install_dir(std::string &path) {
-    PDEBUG(1, "__check_gpkih_install_dir()");
+    PDEBUG(2, "__check_gpkih_install_dir()");
 
     if (!fs::exists(path))
     {
@@ -90,7 +91,7 @@ static int __check_gpkih_install_dir(std::string &path) {
 
 static int __set_platform_dependant_variables()
 {
-    PDEBUG(1,"__set_platform_dependant_variables()");
+    PDEBUG(2,"__set_platform_dependant_variables()");
 
     #ifdef _WIN32
     GPKIH_BASEDIR = utils::env::get_environment_variable("LOCALAPPDATA");
@@ -114,7 +115,7 @@ static int __set_platform_dependant_variables()
 }
 
 static int __set_variables() {
-    PDEBUG(1,"__set_variables()");
+    PDEBUG(2,"__set_variables()");
 
     if (__set_platform_dependant_variables() != GPKIH_OK) {
         return GPKIH_FAIL;
@@ -141,8 +142,8 @@ static int __set_variables() {
 int main(int argc, const char **args) {
   std::vector <std::string> opts(args+1,args+argc);
 
-  for(int i = 0; i < opts.size(); ++i){
-    if(opts[i] == "--debug"){
+  for(int i = 0; i < opts.size();){
+    if(opts[i] == "-debug" || opts[i] == "--debug"){
         if(i+1 == opts.size()){
             PERROR("debug level must be given");
             return GPKIH_FAIL;
@@ -158,8 +159,15 @@ int main(int argc, const char **args) {
         }
 
         opts.erase(opts.begin()+i,opts.begin()+i+2);
+    }else if(opts[i] == "-q" || opts[i] == "--quiet"){
+        ENABLE_PRINTING = false;
+        opts.erase(opts.begin()+i);
+    }else{
+        ++i;
     }
   }
+
+  PDEBUG(1,"main()");
 
   Buffer a = Buffer(__dynamic_memory_size);
   __buff = &a;
@@ -168,7 +176,6 @@ int main(int argc, const char **args) {
     printlasterror();
     return GPKIH_FAIL;
   };
-
 
   if (__check_gpkih_install_dir(GPKIH_BASEDIR) != GPKIH_OK) {
     printlasterror();
@@ -201,8 +208,6 @@ int main(int argc, const char **args) {
   Logger::set_basedir(std::move(fs::path(GPKIH_BASEDIR)/"logs").string());
   Logger pl = Logger("gpkih");
   gpkih_logger = &pl;
-
-  PDEBUG(1,"Loaded [{}] profiles", profile_count);
 
   // Parse options
   if (parsers::parse(opts) != GPKIH_OK) {

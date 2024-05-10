@@ -56,6 +56,9 @@ public:
   // @return entities umap's size
   size_t size();
 
+  // @return true|false indicating if map is empty
+  bool empty(); 
+
   // @brief get the private umap
   // @return constant pointer to umap<strview,Entity>
   const std::map<std::string_view, gpkih::Entity>* const retrieve();

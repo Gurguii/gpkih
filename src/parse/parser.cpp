@@ -16,22 +16,19 @@ int parsers::parse(std::vector<std::string> &args) {
   }
   
   // Override global config options
-  size_t argc = args.size();
-  for (int i = 0; i < argc; ++i) {
+  for (int i = 0; i < args.size();) {
     strview op = args[i];
     if (op == "-y" || op == "--yes") {
       Config::set("behaviour","autoanswer","yes");
       args.erase(args.begin() + i);
-      --argc;
     } else if (op == "-noprompt" || op == "--noprompt") {
       Config::set("behaviour","prompt","no");
       args.erase(args.begin() + i);
-      --argc;
-    }
-    else if (op == "-noprint" || op == "--noprint") {
+    }else if (op == "-noprint" || op == "--noprint") {
       Config::set("behaviour","print_generated_certificate", "no");
       args.erase(args.begin() + i);
-      --argc;
+    }else{
+      ++i;
     }
   }
 

@@ -59,7 +59,7 @@ enum class GPKIH_RETURN_CODES {
   /* ALL GOOD */
   __we_good = 0,
 #define GPKIH_OK static_cast<int>(GPKIH_RETURN_CODES::__we_good)
-  __we_notgood = -1,
+  __we_notgood = 1,
   
   /* FAIL - call lasterror() for more info */
 #define GPKIH_FAIL static_cast<int>(GPKIH_RETURN_CODES::__we_notgood)

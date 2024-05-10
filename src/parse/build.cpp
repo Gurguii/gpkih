@@ -12,6 +12,8 @@ static inline std::string mail_badchars = "~`!#$%^&*()-_=+[{]}\\|;:'\",<>/?¿\t\
 using namespace gpkih;
 
 static inline size_t __get_and_set_prop(std::string &&prompt_msg, char *&default_val, char *&st, size_t* stlen, std::string &badcharlist = badchars, size_t max_st_len = 254) {
+  PDEBUG(2,"__get_and_set_prop()");
+
   std::string input = PROMPT(prompt_msg);
 
   if (input.empty()) {
@@ -33,7 +35,7 @@ static inline size_t __get_and_set_prop(std::string &&prompt_msg, char *&default
 }
 
 static inline size_t __load_serial(Profile *profile, Entity &entity){
-  PDEBUG(1,"__load_serial()");
+  PDEBUG(2,"__load_serial()");
   CALLOCATE(serial_path, &serial_path_len, fmt::format("{}{}pki{}serial{}serial", profile->source, SLASH, SLASH, SLASH));
 
   if(!fs::exists(serial_path)){
@@ -53,14 +55,14 @@ static inline size_t __load_serial(Profile *profile, Entity &entity){
 
   entity.serial = std::stoi(serial);
 
-  printf("loaded serial: %lu\n", entity.serial);
+  PDEBUG(3, "loaded serial: %lu\n", entity.serial);
 
   return GPKIH_OK;
 };
 
 static inline int __prompt_for_subject(std::string_view profile_name, Subject &buffer, ProfileConfig &config, EntityManager &eman)
 {
-  PDEBUG(1,"__prompt_for_subject()");
+  PDEBUG(2,"__prompt_for_subject()");
 
   Subject defaults = config.default_subject();
 
@@ -153,9 +155,6 @@ int parsers::build(std::vector<std::string> &opts) {
     seterror("Profile '{}' doesn't exist\n", profilename);
     return GPKIH_FAIL;
   }
-
-  PDEBUG(3, "loaded profile [id={},name={},source={},creation_time={:%d_%m_%Y@%H:%M},last_modification={:%d_%m_%Y@%H:%M},ca_created={},sv_count={},cl_count={}]",
-    profile->id, profile->name, profile->source, profile->creation_date, profile->last_modification, profile->ca_created, profile->sv_count, profile->cl_count);
   
   if(opts.size() == 1){
     PERROR("entity type must be specified - ca|sv|cl\n");
@@ -192,6 +191,7 @@ int parsers::build(std::vector<std::string> &opts) {
   // override default build params with user arguments
   for (int i = 0; i < opts.size(); ++i) {
     std::string_view opt = opts[i];
+    PDEBUG(3, "opt:{}",opt);
     if(opt == "-algo" || opt == "--algorithm"){
       // check its a valid algorithm
       config.set(CONFIG_PKI,"key","algorithm",std::move(opts[++i]));
@@ -230,14 +230,20 @@ int parsers::build(std::vector<std::string> &opts) {
       CALLOCATE(entity.subject.state, reinterpret_cast<size_t*>(&entity.subject.statelen), opts[++i]);
     }else if(opt == "-email" || opt == "--email"){
       CALLOCATE(entity.subject.email, reinterpret_cast<size_t*>(&entity.subject.email), opts[++i]);
+    }else if(opt == "-pfx" || opt == "--pfx"){
+      config.set(CONFIG_PKI, "output", "create_pfx","yes");
+    }else if(opt == "-inline" || opt == "--inline"){
+      config.set(CONFIG_PKI, "output", "create_inline", "yes");
+    }else if(opt == "-days" || opt == "--days"){
+      int d = std::strtol(&opts[++i][0],NULL,10);
+      if(d <= 0){
+        PWARN("days must be a positive integer, ignoring given value {:+d}\n", d);
+        continue;
+      }
+      config.set(CONFIG_PKI, "crt", "days", opts[i]);
     }else if(opt == "\0"){
       continue;
-    }else if(opt == "-pfx" || "--pfx"){
-      config.set(CONFIG_PKI, "output", "create_pfx","yes");
-    }else if(opt == "-inline" || "--inline"){
-      config.set(CONFIG_PKI, "output", "create_inline", "yes");
-    }
-    else {
+    }else {
       UNKNOWN_OPTION_MESSAGE(opt);
     }
   }

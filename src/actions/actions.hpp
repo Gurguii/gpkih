@@ -16,7 +16,8 @@ extern int revoke(Profile &profile, std::vector<std::string> &common_names, std:
 
 extern int gencrl(Profile &profile);
 
-extern int list(std::string_view profile_name, PROFILE_FIELDS pfields = P_ALL, ENTITY_FIELDS efields = E_ALL);
+extern int list_profiles(uint16_t fields);
+extern int list_entities(std::string_view profile_name, uint16_t fields);
 
 extern int remove(std::vector<std::string> &profiles_to_remove, int remove_all = 0);
 

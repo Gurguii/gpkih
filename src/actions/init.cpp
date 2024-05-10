@@ -244,6 +244,9 @@ int actions::init(strview &profile_name, strview &profile_source) {
     return GPKIH_FAIL;
   }
 
+  // Create profile entities file
+  EntityManager{profile_name};
+  
   // sync() profiles.data with db::profiles::existing_profiles to add the new one
   db::profiles::sync();
   

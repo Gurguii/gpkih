@@ -70,25 +70,19 @@ elif [[ "$arg" == "-docker" || "$arg" == "--docker" ]]; then
                 exit 1
         fi
 
+        results="$base_dir/docker/results"
         # Empty any previous `results` contents
-        > "$base_dir/docker/results"
+        > "$results"
 
         for os in debian ubuntu archlinux fedora alpine; do
-                pids=()
                 # -T : no TTY, required to avoid 'no input TTY available' problems
                 # --rm : deletes the container when stopped, which will be after the command returns
-                compile_command="docker-compose run -T --rm $os bash ./entry.sh compile $docker_result_file"
-                printf "[+] OS: %s - %s\n" "$os" "$compile_command"
+                compile_command="docker-compose run --quiet-pull -T --rm $os bash ./entry.sh compile $docker_result_file"
+                printf "[+] Operating System: %s" "$os"
                 $compile_command &
-                #printf "waiting process to finish...\n"
                 waitpid $!
-
-                #pids+=($!)
+                printf "\r[+] Operating System: %s - %s\n" "$os" "$(grep -E "^Status" "$results" | tail -1 | awk '{print $2}')"
         done 
-        
-        #printf "[+] Waiting for [%i] processes to finish...\n" "${#pids[@]}"
-        #waitpid ${pids[@]}
-
         exit 0
 fi      
 done

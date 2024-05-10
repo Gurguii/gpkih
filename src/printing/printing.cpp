@@ -3,6 +3,7 @@
 
 bool ENABLE_DEBUG_MESSAGES = false;
 int DEBUG_LEVEL = 1;
+bool ENABLE_PRINTING = true;
 
 /* Defined styles for printing */
 STYLE S_NONE = fg(WHITE);

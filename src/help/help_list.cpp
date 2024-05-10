@@ -8,9 +8,6 @@ list profiles/entities
   ./gpkih list <profile> [subopts] | print entities from profile
   ./gpkih list [subopts]           | print all profiles
 
-note: profile name can be omitted, in that case 
-all profiles will be assumed
-
 [ subopts ]
 note: -cn|-ef will only affect when a profile is given, else only profiles will be printed
   

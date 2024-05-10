@@ -8,6 +8,7 @@
 
 extern bool ENABLE_DEBUG_MESSAGES;
 extern int DEBUG_LEVEL;
+extern bool ENABLE_PRINTING;
 
 using COLOR = fmt::color;
 using STYLE = fmt::text_style;
@@ -66,33 +67,49 @@ extern void PRINT(std::string_view msg, STYLE style = S_NONE);
 
 /* success */
 template <typename ...T> static inline void PSUCCESS(std::string_view fmt, T&& ...args){
-	fmt::print("{} {}", fmt::format(S_SUCCESS, "[success]"), fmt::format(fmt, std::forward<T>(args)...));
+	if(ENABLE_PRINTING){fmt::print("{} {}", fmt::format(S_SUCCESS, "[success]"), fmt::format(fmt, std::forward<T>(args)...));};
 };
 
 /* error */
 template <typename ...T> static inline void PERROR(std::string_view fmt, T&& ...args){
-	fmt::print(S_ERROR, "[error] {}", fmt::format(fmt, std::forward<T>(args)...));
+	if(ENABLE_PRINTING){fmt::print(S_ERROR, "[error] {}", fmt::format(fmt, std::forward<T>(args)...));};
 };
 
 /* info */
 template <typename ...T> static inline void PINFO(std::string_view fmt, T&& ...args){
-	fmt::print(S_INFO, "[info] {}", fmt::format(fmt, std::forward<T>(args)...));
+	if(ENABLE_PRINTING){fmt::print(S_INFO, "[info] {}", fmt::format(fmt, std::forward<T>(args)...));};
 };
 
 /* warning */
 template <typename ...T> static inline void PWARN(std::string_view fmt, T&& ...args){
-	fmt::print(S_WARNING, "[warn] {}", fmt::format(fmt, std::forward<T>(args)...));
+	if(ENABLE_PRINTING){fmt::print(S_WARNING, "[warn] {}", fmt::format(fmt, std::forward<T>(args)...));};
 };
 
 /* hint */
 template <typename ...T> static inline void PHINT(std::string_view fmt, T&& ...args){
-	fmt::print(S_HINT, "[hint] {}", fmt::format(fmt, std::forward<T>(args)...));
+	if(ENABLE_PRINTING){fmt::print(S_HINT, "[hint] {}", fmt::format(fmt, std::forward<T>(args)...));};
 };
 
 /* debug */
 template <typename ...T> static inline void PDEBUG(int dlevel, std::string_view fmt, T&& ...args) {
 	if(ENABLE_DEBUG_MESSAGES && (dlevel <= DEBUG_LEVEL)){
-		fmt::print("-- {}\n", fmt::format(fmt, std::forward<T>(args)...));
+		switch(dlevel){
+			case 1:
+				fmt::print("-- {}\n", fmt::format(fmt, std::forward<T>(args)...));
+				break;
+			;;
+			case 2:
+				fmt::print("\t{}\n", fmt::format(fmt, std::forward<T>(args)...));
+				break;
+			;;
+			case 3:
+				fmt::print("\t\t{}\n", fmt::format(fmt, std::forward<T>(args)...));
+				break;
+			;;
+			default:
+				break;
+			;;
+		}		
 	}
 }
 

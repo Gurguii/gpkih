@@ -7,17 +7,19 @@
 // concept of something I might implement
 // for command line options' parsing 
 
+using namespace gpkih;
+
 struct gpkih_opt
 {
 	CONFIG_FILE file;
 	std::string section;
-	std::string key; 
+	std::string key;
 };
 
 static inline std::unordered_map<std::string,gpkih_opt> gpkih_opts
 {
 	/* gpkih.conf */
-	{"-y",{CONFIG_PKI,"behaviour","autoanswer_yes"}},
+	{"-y",{CONFIG_PKI,"key","format"}},
 	/* pki.conf */
 	{"-keysize",{CONFIG_PKI,"key","size"}},
 	/* openvpn.conf */

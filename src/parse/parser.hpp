@@ -5,10 +5,10 @@
 
 namespace gpkih::parsers 
 {
-// main parser
+// @brief does generic parsing and calls specialized parser
 extern int parse(std::vector<std::string> &opts);
 
-// @brief does generic parsing and calls specialized parser
+// @brief initialize a new profile, creating the PKI file structure
 extern int init(std::vector<std::string> &opts);
 
 // @brief build ca|server|client key + certificates

@@ -42,22 +42,22 @@ static bool operator&(uint16_t lo, PROFILE_FIELDS ro) {
 }
 
 /* PROFILE STRING -> PROFILE_FIELD MAP */
-static inline std::unordered_map<std::string, PROFILE_FIELDS>
+static inline std::unordered_map<std::string, uint16_t>
 profile_fields_map() {
   return {
-      {"id",PROFILE_FIELDS::id},
-      {"name", PROFILE_FIELDS::name},
-      {"source", PROFILE_FIELDS::source},
+      {"id",static_cast<uint16_t>(PROFILE_FIELDS::id)},
+      {"name", static_cast<uint16_t>(PROFILE_FIELDS::name)},
+      {"source", static_cast<uint16_t>(PROFILE_FIELDS::source)},
       
-      {"cdate", PROFILE_FIELDS::creation_date},
-      {"creation_date", PROFILE_FIELDS::creation_date},
+      {"cdate", static_cast<uint16_t>(PROFILE_FIELDS::creation_date)},
+      {"creation_date", static_cast<uint16_t>(PROFILE_FIELDS::creation_date)},
 
-      {"lmod", PROFILE_FIELDS::last_modification},
-      {"last_modification", PROFILE_FIELDS::last_modification},
+      {"lmod", static_cast<uint16_t>(PROFILE_FIELDS::last_modification)},
+      {"last_modification", static_cast<uint16_t>(PROFILE_FIELDS::last_modification)},
 
-      {"ca", PROFILE_FIELDS::ca_created},
-      {"sv", PROFILE_FIELDS::sv_count},
-      {"cl", PROFILE_FIELDS::cl_count}
+      {"ca", static_cast<uint16_t>(PROFILE_FIELDS::ca_created)},
+      {"sv", static_cast<uint16_t>(PROFILE_FIELDS::sv_count)},
+      {"cl", static_cast<uint16_t>(PROFILE_FIELDS::cl_count)}
   };
 }
 
@@ -97,14 +97,14 @@ enum class ENTITY_FIELDS : uint16_t {
 #define E_ORG ENTITY_FIELDS::subject_organisation
   subject_email = 512,
 #define E_MAIL ENTITY_FIELDS::subject_email
-  key_path = 1024,
-#define E_KEYPATH ENTITY_FIELDS::key_path
-  req_path = 2048,
-#define E_REQPATH ENTITY_FIELDS::req_path
-  cert_path = 4096,
-#define E_CRTPATH ENTITY_FIELDS::cert_path
-  status = 8192,
+  status = 1024,
 #define E_STATUS ENTITY_FIELDS::status
+  key_path = 2048,
+#define E_KEYPATH ENTITY_FIELDS::key_path
+  req_path = 4096,
+#define E_REQPATH ENTITY_FIELDS::req_path
+  cert_path = 8192,
+#define E_CRTPATH ENTITY_FIELDS::cert_path
   all = 16383,
 #define E_ALL ENTITY_FIELDS::all
 };
@@ -122,21 +122,21 @@ static bool operator&(uint16_t lo, ENTITY_FIELDS ro){
 }
 
 /* ENTITY STRING -> ENTITY_FIELD MAP*/
-static inline std::unordered_map<std::string, ENTITY_FIELDS>
+static inline std::unordered_map<std::string, uint16_t>
 entity_fields_map() {
-  return {{"date", E_CREATION_DATE},
-          {"cn", ENTITY_FIELDS::subject_cn},
-          {"type", ENTITY_FIELDS::type},
-          {"serial", ENTITY_FIELDS::serial},
-          {"country", ENTITY_FIELDS::subject_country},
-          {"state", ENTITY_FIELDS::subject_state},
-          {"location", ENTITY_FIELDS::subject_location},
-          {"org", ENTITY_FIELDS::subject_organisation},
-          {"mail", ENTITY_FIELDS::subject_email},
-          {"key", ENTITY_FIELDS::key_path},
-          {"req", ENTITY_FIELDS::req_path},
-          {"crt", ENTITY_FIELDS::cert_path},
-          {"status", ENTITY_FIELDS::status}};
+  return {{"cdate", static_cast<uint16_t>(E_CREATION_DATE)},
+          {"cn", static_cast<uint16_t>(ENTITY_FIELDS::subject_cn)},
+          {"type", static_cast<uint16_t>(ENTITY_FIELDS::type)},
+          {"serial", static_cast<uint16_t>(ENTITY_FIELDS::serial)},
+          {"country", static_cast<uint16_t>(ENTITY_FIELDS::subject_country)},
+          {"state", static_cast<uint16_t>(ENTITY_FIELDS::subject_state)},
+          {"location", static_cast<uint16_t>(ENTITY_FIELDS::subject_location)},
+          {"org", static_cast<uint16_t>(ENTITY_FIELDS::subject_organisation)},
+          {"mail", static_cast<uint16_t>(ENTITY_FIELDS::subject_email)},
+          {"key", static_cast<uint16_t>(ENTITY_FIELDS::key_path)},
+          {"req", static_cast<uint16_t>(ENTITY_FIELDS::req_path)},
+          {"crt", static_cast<uint16_t>(ENTITY_FIELDS::cert_path)},
+          {"status", static_cast<uint16_t>(ENTITY_FIELDS::status)}};
 }
 
 enum class ENTITY_STATUS : uint8_t {
@@ -156,7 +156,6 @@ static inline std::unordered_map<ENTITY_STATUS, std::string> entity_status_to_st
   {ENTITY_STATUS::revoked,"revoked"},
   {ENTITY_STATUS::marked,"marked"},
 };
-
 
 static inline std::string str_conversion(PROFILE_FIELDS field) {
   return (field & P_NAME ? "name" : "source");

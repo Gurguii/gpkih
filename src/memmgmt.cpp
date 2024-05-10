@@ -66,8 +66,6 @@ char *Buffer::allocate(size_t bytes){
 	*next='\0';
 	++next;
 	_available -= bytes;
-	
-	PDEBUG(3,"allocated '{}' bytes, '{}' available", bytes, _available);
 
 	return ptr;
 };
