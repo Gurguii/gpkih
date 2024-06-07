@@ -1,46 +1,46 @@
 #pragma once
 #include <vector>
-#include "../actions/actions.hpp" // database.hpp gpki.hpp structs.hpp
-#include "../gpki.hpp"
+#include "../actions/actions.hpp" // database.hpp gpkih.hpp structs.hpp
+#include "../gpkih.hpp"
 
 namespace gpkih::parsers 
 {
-// @brief does generic parsing and calls specialized parser
+/// @brief does generic parsing and calls specialized parser
 extern int parse(std::vector<std::string> &opts);
 
-// @brief initialize a new profile, creating the PKI file structure
+/// @brief initialize a new profile, creating the PKI file structure
 extern int init(std::vector<std::string> &opts);
 
-// @brief build ca|server|client key + certificates
+/// @brief build ca|server|client key + certificates
 extern int build(std::vector<std::string> &opts);
 
-// @brief revoke certificate
+/// @brief revoke certificate
 extern int revoke(std::vector<std::string> &opts);
 
-// @brief generate certificate revocation list
+/// @brief generate certificate revocation list
 extern int gencrl(std::vector<std::string> &opts);
 
-// @brief list profiles/entities
+/// @brief list profiles/entities
 extern int list(std::vector<std::string> &opts);
 
-// @brief remove remove profile
+/// @brief remove remove profile
 extern int remove(std::vector<std::string> &opts);
 
-// @brief rename profile
+/// @brief rename profile
 extern int rename(std::vector<std::string> &opts);
 
-// @brief remove gpkih base dir and all profiles
+/// @brief remove gpkih base dir and all profiles
 extern int reset(std::vector<std::string> &opts);
 
-// @brief retrieve general/profile configuration
-// partially implemented
+/// @brief retrieve general/profile configuration
+/// partially implemented
 extern int get(std::vector<std::string> &opts);
 
-// @brief change general/profile configuration
-// unimplemented
+/// @brief change general/profile configuration
+/// unimplemented
 extern int set(std::vector<std::string> &opts);
 
-// @brief generate key
+/// @brief generate key
 // unimplementes
 extern int genkey(std::vector<std::string> &opts);
 } // namespace gpkih::parsers

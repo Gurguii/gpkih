@@ -1,33 +1,140 @@
 
 #include "config_management.hpp"
+#include <cstdio>
 #include <cstring>
 #include <sstream>
 #include <fstream>
 #include <unordered_map>
+#include "../printing/printing.hpp"
+#include "../memory/memmgmt.hpp"
 
-
-static inline std::string skip_chars = "#\n ";
-static inline constexpr char section_delim_open = '[';
-static inline constexpr char section_delim_close = ']';
-static std::string empty_chars = fmt::format("{}{} ", section_delim_open, section_delim_close);
+static inline constexpr char sectionOpenDelim = '[';
+static inline constexpr char sectionCloseDelim = ']';
+static inline constexpr const char *emptyChars = "[] ";
+static inline constexpr const char *gpkihSections = "logs behaviour cli formatting";
+static inline constexpr const char *skipChars = "#\n ";
 
 static inline void __clear_section_line(std::string &line){
-  line.erase(std::remove_if(line.begin(), line.end(), [](const char &c){return empty_chars.find(c) != -1;}), line.end());
+  line.erase(std::remove_if(line.begin(), line.end(), [](const char &c){return (emptyChars[0] == c || emptyChars[1] == c || emptyChars[2] == c);}), line.end());
 }
 
 using namespace gpkih;
 
-static int load_file(fs::path path, ConfigMap &buff) {
-  std::ifstream file(path);
-  if (!file.is_open()) {
-    seterror("couldn't open gpkih.conf '{}'", path.string());
-    return F_NOOPEN;
+static int __syncFile(std::string_view srcConfigPath, ConfigMap *cmap){
+  std::string tmpPath = std::string{srcConfigPath}+".new";
+
+  std::ifstream src{srcConfigPath.data()};
+  std::ofstream dst{tmpPath};
+
+  if(!src.is_open()){
+    PERROR("Couldn't open old configuration file '{}' for reading\n", "FILL");
+    return GPKIH_FAIL;
   }
+
+  if(!dst.is_open()){
+    PERROR("Couldn't open new configuration file '{}' for writing\n", tmpPath);
+    return GPKIH_FAIL;
+  }
+
+  std::string line{};
+  bool exists = false;
+
+  while(getline(src, line)){
+
+    if(line.empty()){
+      continue;
+    }
+    
+    if(line[0] == '#'){
+      dst << line << EOL;
+      continue;
+    }
+
+    if(line[0] != sectionOpenDelim || line.empty()){
+      continue;
+    }
+
+    __clear_section_line(line);
+    
+    if(cmap->find(line) == cmap->end()){
+      PWARN("Skipping unexistant section '{}'\n", line);
+      size_t pos = src.tellg();
+      while(getline(src, line)){
+        if(line[0] == sectionOpenDelim){
+          src.seekg(pos);
+          break;
+        }
+        pos = src.tellg();
+      }
+      continue;
+    }
+
+    // Add [ sectionName ] to the file indicating the beginning of the section
+    dst << sectionOpenDelim << " " << line << " " << sectionCloseDelim << EOL;
+    auto &section = (*cmap)[line];
+    size_t pos = src.tellg();
+    
+    while(getline(src, line)){
+      
+      if(line.empty()){
+        continue;
+      }
+
+      if(line[0] == '#'){
+        dst << line << EOL;
+        continue;
+      }
+
+      if(line[0] == sectionOpenDelim){
+        src.seekg(pos);
+        break;
+      }
+
+      std::stringstream ss{line};
+      std::string key, val;
+      ss >> key;
+      ss >> val;
+      exists = false; 
+      
+      if(section.find(key) == section.end()){
+        PWARN("Skipping unexistant key '{}'\n", key);
+        continue;
+      }else{
+        dst << key << ' ' << section[key] << EOL;
+      }
+      
+      pos=src.tellg();
+    }
+  }
+
+  src.close();
+  dst.close();
+
+  if(fs::remove(srcConfigPath) == false){
+    PWARN("Wrote new configuration to '{}' but couldn't delete older config file '{}'\n", tmpPath, srcConfigPath);
+    return GPKIH_FAIL;
+  };
+
+  fs::rename(tmpPath,srcConfigPath);
+  
+  return fs::exists(srcConfigPath) == true ? GPKIH_OK : GPKIH_FAIL;
+
+}
+
+static int __load_file(fs::path path, ConfigMap &buff) {
+  std::ifstream file(path);
+  
+  if (!file.is_open()) {
+    PERROR("couldn't open gpkih.conf '{}'", path.string());
+    return GPKIH_FAIL;
+  }
+
   std::string line;
-  size_t next_section = file.tellg();
+  size_t nextSection = file.tellg();
+  
   while (getline(file, line)) {
     char first = line[0];
-    if (first == section_delim_open) {
+    if (first == sectionOpenDelim) {
       // got a POSSIBLE section
       // remove section delimiters and spaces from line to 
       // have the section name only
@@ -35,34 +142,50 @@ static int load_file(fs::path path, ConfigMap &buff) {
       
       // check that section is valid
       if (buff.find(line) == buff.end()) {
-        PWARN("skipping unknown section '{}'\n", line);
+        PWARN("Skipping unknown section '{}'\n", line);
+        size_t pos = file.tellg();
+        while(getline(file, line)){
+          if(line[0] == sectionOpenDelim){
+            file.seekg(pos);
+            break;
+          }
+          pos=file.tellg();
+        }
         continue; 
       }
 
       // got a valid section, load it
-      std::string section_name = line;
+      std::string sectionName = line;
+      auto &sectionMap = buff[sectionName];
+
       while (getline(file, line)) {
         first = line[0];
-        if (first == section_delim_open) {
-          file.seekg(next_section);
+ 
+        if (first == sectionOpenDelim) {
+          file.seekg(nextSection);
           break;
         }
-        if (skip_chars.find(first) != -1 || line.empty()) {
+        if ( (skipChars[0] == first || skipChars[1] == first || skipChars[2] == first) || line.empty()) {
           continue;
         }
+
         sstream ss(line);
         std::string key, val;
         ss >> key;
         getline(ss, val);
-        // val.erase(std::remove_if(val.begin(),val.end(),[](char c){return
-        // empty_chars.find(c) != -1;}),val.end());
+
         if (val[0] == ' ') {
           val.erase(val.begin());
         }
-        next_section = file.tellg();
+        nextSection = file.tellg();
 
-        // got a valid keyval pair
-        buff[section_name].emplace(std::move(key), std::move(val));
+        if(sectionMap.find(key) == sectionMap.end()){
+          PWARN("Skipping invalid key '{}.{}' loading configuration\n", sectionName, key);
+          continue;
+        }
+
+        sectionMap[key]=val;
+
       }
     }
   }
@@ -71,74 +194,113 @@ static int load_file(fs::path path, ConfigMap &buff) {
 };
 
 // [begin] static class Config
+static inline std::string gpkihConfigPath;
 
-ConfigMap Config::_conf_gpkih = {
-  {"behaviour",{}},
-  {"logs",{}},
-  {"cli",{}},
-  {"formatting",{}}
+ConfigMap Config::gpkihConfig = {
+  {"behaviour",{
+    {"headers",""},
+    {"print_generated_certificate",""},
+    {"prompt",""},
+    {"autoanswer",""}
+  }},
+  {"logs",{
+    {"includedFormatFields",""},
+    {"includedLogLevels",""},
+    {"max_size",""}
+  }},
+  {"cli",{
+    {"customPS",""}
+  }},
+  {"formatting",{
+    {"date_format",""}
+  }}
 };
 
 int Config::load(std::string_view filepath){ 
-  return load_file(filepath, _conf_gpkih); 
+  if(gpkihConfigPath.empty()){
+    gpkihConfigPath = std::string(filepath);
+    return __load_file(filepath, gpkihConfig);     
+  }
+  return GPKIH_FAIL;
 } // Config::load()
 
 std::string_view Config::get(std::string_view section, std::string_view key){
-  if(_conf_gpkih.find(section.data()) != _conf_gpkih.end() && _conf_gpkih.at(section.data()).find(key.data()) != _conf_gpkih.at(section.data()).end()){
-    return _conf_gpkih[section.data()][key.data()];     
+  if(gpkihConfig.find(section.data()) != gpkihConfig.end() && gpkihConfig.at(section.data()).find(key.data()) != gpkihConfig.at(section.data()).end()){
+    return gpkihConfig[section.data()][key.data()];     
   }else{
     return "N/A";
   }
 } // Config::get()
 
-void Config::set(std::string_view section, std::string_view key, std::string_view val){
-      _conf_gpkih[section.data()][key.data()] =  val.data();
+int Config::set(std::string_view section, std::string_view key, std::string_view val){
+  if(gpkihConfig.find(section.data()) == gpkihConfig.end()){
+    PERROR("Section '{}' doesn't exist, valid sections: {}\n", section, gpkihSections);
+    return GPKIH_FAIL;
+  }
+
+  auto &ref = gpkihConfig[section.data()];
+
+  if(ref.find(key.data()) == ref.end()){
+    std::stringstream msg{};
+    msg << "Key '" << key << "' doesn't exist in section '" << section << "', valid keys: ";
+    for(const auto &kv : ref){
+      msg << kv.first << " ";
+    }
+    PERROR("{}\n", msg.str());
+    return GPKIH_FAIL;
+  }
+
+  std::string oval{gpkihConfig[section.data()][key.data()]};
+  gpkihConfig[section.data()][key.data()] =  val.data();
+
+  PSUCCESS("Changed 'gpkih.{}.{}' from '{}' to '{}\n", section, key, oval, val);  
+  return GPKIH_OK;    
 } // Config::set()
 
 bool Config::section_exists(const char *section){
-  return _conf_gpkih.find(section) != _conf_gpkih.end();
-}
+  PDEBUG(1, "Config::section_exists()");
+  return gpkihConfig.find(section) != gpkihConfig.end();
+} // Config::section_exists()
 
 const std::unordered_map<std::string,std::string>* const Config::key_exists(const char *key){
-  for(const auto &section : _conf_gpkih){
+  for(const auto &section : gpkihConfig){
     if(section.second.find(key) != section.second.end()){
       // return pointer to section that contains the key
-      return &_conf_gpkih[section.first];
+      return &gpkihConfig[section.first];
     }
   }
   return nullptr;
-}
+} // Config::key_exists
 
 bool Config::key_exists(const char *section, const char *key){
-  if(_conf_gpkih.find(section) != _conf_gpkih.end()){
-    // section exists, return key
-    return (_conf_gpkih[section].find(key) != _conf_gpkih[section].end()
-      ? true
-      : false);
+  PDEBUG(1, "Config::key_exists()");
+  if(gpkihConfig.find(section) != gpkihConfig.end()){
+    return gpkihConfig[section].find(key) != gpkihConfig[section].end();
   }
   return false;
-}
+} // Config::key_exists
+
+int Config::sync(){
+  PDEBUG(1, "Config::sync({})", gpkihConfigPath);
+  return __syncFile(gpkihConfigPath, &gpkihConfig);
+} // Config::sync
+
 // [end] namespace Config
 
+ProfileConfig::ProfileConfig(Profile &prof, CONFIG_FILE filesToLoad):profile(prof){
+  fs::path path = profile.source;
+  vpnConfigPath = path/vpnConfFilename;
+  pkiConfigPath = path/pkiConfFilename;
 
-ProfileConfig::ProfileConfig(Profile &profile, CONFIG_FILE files_to_load) {
-  
   /* Load pki.conf */
-  if (files_to_load & CONFIG_PKI) {  
-    //auto path = std::move(fmt::format("{}{}{}", profile.source, SLASH, pki_conf_filename));
-    fs::path path = profile.source;
-    path /= pki_conf_filename; 
-    succesfully_loaded = load_file(path, this->_conf_pki) ? false : true;
+  if (filesToLoad & CONFIG_PKI && __load_file(pkiConfigPath, this->pkiConfig) == GPKIH_OK) {
+    succesfullyLoadedFiles = succesfullyLoadedFiles | CONFIG_PKI;
   }
 
   /* Load openvpn.conf */
-  if (files_to_load & CONFIG_VPN) {
-    //auto path = std::move(fmt::format("{}{}{}", profile.source, SLASH, vpn_conf_filename));
-    fs::path path = profile.source;
-    path /= vpn_conf_filename;
-    succesfully_loaded = load_file(path, this->_conf_vpn) ? false : true;
+  if (filesToLoad & CONFIG_VPN && __load_file(vpnConfigPath, this->vpnConfig)) {
+    succesfullyLoadedFiles =  succesfullyLoadedFiles | CONFIG_VPN;
   }
-
 } // ProfileConfig::ProfileConfig()
 
 Subject ProfileConfig::default_subject() {
@@ -146,53 +308,104 @@ Subject ProfileConfig::default_subject() {
   
   Subject subj;
 
-  memcpy(subj.country,(_conf_pki["subject"]["country"]).data(),2);
-  CALLOCATE(subj.state,reinterpret_cast<size_t*>(&subj.statelen),_conf_pki["subject"]["state"]);
-  CALLOCATE(subj.location,reinterpret_cast<size_t*>(&subj.locationlen),_conf_pki["subject"]["location"]);
-  CALLOCATE(subj.organisation,reinterpret_cast<size_t*>(&subj.organisationlen),_conf_pki["subject"]["organisation"]);
-  CALLOCATE(subj.cn,reinterpret_cast<size_t*>(&subj.cnlen),_conf_pki["subject"]["cn"]);
-  CALLOCATE(subj.email,reinterpret_cast<size_t*>(&subj.emaillen),_conf_pki["subject"]["email"]);
-  PDEBUG(3,"returning default subject : [country={},state={},location={},organisation={},common_name={},email={}]", subj.country,subj.state,subj.location,subj.organisation,subj.cn,subj.email);
-  
+  memcpy(subj.country,(pkiConfig["subject"]["country"]).data(),2);
+  CALLOCATE(subj.state,reinterpret_cast<size_t*>(&subj.statelen),pkiConfig["subject"]["state"]);
+  CALLOCATE(subj.location,reinterpret_cast<size_t*>(&subj.locationlen),pkiConfig["subject"]["location"]);
+  CALLOCATE(subj.organisation,reinterpret_cast<size_t*>(&subj.organisationlen),pkiConfig["subject"]["organisation"]);
+  CALLOCATE(subj.cn,reinterpret_cast<size_t*>(&subj.cnlen),pkiConfig["subject"]["cn"]);
+  CALLOCATE(subj.email,reinterpret_cast<size_t*>(&subj.emaillen),pkiConfig["subject"]["email"]);
+
   return subj;
 };
 
-ConfigMap* const ProfileConfig::get(CONFIG_FILE file) {
+ConfigMap* const ProfileConfig::getptr(CONFIG_FILE file) {
+  PDEBUG(1, "ProfileConfig::getptr()");
+
   switch (file) {
   case CONFIG_VPN:
-    return &this->_conf_vpn;
+    return &this->vpnConfig;
     break;
   case CONFIG_PKI:
-    return &this->_conf_pki;
+    return &this->pkiConfig;
     break;
   default:
     return nullptr;
-    break;
-  }
-}
-ConfigMap& ProfileConfig::_get(CONFIG_FILE file){
-  switch(file){
-    case CONFIG_VPN:
-      return this->_conf_vpn;
-    default:
-      return this->_conf_pki;
-  }
-}
-void ProfileConfig::set(CONFIG_FILE file, std::string_view section, std::string_view key, std::string_view val){
-  switch(file){
-    case CONFIG_PKI:
-      _conf_pki[section.data()][key.data()] = val;
-      break;
-    case CONFIG_VPN:
-      _conf_pki[section.data()][key.data()] = val;
-      break;
-    default:
-      break;
   }
 }
 
-bool ProfileConfig::exists(std::string_view key, CONFIG_FILE file) {
-  auto ptr = get(file);
+ConfigMap& ProfileConfig::get(CONFIG_FILE file){
+  PDEBUG(1, "ProfileConfig::get()");
+
+  switch(file){
+    case CONFIG_VPN:
+      return this->vpnConfig;
+    default:
+      return this->pkiConfig;
+  }
+}
+
+const CONFIG_FILE ProfileConfig::loadedFiles(){
+  PDEBUG(1, "ProfileConfig::loadedFiles()");
+
+  return this->succesfullyLoadedFiles; 
+}
+
+int ProfileConfig::set(CONFIG_FILE file, std::string_view section, std::string_view key, std::string_view val){
+  PDEBUG(1, "ProfileConfig::set()");
+
+  try{
+    if(file & CONFIG_PKI){
+      pkiConfig.at(section.data()).at(key.data()) = val;
+    }else if(file & CONFIG_VPN){
+      vpnConfig.at(section.data()).at(key.data()) = val;
+    }else{
+      return GPKIH_FAIL;
+    }
+    return GPKIH_OK;
+  }catch(const std::out_of_range &err){
+    PERROR(err.what());
+    return GPKIH_FAIL;
+  }
+}
+
+int ProfileConfig::set2(CONFIG_FILE file, std::string_view section, std::string_view key, std::string_view val){
+  PDEBUG(1, "ProfileConfig::set2()");
+
+  try{
+    if(file & CONFIG_PKI){
+      pkiConfig.at(section.data()).at(key.data()) = val;
+    }else if(file & CONFIG_VPN){
+      vpnConfig.at(section.data()).at(key.data()) = val;
+    }else{
+      return GPKIH_FAIL;
+    }
+  }catch(const std::out_of_range &err){
+    if(file & CONFIG_PKI){
+      if(pkiConfig.find(section.data()) == pkiConfig.end()){
+        PERROR("Section '{}' doesn't exist in pki file\n", section.data());
+      }else{
+        PERROR("Key '{}' doesn't exist in pki file section '{}'\n", key.data(), section.data());
+      }
+    }else if(file & CONFIG_VPN){
+      if(vpnConfig.find(section.data()) == vpnConfig.end()){
+        PERROR("Section '{}' doesn't exist in vpn file\n", section.data());
+      }else{
+        PERROR("Key '{}' doesn't exist in vpn file section '{}'\n", key.data(), section.data());
+      }      
+    }
+    return GPKIH_FAIL;
+  }
+
+  std::string msg = fmt::format("changed {}.{}.{} to '{}'", file == CONFIG_PKI ? "pki" : "vpn", section, key, val);
+  PSUCCESS("{}\n", msg);
+  ADD_LOG(L_INFO, "Profile:{} - {}", this->profile.name, msg);
+  return GPKIH_OK;
+}
+
+bool ProfileConfig::key_exists(std::string_view key, CONFIG_FILE file) {
+  PDEBUG(1, "ProfileConfig::key_exists()");
+
+  auto ptr = getptr(file);
   if (ptr == nullptr) {
     return false;
   }
@@ -205,24 +418,58 @@ bool ProfileConfig::exists(std::string_view key, CONFIG_FILE file) {
   return conf.find(key.data()) != conf.end();
 }
 
+bool ProfileConfig::key_exists(CONFIG_FILE file, std::string_view section, std::string_view key){
+  PDEBUG(1, "ProfileConfig::key_exists()");
+
+  std::unordered_map<std::string, std::string> *sptr;
+
+  if(section_exists(section, file) == false){
+    return false;
+  }
+
+  switch(file){
+    case CONFIG_PKI:
+      sptr = &pkiConfig[section.data()];
+      break;
+    case CONFIG_VPN:
+      sptr = &vpnConfig[section.data()];
+      break;
+    default:
+      return false;    
+  }
+  
+  return sptr->find(key.data()) != sptr->end();
+}
+
+bool ProfileConfig::section_exists(std::string_view section, CONFIG_FILE file){
+  PDEBUG(1, "ProfileConfig::section_exists()");
+
+  auto ptr = getptr(file);
+  if(ptr == nullptr){
+    return false;
+  }
+  return ptr->find(section.data()) != ptr->end();
+}
 
 bool ProfileConfig::dump_vpn_conf(fs::path &outpath, ENTITY_TYPE type) {
+  PDEBUG(1, "ProfileConfig::dump_vpn_conf()");
+
   if (fs::exists(outpath)) {
-    seterror("already existing file '{}'\n", outpath.string());
+    PERROR("already existing file '{}'\n", outpath.string());
     return false;
   }
 
   std::ofstream file(outpath);
   if (!file.is_open()) {
-    seterror("couldn't open file '{}' to write", outpath.string());
+    PERROR("couldn't open file '{}' to write", outpath.string());
     return false;
   }
 
   // entity specific options
   switch (type) {
   case ET_SV:
-    if (this->_conf_vpn.find("server") != this->_conf_vpn.end()) {
-      for (auto &kv : this->_conf_vpn["server"]) {
+    if (this->vpnConfig.find("server") != this->vpnConfig.end()) {
+      for (auto &kv : this->vpnConfig["server"]) {
         if (kv.second == "UNSET") {
           file << "# ";
         }
@@ -231,8 +478,8 @@ bool ProfileConfig::dump_vpn_conf(fs::path &outpath, ENTITY_TYPE type) {
     }
     break;
   case ET_CL:
-    if (this->_conf_vpn.find("client") != this->_conf_vpn.end()) {
-      for (auto &kv : _conf_vpn["client"]) {
+    if (this->vpnConfig.find("client") != this->vpnConfig.end()) {
+      for (auto &kv : vpnConfig["client"]) {
         if (kv.second == "UNSET") {
           file << "# ";
         }
@@ -241,18 +488,18 @@ bool ProfileConfig::dump_vpn_conf(fs::path &outpath, ENTITY_TYPE type) {
     }
     break;
   default:
-    seterror("entity type '{}' not suitable for call to dump_vpn_conf()",
+    PERROR("entity type '{}' not suitable for call to dump_vpn_conf()",
              to_str(type));
     break;
   }
   
-  // common options
-  if (this->_conf_vpn.find("common") == this->_conf_vpn.end()) {
-    seterror("couldn't find 'common' section in vpn mapped values");
+  // Common options
+  if (this->vpnConfig.find("common") == this->vpnConfig.end()) {
+    PERROR("couldn't find 'common' section in vpn mapped values");
     file.close();
     return false;
   }
-  for (auto &kv : this->_conf_vpn["common"]) {
+  for (auto &kv : this->vpnConfig["common"]) {
     if (kv.second == "UNSET") {
       file << "# ";
     }
@@ -261,4 +508,24 @@ bool ProfileConfig::dump_vpn_conf(fs::path &outpath, ENTITY_TYPE type) {
   file.close();
   return (fs::exists(outpath) && fs::file_size(outpath) > 0) ? true : false;
 }
+
+int ProfileConfig::sync(CONFIG_FILE files){
+  PDEBUG(1, "ProfileConfig::sync()");
+  
+  if (files & CONFIG_VPN){
+    PDEBUG(2, "syncing VPN - {}\n", vpnConfigPath.string());
+    if(__syncFile(vpnConfigPath.c_str(), &vpnConfig) == GPKIH_FAIL){
+      return GPKIH_FAIL;
+    }
+  }
+
+  if (files & CONFIG_PKI){
+    PDEBUG(2, "syncing PKI - {}\n", pkiConfigPath.string());
+    if(__syncFile(pkiConfigPath.c_str(), &pkiConfig) == GPKIH_FAIL){
+      return GPKIH_FAIL;
+    }
+  }  
+  
+  return GPKIH_OK;
+};
 // [end] class ProfileConfig

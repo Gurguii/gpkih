@@ -3,7 +3,8 @@
 #include <iostream> // std::cin
 #include <fstream>
 #include <sstream>
-static inline std::string openssl_conf_filename = "gopenssl.conf";
+
+static std::string openssl_conf_filename = "gopenssl.conf";
 
 static inline std::vector<std::string> RELATIVE_DIRECTORY_PATHS(){
   return 
@@ -38,7 +39,7 @@ static bool __has_write_perms(std::string dirpath) {
     auto s = fs::status(dirpath);
     return true;
   } catch (fs::filesystem_error &ex) {
-    seterror(ex.what());
+    PERROR(ex.what());
     return false;
   }
 }
@@ -46,8 +47,8 @@ static bool __has_write_perms(std::string dirpath) {
 /* __sed("/home/gurgui/base", "/home/gurgui/after_sed.txt",
           {{"GPKI_BASEDIR", "WISKONSIN"}})
 */
-static int __sed(strview src, strview dst,
-  std::unordered_map<strview, strview> &&vals) {
+static int __sed(std::string_view src, std::string_view dst,
+  std::unordered_map<std::string_view, std::string_view> &&vals) {
   PDEBUG(2, "__sed()");
 
   std::ifstream srcfile(src.data());
@@ -91,13 +92,13 @@ template <typename T> static int __is_valid_path(T path) {
         if(fs::remove_all(path) == true){
           return GPKIH_OK;
         }
-        seterror("couldn't remove '{}' recursively",path);
+        PERROR("couldn't remove '{}' recursively",path);
         return GPKIH_FAIL;
       }
       return GPKIH_OK;
     };
   } catch (std::exception ex) {
-    seterror("permission denied in '{}'\n", path);
+    PERROR("permission denied in '{}'\n", path);
     return GPKIH_OK;
   }
 
@@ -127,19 +128,19 @@ int __create_pki_filestruct(Profile &profile){
 
     std::ofstream(path, std::ios::app).write(p.second.c_str(), p.second.size());
     if (!fs::exists(path)) {
-      seterror("couldn't create file " + p.first);
+      PERROR("couldn't create file " + p.first);
       return GPKIH_FAIL;
     }
   }
 
   // Copy required config files to profile
-  for (auto &filenames :
-       {vpn_conf_filename, pki_conf_filename}) {
-    std::string src = fmt::format("{}{}", CONF_DIRPATH, filenames);
-    std::string dst = fmt::format("{}{}{}", profile.source, SLASH, filenames);
+  for (const auto &filename :
+       {vpnConfFilename, pkiConfFilename}) {
+    std::string src = fmt::format("{}{}", CONF_DIRPATH, filename);
+    std::string dst = fmt::format("{}{}{}", profile.source, SLASH, filename);
     fs::copy(src, dst);
     if (!fs::exists(dst)) {
-      PERROR("couldn't copy '{}' to '{}'\n", src, dst);
+      PERROR("Couldn't copy '{}' to '{}'\n", src, dst);
       return GPKIH_FAIL;
     }
   }
@@ -153,10 +154,10 @@ int __create_pki_filestruct(Profile &profile){
 #endif
 
 // [Linux | Windows] - adapt gopenssl.cnf 
-  if (__sed(gopenssl_sed_src, gopenssl_sed_dst, {{"GPKIH_BASEDIR", fmt::format("{}/pki",profile.source)}})) {
-    PERROR("__sed failed()\n");
-    return GPKIH_FAIL;
-  }
+if (__sed(gopenssl_sed_src, gopenssl_sed_dst, {{"GPKIH_BASEDIR", fmt::format("{}/pki",profile.source)}})) {
+  PERROR("__sed failed()\n");
+  return GPKIH_FAIL;
+}
 
 // [Windows] - change '/' slashes back to '\'
 #ifdef _WIN32
@@ -166,29 +167,22 @@ int __create_pki_filestruct(Profile &profile){
   // Add profile to database
   if (db::profiles::add(profile)) {
     // error is set by db::profiles::add
-    printlasterror();
     return GPKIH_FAIL;
   }
 
   return GPKIH_OK;
 };
 
-
-static int __check_profile_info(strview &profile_name, strview &profile_source, Profile &buffer){
+static int __check_profile_info(std::string_view &profileName, std::string_view &profileSource, Profile &profile){
   // TODO - check path length < 254 (uint8_t = 255 | 254 + '\0' = 255);
   // remember macro `len`
-  Profile &profile = buffer;
-  //if (!profile_name.empty() &&
-  //    db::profiles::exists(profile_name)) {
-  //  PWARN("profile '{}' already exists\n", profile_name);
-  //}
 
   /* 
-    profile_name can't be empty
-    profile with name `profile_name` can't already exist
-    profile_name size is max 254 characters
+    profileName can't be empty
+    profile with name `profileName` can't already exist
+    profileName size is max 254 characters
   */
-  if (profile_name.empty() || db::profiles::exists(profile_name) || profile_name.size() > 254) {
+  if (profileName.empty() || db::profiles::exists(profileName) || profileName.size() > 254) {
     std::string pname;
     for(;;){
       pname = PROMPT("Desired profile name");
@@ -207,22 +201,22 @@ static int __check_profile_info(strview &profile_name, strview &profile_source, 
       break;
     }
   } else {
-    CALLOCATE(profile.name,reinterpret_cast<size_t*>(&profile.namelen),profile_name);
+    CALLOCATE(profile.name,reinterpret_cast<size_t*>(&profile.namelen),profileName);
   }
 
-  if (profile_source.empty() || !__is_valid_path(profile_source) || profile_source.size() > 254) {
+  if (profileSource.empty() || !__is_valid_path(profileSource) || profileSource.size() > 254) {
     std::string psource;
     do {
       psource = PROMPT("Profile source dir (absolute path)");
-    } while (!__is_valid_path(psource) && profile_source.size() > 254);
+    } while (!__is_valid_path(psource) && profileSource.size() > 254);
     CALLOCATE(profile.source,reinterpret_cast<size_t*>(&profile.sourcelen),psource);
   } else {
-    CALLOCATE(profile.source,reinterpret_cast<size_t*>(&profile.sourcelen),profile_source);
+    CALLOCATE(profile.source,reinterpret_cast<size_t*>(&profile.sourcelen),profileSource);
   }
 
   // Check that we have write permissions in such path
   if (!__has_write_perms(profile.source)) {
-    seterror("no write permissions in '{}'", profile.source);
+    PERROR("no write permissions in '{}'", profile.source);
     return GPKIH_FAIL;
   };
 
@@ -232,11 +226,11 @@ static int __check_profile_info(strview &profile_name, strview &profile_source, 
   return fs::create_directories(profile.source) ? GPKIH_OK : GPKIH_FAIL;
 } // check_profile_info()
 
-int actions::init(strview &profile_name, strview &profile_source) {
+int actions::init(std::string_view &profileName, std::string_view &profileSource) {
   Profile profile;
   profile.last_modification = profile.creation_date = std::chrono::system_clock::now();
   
-  if(__check_profile_info(profile_name, profile_source, profile) != GPKIH_OK){
+  if(__check_profile_info(profileName, profileSource, profile) == GPKIH_FAIL){
     return GPKIH_FAIL;
   };
 
@@ -245,7 +239,7 @@ int actions::init(strview &profile_name, strview &profile_source) {
   }
 
   // Create profile entities file
-  EntityManager{profile_name};
+  EntityManager eman{profileName};
   
   // sync() profiles.data with db::profiles::existing_profiles to add the new one
   db::profiles::sync();
@@ -254,6 +248,16 @@ int actions::init(strview &profile_name, strview &profile_source) {
   if (Config::get("behaviour", "prompt") == "yes") {
     bool autoans = Config::get("behaviour", "autoanswer") == "no" ? false : true; 
     if (autoans) {
+      // QUESTION 1 - create dhparam?
+      utils::openssl::create_dhparam(fmt::format("{}{}pki{}tls{}dhparam1024",profile.source, SLASH, SLASH, SLASH));
+      // QUESTION 2 - create ca?
+      ProfileConfig pconf(profile, CONFIG_PKI);
+      Entity ca;
+      ca.type = ET_CA;
+      utils::entities::promptForSubject(profile.name, ca.subject, pconf, eman);
+
+      build_ca(profile, pconf, ca, eman);
+    }else{
       auto ans = PROMPT("Create dhparam? " + fmt::format(fg(fmt::terminal_color::bright_green) |
                                                   EMPHASIS::underline,
                                               "(highly recommended)"),
@@ -264,18 +268,14 @@ int actions::init(strview &profile_name, strview &profile_source) {
 
       ans = PROMPT("Create CA?","[y/n]",true);
       if(ans == "y" || ans == "yes"){
+        ProfileConfig pconf(profile, CONFIG_PKI);
         Entity ca;
-      }
-
-    }else{
-      PINFO("generating dhparam of {} bits\n", 1024);
-      // QUESTION 1
-      utils::openssl::create_dhparam(fmt::format("{}{}pki{}tls{}dhparam1024",profile.source, SLASH, SLASH, SLASH));
-      
-      // QUESTION 2
-
-    }
+        ca.type = ET_CA;
+        utils::entities::promptForSubject(profile.name, ca.subject, pconf, eman);
   
+        build_ca(profile, pconf, ca, eman);
+      }
+    }
   }
 
   ADD_LOG(L_INFO,"created profile [name:{},source:{}]",profile.name,profile.source);

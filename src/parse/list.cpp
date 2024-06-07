@@ -24,7 +24,7 @@ int parsers::list(std::vector<std::string> &opts) {
   if(opts[0][0] != '-'){
     pname = opts[0];
     opts.erase(opts.begin());
-    fmap = entity_fields_map();
+    fmap = entityFieldsMap();
     if(db::profiles::exists(pname) == false){
       return GPKIH_FAIL;
     }
@@ -56,6 +56,12 @@ int parsers::list(std::vector<std::string> &opts) {
       UNKNOWN_OPTION_MESSAGE(opt);
       continue;
     }
+  }
+
+  if(fields == 0){
+    PINFO("No valid fields requested\n");
+    PHINT("Try ./gpkih help list to get a list of available profile/entity fields\n");
+    return GPKIH_OK;
   }
 
   return pname.empty() ? actions::list_profiles(fields) : actions::list_entities(pname, fields);

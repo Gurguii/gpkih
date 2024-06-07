@@ -1,7 +1,5 @@
 .vscode
 build
-todo.txt
-tothink.txt
 .error.log
 COMANDOS.md
 CMakeSettings.json
@@ -10,3 +8,5 @@ out
 .tools
 .cache
 docker/*results
+misc
+documentation/

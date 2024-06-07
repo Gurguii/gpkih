@@ -1,5 +1,6 @@
 #include "logger.hpp"
 #include "../config/config_management.hpp" // Config::get()
+#include "../printing/printing.hpp"
 
 using namespace gpkih;
 
@@ -30,15 +31,12 @@ std::string Logger::get_basedir(){
 }
 
 Logger::~Logger() {
-	// Save current lines to a file
-	std::ofstream(this->linefile).write(reinterpret_cast<const char*>(&this->current_lines),sizeof(decltype(this->current_lines)));
+	logstream.close();
 } // Logger::~Logger
 
-Logger::Logger(std::string &&filename){
+Logger::Logger(std::string &&filename)
+:logpath(Logger::basedir/filename+=".log"),ppfile(Logger::basedir/filename+=".data"){
 	PDEBUG(1, "Logger::Logger()");
-
-	this->logpath = Logger::basedir / filename += ".log";
-	this->linefile = Logger::basedir / filename += ".line";
 
 	/* BEG - file checking */
 	if (fs::exists(Logger::basedir) == false) {
@@ -52,60 +50,46 @@ Logger::Logger(std::string &&filename){
 			PWARN("couldn't create log file '{}'\n", logpath.string());
 			return;
 		}
-		// create line counting file
-		std::ofstream(this->linefile, std::ios::binary).write(reinterpret_cast<const char*>(0),sizeof(decltype(this->current_lines)));
-		if (fs::exists(this->linefile) == false) {
-			PWARN("couldn't create line counting file '{}'\n", this->linefile.string());
-			return;
-		}
 	}else if(!fs::exists(logpath)){
 		if (!std::ofstream(logpath).is_open()) {
 			PWARN("couldn't create log file '{}'\n", logpath.string());
 			return;
 		}
 	}
-	else if (!fs::exists(this->linefile)) {
-		std::ofstream(this->linefile).write(reinterpret_cast<const char*>(0), sizeof(decltype(this->current_lines)));
-		if (fs::exists(this->linefile) == false) {
-			PWARN("couldn't create line counting file '{}'\n", this->linefile.string());
-			return;
-		}
-		this->current_lines = 0;
-	}
-	else {
-		// Load current lines
-		std::ifstream file(this->linefile, std::ios::binary);
-
-		if (!file.is_open()) {
-			PWARN("couldn't open line tracking file '{}'\n", this->linefile.string());
-			if (std::filesystem::exists(this->linefile)) {
-				PWARN("but it exists tho\n");
-			}
-			return;
-		}
-
-		file.read(reinterpret_cast<char*>(&this->current_lines), sizeof(decltype(this->current_lines)));
-	}
-	/* END - File checking */
-
-	// set max_lines
-	std::string_view msize = Config::get("logs", "max_size");
 	
-	size_t number = std::stoull(&msize[0],NULL,10);
-	char unit = tolower(msize[msize.size()-1]);
+	// Create streams
+	this->logstream = std::ofstream(this->logpath, std::ios::app);
+
+	if(this->logstream.is_open() == false){
+		_ok = false;
+	}
+	
+	/* END - File checking */
+	
+	this->csize = fs::file_size(logpath);
+	
+	// set max_size
+	std::string_view msizestr = Config::get("logs", "max_size");
+	if(msizestr.empty()){
+		this->msize = 0;
+		return; 		
+	}
+
+	size_t number = std::stoull(&msizestr[0],NULL,10);
+	char unit = tolower(msizestr[msizestr.size()-1]);
 
 	switch(unit){
 	case 'g':
-		this->max_size = static_cast<size_t>(number * 1024 * 1024 * 1024);
+		this->msize = static_cast<size_t>(number * 1024 * 1024 * 1024);
 		break;
 	case 'm':
-		this->max_size = static_cast<size_t>(number * 1024 * 1024);
+		this->msize = static_cast<size_t>(number * 1024 * 1024);
 		break;
 	case 'k':
-		this->max_size = static_cast<size_t>(number * 1024);
+		this->msize = static_cast<size_t>(number * 1024);
 		break;
 	case 'b':
-		this->max_size = static_cast<size_t>(number);
+		this->msize = static_cast<size_t>(number);
 		break;
 	default:
 		// assume bytes
@@ -113,14 +97,14 @@ Logger::Logger(std::string &&filename){
 		break;
 	} 
 
-	// set included_format_fields
-	this->included_format_fields = FormatField::NONE;
+	// set includedFormatFields
+	this->includedFormatFields = FormatField::NONE;
 	str token;
-	sstream ss(Config::get("logs", "included_format_fields").data());
+	sstream ss(Config::get("logs", "includedFormatFields").data());
 	while (getline(ss, token, ':')) {
 		if (__str_ffield_map.find(token) != __str_ffield_map.end()) {
 			// it exists, add field
-			included_format_fields = included_format_fields | __str_ffield_map[token];
+			includedFormatFields = includedFormatFields | __str_ffield_map[token];
 		}
 	}
 
@@ -128,21 +112,25 @@ Logger::Logger(std::string &&filename){
 	ss.clear();
 
 	// set include_levels
-	this->included_levels = L_NONE;
+	this->includedLogLevels = L_NONE;
 
-	ss = std::move(sstream(Config::get("logs", "included_levels").data()));
+	ss = std::move(sstream(Config::get("logs", "includedLogLevels").data()));
 	while (getline(ss, token, ':')) {
 		if (__str_level_map.find(token) != __str_level_map.end()) {
 			// it exists, add field
-			included_levels = included_levels | __str_level_map[token];
+			includedLogLevels = includedLogLevels | __str_level_map[token];
 		}
 	}
 	
 	return;
 } // Logger::Logger()
 
+bool Logger::ok(){
+	return _ok;
+}
+
 const FormatField& Logger::ffields(){
-	return this->included_format_fields;
+	return this->includedFormatFields;
 }
 
 Logger *gpkih_logger = nullptr; 

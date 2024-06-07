@@ -3,7 +3,7 @@
 
 using namespace gpkih;
 
-bool utils::str::compare_views(std::string_view &s0, std::string_view &s1, size_t nchars){
+bool utils::str::compareViews(std::string_view &s0, std::string_view &s1, size_t nchars){
 	for(int i = 0; i < nchars; ++i){
 		if(s0[i] != s1[i]){
 			return false;
@@ -12,7 +12,7 @@ bool utils::str::compare_views(std::string_view &s0, std::string_view &s1, size_
 	return true;
 };
 
-bool utils::str::compare_views(std::string_view s0, std::string_view s1, size_t nchars){
+bool utils::str::compareViews(std::string_view s0, std::string_view s1, size_t nchars){
 	for(int i = 0; i < nchars; ++i){
 		printf("%c-%c\n",s0[i],s1[i]);
 		if(s0[i] != s1[i]){
@@ -32,7 +32,7 @@ size_t utils::str::length(const char *st){
 
 size_t utils::str::slength(const char *st){
 	if(st == NULL){
-		return 0;
+		return -1;
 	}
 	size_t l = 0;
 	while(st[l] != '\0'){

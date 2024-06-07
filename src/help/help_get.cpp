@@ -11,7 +11,7 @@ get generic/profile-specific configuration
   ./gpkih get <profile> <file>.<section>.<property> 
 
 note: when working with gpkih.conf, profile its not required since this
-configuration its global, e.g '/.gpkih get behaviour'
+configuration its global, e.g './gpkih get behaviour'
 
 [ files and sections ]
   gpkih : behaviour, logs, cli

@@ -1,7 +1,7 @@
 #pragma once
 
 #include "../config/config_management.hpp"
-#include "../gpki.hpp"
+#include "../gpkih.hpp"
 #include "../printing/printing.hpp"
 #include "../logger/logger.hpp"
 #include "../db/profiles.hpp"

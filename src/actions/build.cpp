@@ -1,7 +1,6 @@
 #include "actions.hpp"
 
 #include <filesystem>
-#include <algorithm>
 #include <iostream>
 #include <fstream>
 
@@ -11,11 +10,11 @@ using namespace gpkih;
 static int __increment_serial(){
   PDEBUG(2,"__increment_serial()");
 
-  std::fstream file(serial_path, std::ios::in | std::ios::out);
+  std::fstream file(serialPath, std::ios::in | std::ios::out);
   
   if(!file.is_open()){
-    seterror("couldn't open serial file '{}' to update serial\n", serial_path);
-    return F_NOCREATE;
+    PERROR("couldn't open serial file '{}' to update serial\n", serialPath);
+    return GPKIH_FAIL;
   }
 
   std::string stserial{};
@@ -39,7 +38,7 @@ static int __create_outdir(fs::path &path){
   PDEBUG(2,"__create_outdir({})",path.string());
 
   if(path.is_relative()){
-    seterror("path to __create_outdir() must be absolute, given path: {}", path.string());
+    PERROR("path to __create_outdir() must be absolute, given path: {}", path.string());
     return GPKIH_FAIL;
   }
 
@@ -72,20 +71,20 @@ static std::pair<std::string,std::string> __server_client_build_commands(Profile
 
   // Set entity certificate request PATH
   std::string tmp = std::move(fmt::format("{}{}-csr.{}",profile::dir_req(profile), subject.cn, csr_creation_format.data()));
-  CALLOCATE(entity.csr_path,reinterpret_cast<size_t*>(&entity.csr_path_len),tmp);
+  CALLOCATE(entity.csrPath,reinterpret_cast<size_t*>(&entity.csrPathLen),tmp);
 
   // Set entity key PATH
   tmp.assign("");
   tmp = std::move(fmt::format("{}{}-key.{}",profile::dir_key(profile), subject.cn, key_creation_format.data()));
-  CALLOCATE(entity.key_path,reinterpret_cast<size_t*>(&entity.key_path_len),tmp);
+  CALLOCATE(entity.keyPath,reinterpret_cast<size_t*>(&entity.keyPathLen),tmp);
 
   tmp.assign("");
 
   std::string csr_command = std::move(fmt::format("openssl req -newkey {}:{} -out \"{}\" -keyout \"{}\" -subj {} -outform {} -keyform {} -noenc",
     key_algo,
     key_size,
-    entity.csr_path,
-    entity.key_path,
+    entity.csrPath,
+    entity.keyPath,
     subject::openssl_oneliner(subject),
     csr_creation_format,
     key_creation_format
@@ -96,7 +95,7 @@ static std::pair<std::string,std::string> __server_client_build_commands(Profile
 
   // Set entity certificate PATH
   tmp = std::move(fmt::format("{}{}-crt.{}",profile::dir_crt(profile), subject.cn, crt_creation_format.data()));
-  CALLOCATE(entity.crt_path,reinterpret_cast<size_t*>(&entity.crt_path_len),tmp);
+  CALLOCATE(entity.crtPath,reinterpret_cast<size_t*>(&entity.crtPathLen),tmp);
 
   tmp.assign("");
   
@@ -105,8 +104,8 @@ static std::pair<std::string,std::string> __server_client_build_commands(Profile
   
   std::string crt_command = std::move(fmt::format("openssl ca -config \"{}\" -in \"{}\" -out \"{}\" -extfile \"{}\" -days {}",
     profile::gopenssl(profile),
-    entity.csr_path,
-    entity.crt_path,
+    entity.csrPath,
+    entity.crtPath,
     x509_extensions_file_path,
     days
   ));
@@ -120,21 +119,26 @@ static std::pair<std::string,std::string> __server_client_build_commands(Profile
     crt_command += " -notext";
   }
 
-  PDEBUG(3, "cmd:{}",crt_command);
   return {std::move(csr_command),std::move(crt_command)};
 }
 
 static std::string __ca_build_command(Profile &profile, ConfigMap &pkiconf, Entity &entity){
   PDEBUG(2, "__ca_build_command()");
 
-  std::string ca_crt_path = profile::ca_crt(profile);
-  std::string ca_key_path = profile::ca_key(profile);
+  std::string caCertPath = profile::ca_crt(profile);
+  std::string caKeyPath = profile::ca_key(profile);
+  entity.csrPathLen = 3;
+  entity.csrPath = ALLOCATE(entity.csrPathLen);
+  memcpy(entity.csrPath, "N/A", 3);
+  
   auto days = pkiconf["crt"]["days"];
 
+  PINFO("key: {} csr: {} crt: {}\n", entity.keyPath == NULL ? "N/A" : entity.keyPath, entity.csrPath == NULL ? "N/A" : entity.csrPath, entity.crtPath == NULL ? "N/A" : entity.crtPath);
+  
   std::string command = std::move(fmt::format("openssl req -config {} -new -x509 -out {} -keyout {} -subj {} -set_serial {} -newkey {}:{} -noenc -days {}",
     profile::gopenssl(profile),
-    ca_crt_path,
-    ca_key_path,
+    caCertPath,
+    caKeyPath,
     subject::openssl_oneliner(entity.subject),
     entity.serial,
     pkiconf["key"]["algorithm"],
@@ -154,23 +158,23 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
                                  std::vector<Entity> &entities,bool autoanswer, bool prompt) {
   PDEBUG(2, "__create_inline_config()");
   
-  std::string ca_crt_path = std::move(profile::ca_crt(profile));
+  std::string caCertPath = std::move(profile::ca_crt(profile));
 
-  if (!fs::exists(ca_crt_path)) {
-    seterror("ca cert path '{}' doesn't exist\n", ca_crt_path);
+  if (!fs::exists(caCertPath)) {
+    PERROR("ca cert path '{}' doesn't exist\n", caCertPath);
     return GPKIH_FAIL;
   }
 
   // Load CA certificate
-  size_t _ca_filesize = fs::file_size(ca_crt_path);
-  //std::string ca_crt_str("\0", _ca_filesize);
-  char *ca_crt_str = ALLOCATE(_ca_filesize);
-  if(ca_crt_str == nullptr){
-    seterror("couldn't load CA certificate '{}'\n", ca_crt_path);
+  size_t caCertSize = fs::file_size(caCertPath);
+  //std::string caCertBuffer("\0", caCertSize);
+  char *caCertBuffer = ALLOCATE(caCertSize);
+  if(caCertBuffer == nullptr){
+    PERROR("couldn't load CA certificate '{}'\n", caCertPath);
     return GPKIH_FAIL;  
   }
 
-  std::ifstream(ca_crt_path).read(ca_crt_str, _ca_filesize);
+  std::ifstream(caCertPath).read(caCertBuffer, caCertSize);
 
   fs::path profile_dir_key = std::move(profile::dir_key_fs(profile));
   fs::path profile_dir_crt = std::move(profile::dir_crt_fs(profile));
@@ -185,47 +189,47 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
       return GPKIH_FAIL;
     };
 
-    fs::path entity_config_file = entity_directory / fmt::format("inline_{}.{}",entity.subject.cn,VPN_CONFIG_EXTENSION);
+    fs::path entity_config_file = entity_directory / fmt::format("inline_{}.{}",entity.subject.cn,vpnConfigExtension);
 
     if(config.dump_vpn_conf(entity_config_file, entity.type) == false){
       return GPKIH_FAIL;
     }
 
-    ConfigMap &pkiconf = config._get(CONFIG_PKI);
+    ConfigMap &pkiconf = config.get(CONFIG_PKI);
     
     std::string_view key_extension = pkiconf["key"]["creation_format"];
     std::string_view crt_extension = pkiconf["crt"]["creation_format"];
 
-    if (!fs::exists(entity.key_path)) {
-      seterror("missing entity '{}' key\n", entity.subject.cn);
+    if (!fs::exists(entity.keyPath)) {
+      PERROR("missing entity '{}' key\n", entity.subject.cn);
       return GPKIH_FAIL;
     }
 
-    if(!fs::exists(entity.crt_path)){
-      seterror("missing entity crt '{}'\n", entity.subject.cn);
+    if(!fs::exists(entity.crtPath)){
+      PERROR("missing entity crt '{}'\n", entity.subject.cn);
       return GPKIH_FAIL;
     }
     
-    size_t entity_key_size = fs::file_size(entity.key_path);
-    size_t entity_crt_size = fs::file_size(entity.crt_path);
+    size_t entity_key_size = fs::file_size(entity.keyPath);
+    size_t entity_crt_size = fs::file_size(entity.crtPath);
     
     std::ofstream file(entity_config_file, std::ios::app);
     
     if (!file.is_open()) {
-      seterror("couldn't open entity config file '{}'\n", entity_config_file.string());
+      PERROR("couldn't open entity config file '{}'\n", entity_config_file.string());
       return GPKIH_FAIL;
     }
 
-    std::ifstream ekey(entity.key_path);
-    std::ifstream ecrt(entity.crt_path);
+    std::ifstream ekey(entity.keyPath);
+    std::ifstream ecrt(entity.crtPath);
 
     if (!ekey.is_open()) {
-      seterror("couldn't open entity key file '{}'\n", entity.key_path);
+      PERROR("couldn't open entity key file '{}'\n", entity.keyPath);
       return GPKIH_FAIL;
     }
 
     if (!ecrt.is_open()) {
-      seterror("couldn't open entity certificate file '{}'\n", entity.crt_path);
+      PERROR("couldn't open entity certificate file '{}'\n", entity.crtPath);
       return GPKIH_FAIL;
     }
 
@@ -234,11 +238,11 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
     // add inline entity certificate
     file << "<crt>" << EOL << ecrt.rdbuf() << "</crt>" << EOL;
     // add inline ca certificate
-    file << "<ca>" << EOL << ca_crt_str << "</ca>" << EOL;
+    file << "<ca>" << EOL << caCertBuffer << "</ca>" << EOL;
 
     ecrt.close();
     ekey.close();
-    // FREEBLOCK(ca_crt_str);
+    FREEBLOCK(caCertBuffer);
   }
   return GPKIH_OK;
 }
@@ -253,10 +257,10 @@ int __create_pfx(Profile &profile, Entity &entity){
   };
 
   std::string command = fmt::format("openssl pkcs12 -export -inkey {} -in {} -out {}.pfx",
-    entity.key_path,entity.crt_path,(entity_dir/entity.subject.cn).string());
+    entity.keyPath,entity.crtPath,(entity_dir/entity.subject.cn).string());
 
   if(system(command.c_str())){
-    seterror("command '{}' failed\n", command);
+    PERROR("command '{}' failed\n", command);
     return GPKIH_FAIL;
   }
 
@@ -277,11 +281,15 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity, E
     } 
   }
 
-  ConfigMap &pkiconf = config._get(CONFIG_PKI);
+  if(profile::ca_key(profile, entity) == GPKIH_FAIL || profile::ca_crt(profile, entity) == GPKIH_FAIL){
+    return GPKIH_FAIL;
+  }; 
+
+  ConfigMap &pkiconf = config.get(CONFIG_PKI);
   std::string command = std::move(__ca_build_command(profile,pkiconf,entity));
 
   if(system(command.c_str())){
-    seterror("command '{}' failed\n", command);
+    PERROR("command '{}' failed\n", command);
     return GPKIH_FAIL;
   }
 
@@ -313,12 +321,12 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity, Enti
     if(ans == "y" || ans == "yes"){
       return build_ca(profile, config, entity, eman);
     }else{
-      seterror("can't create server/client certificates without CA");
+      PERROR("can't create server/client certificates without CA");
       return GPKIH_FAIL;
     }
   }
 
-  ConfigMap &pkiconf = config._get(CONFIG_PKI);
+  ConfigMap &pkiconf = config.get(CONFIG_PKI);
 
   bool autoanswer = Config::get("behaviour","autoanswer") == "yes" ? true : false;
   bool prompt = Config::get("behaviour","prompt") == "yes" ? true : false;
@@ -329,7 +337,7 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity, Enti
   PDEBUG(2,"executing key + certificate request command - {}",req_command);
   if(system(req_command.c_str())){
     // fail
-    seterror("[ REQUEST ] command '{}' failed\n",req_command);
+    PERROR("[ REQUEST ] command '{}' failed\n",req_command);
     return GPKIH_FAIL;
   }
 
@@ -337,7 +345,7 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity, Enti
   PDEBUG(2,"executing certificate command - {}",crt_command);
   if(system(crt_command.c_str())){
     // fail
-    seterror("[ CERTIFICATE SIGNING ] command '{}' failed\n",crt_command);
+    PERROR("[ CERTIFICATE SIGNING ] command '{}' failed\n",crt_command);
     return GPKIH_FAIL;
   }
 

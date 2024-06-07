@@ -16,6 +16,10 @@ static inline int date_width;
 template <typename T> void __header_print(uint16_t fields, std::vector<const char*> &values,std::vector<int> &widths, STYLE style = S_NONE){
   PDEBUG(2, "__header_print(template)");
 
+  if(SHOW_HEADER == false){
+    return;
+  }
+
   if(values.size() != widths.size()){
     return;
   }  
@@ -95,9 +99,9 @@ template <typename T> static inline void __table_print(ENTITY_FIELDS fields, con
     fields & E_LOCATION      && entry << fmt::format("{:^" + std::to_string(widths[7])  + "}", s.location);
     fields & E_ORG           && entry << fmt::format("{:^" + std::to_string(widths[8])  + "}", s.organisation);
     fields & E_MAIL          && entry << fmt::format("{:^" + std::to_string(widths[9])  + "}", s.email);
-    fields & E_KEYPATH       && entry << fmt::format("{:^" + std::to_string(widths[10]) + "}", e.key_path);
-    fields & E_REQPATH       && entry << fmt::format("{:^" + std::to_string(widths[11]) + "}", e.crt_path);
-    fields & E_CRTPATH       && entry << fmt::format("{:^" + std::to_string(widths[12]) + "}", e.csr_path);
+    fields & E_KEYPATH       && entry << fmt::format("{:^" + std::to_string(widths[10]) + "}", e.keyPath);
+    fields & E_REQPATH       && entry << fmt::format("{:^" + std::to_string(widths[11]) + "}", e.csrPath);
+    fields & E_CRTPATH       && entry << fmt::format("{:^" + std::to_string(widths[12]) + "}", e.crtPath);
     
     // Print entry
     fmt::print(style, "{}\n",entry.str());
@@ -155,7 +159,7 @@ int actions::list_entities(std::string_view profile_name,uint16_t fields){
   }
 
   auto entity_list = eman.retrieve();
-  std::vector<const char *> headers{"serial","common_name","creation_date","type","status","country","state","location","organisation","email","key_path","csr_path","crt_path"};
+  std::vector<const char *> headers{"serial","common_name","creation_date","type","status","country","state","location","organisation","email","keyPath","csrPath","crtPath"};
   std::vector<int> widths{8,13,date_width,8,6,9,7,10,14,7,10,10,10};
 
   // Set appropiate widths
@@ -167,9 +171,9 @@ int actions::list_entities(std::string_view profile_name,uint16_t fields){
     widths[7] = std::max(widths[7], static_cast<int>(s.locationlen)) + 2;
     widths[8] = std::max(widths[8], static_cast<int>(s.organisationlen)) + 2;
     widths[9] = std::max(widths[9], static_cast<int>(s.emaillen)) + 2;
-    widths[10] = std::max(widths[10], static_cast<int>(e.key_path_len)) + 2;
-    widths[11] = std::max(widths[11], static_cast<int>(e.csr_path_len)) + 2;
-    widths[12] = std::max(widths[12], static_cast<int>(e.crt_path_len)) + 2;
+    widths[10] = std::max(widths[10], static_cast<int>(e.keyPathLen)) + 2;
+    widths[11] = std::max(widths[11], static_cast<int>(e.csrPathLen)) + 2;
+    widths[12] = std::max(widths[12], static_cast<int>(e.crtPathLen)) + 2;
   }
   // Print headers
   __header_print<Entity>(static_cast<uint16_t>(fields), headers, widths, fg(T_GREEN) | EMPHASIS::bold);

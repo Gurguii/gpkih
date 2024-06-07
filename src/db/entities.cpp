@@ -1,6 +1,6 @@
 #include "entities.hpp"
 #include "mnck.hpp"
-#include "../memmgmt.hpp"
+#include "../memory/memmgmt.hpp"
 
 using namespace gpkih;
 
@@ -82,23 +82,23 @@ EntityManager::EntityManager(std::string_view profile_name){
 		}
 		file.read(sub.email, sub.emaillen);
 	
-		file.read(reinterpret_cast<char*>(&tmp.key_path_len), sizeof(decltype(Entity::key_path_len)));
-		if((tmp.key_path = ALLOCATE(tmp.key_path_len)) == NULL){
+		file.read(reinterpret_cast<char*>(&tmp.keyPathLen), sizeof(decltype(Entity::keyPathLen)));
+		if((tmp.keyPath = ALLOCATE(tmp.keyPathLen)) == NULL){
 			break;
 		}
-		file.read(tmp.key_path, tmp.key_path_len);
+		file.read(tmp.keyPath, tmp.keyPathLen);
 
-		file.read(reinterpret_cast<char*>(&tmp.csr_path_len), sizeof(decltype(Entity::csr_path_len)));
-		if((tmp.csr_path = ALLOCATE(tmp.csr_path_len)) == NULL){
+		file.read(reinterpret_cast<char*>(&tmp.csrPathLen), sizeof(decltype(Entity::csrPathLen)));
+		if((tmp.csrPath = ALLOCATE(tmp.csrPathLen)) == NULL){
 			break;
 		}
-		file.read(tmp.csr_path, tmp.csr_path_len);
+		file.read(tmp.csrPath, tmp.csrPathLen);
 
-		file.read(reinterpret_cast<char*>(&tmp.crt_path_len), sizeof(decltype(Entity::crt_path_len)));
-		if((tmp.crt_path = ALLOCATE(tmp.crt_path_len) )== NULL){
+		file.read(reinterpret_cast<char*>(&tmp.crtPathLen), sizeof(decltype(Entity::crtPathLen)));
+		if((tmp.crtPath = ALLOCATE(tmp.crtPathLen) )== NULL){
 			break;
 		}
-		file.read(tmp.crt_path, tmp.crt_path_len);
+		file.read(tmp.crtPath, tmp.crtPathLen);
 
 		// Add entity to umap
 		const auto [iter, success] = entities.emplace(sub.cn, tmp);
@@ -119,7 +119,7 @@ int EntityManager::sync(){
 
 	std::ofstream file(dbpath, std::ios::binary);
 	if(!file.is_open()){
-		seterror("couldn't open entities db '{}'",dbpath);
+		PERROR("couldn't open entities db '{}'",dbpath);
 		return GPKIH_FAIL;
 	}
 
@@ -158,14 +158,14 @@ int EntityManager::sync(){
 		file.write(reinterpret_cast<const char*>(&subject.emaillen), sizeof(decltype(subject.emaillen)));
 		file.write(entity.subject.email,entity.subject.emaillen);
 	
-		file.write(reinterpret_cast<const char*>(&entity.key_path_len),sizeof(decltype(entity.key_path_len)));
-		file.write(entity.key_path,entity.key_path_len);
+		file.write(reinterpret_cast<const char*>(&entity.keyPathLen),sizeof(decltype(entity.keyPathLen)));
+		file.write(entity.keyPath,entity.keyPathLen);
 	
-		file.write(reinterpret_cast<const char*>(&entity.csr_path_len), sizeof(decltype(entity.csr_path_len)));
-		file.write(entity.csr_path,entity.csr_path_len);
+		file.write(reinterpret_cast<const char*>(&entity.csrPathLen), sizeof(decltype(entity.csrPathLen)));
+		file.write(entity.csrPath,entity.csrPathLen);
 	
-		file.write(reinterpret_cast<const char*>(&entity.crt_path_len),sizeof(decltype(entity.crt_path_len)));
-		file.write(entity.crt_path,entity.crt_path_len);
+		file.write(reinterpret_cast<const char*>(&entity.crtPathLen),sizeof(decltype(entity.crtPathLen)));
+		file.write(entity.crtPath,entity.crtPathLen);
 	
 		file.write("%", 1);
 	}

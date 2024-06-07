@@ -1,3 +1,4 @@
+
 cmake_minimum_required(VERSION 3.10)
 
 project(gpkih VERSION 1.0)
@@ -83,17 +84,15 @@ target_link_libraries(gpkih_config_management_lib PUBLIC "${gpkih_utils_lib}")
 set(gpkih_logger_src "${GPKIH_SRC_DIR}/logger")
 set(gpkih_logging_definition 
     "${gpkih_logger_src}/logger.hpp"
-    "${gpkih_logger_src}/error_management.hpp"
     "${gpkih_logger_src}/signals.hpp"
 )
 set(gpkih_logging_implementation
     "${gpkih_logger_src}/logger.cpp"
-    "${gpkih_logger_src}/error_management.cpp"
     "${gpkih_logger_src}/signals.cpp"
 )
 add_library(gpkih_logging_lib STATIC "${gpkih_logging_implementation}")
 target_include_directories(gpkih_logging_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
-
+target_link_libraries(gpkih_logging_lib PUBLIC "${gpkih_printing_lib}")
 # Lib - actions
 set(gpkih_actions_src "${GPKIH_SRC_DIR}/actions")
 set (gpkih_actions_definition
@@ -189,19 +188,21 @@ set(gpkih_utils_implementation
     "${gpkih_utils_src}/env.cpp"
     "${gpkih_utils_src}/str.cpp"
     "${gpkih_utils_src}/openssl.cpp"
+    "${gpkih_utils_src}/entities.cpp"
 )
 add_library(gpkih_utils_lib STATIC "${gpkih_utils_implementation}")
 target_include_directories(gpkih_utils_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
 
 # Lib memmgmt
-set(gpkih_memmgmt_definition "${GPKIH_SRC_DIR}/memmgmt.hpp")
-set(gpkih_memmgmt_implementation "${GPKIH_SRC_DIR}/memmgmt.cpp")
+set(gpkih_memmgmt_src "${GPKIH_SRC_DIR}/memory")
+set(gpkih_memmgmt_definition "${gpkih_memmgmt_src}/memmgmt.hpp")
+set(gpkih_memmgmt_implementation "${gpkih_memmgmt_src}/memmgmt.cpp")
 add_library(gpkih_memmgmt_lib STATIC "${gpkih_memmgmt_implementation}")
 target_include_directories(gpkih_memmgmt_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
 
 # Self-contained binary - gpkih
 add_executable(gpkih
-    ${GPKIH_SRC_DIR}/gpki.cpp
+    ${GPKIH_SRC_DIR}/gpkih.cpp
 )
 
 set(GPKIH_LIBS gpkih_parse_lib gpkih_db_lib gpkih_actions_lib 

@@ -5,36 +5,6 @@ bool ENABLE_DEBUG_MESSAGES = false;
 int DEBUG_LEVEL = 1;
 bool ENABLE_PRINTING = true;
 
-/* Defined styles for printing */
-STYLE S_NONE = fg(WHITE);
-STYLE S_WARNING = fg(ORANGE) | EMPHASIS::bold | EMPHASIS::italic;
-STYLE S_INFO = fg(PALE_GOLDEN_ROD) | EMPHASIS::italic;
-STYLE S_ERROR = fg(RED) | EMPHASIS::bold | EMPHASIS::italic;
-STYLE S_SUCCESS = fg(LGREEN) | EMPHASIS::bold;
-STYLE S_HINT = fg(YELLOW) | EMPHASIS::italic;
-
-/* Styling used in action 'list' */
-STYLE ENTITY_LABEL_KEY_STYLE = fg(PALE_GOLDEN_ROD) | EMPHASIS::bold;
-STYLE ENTITY_LABEL_VAL_STYLE = fg(WHITE) | EMPHASIS::italic | EMPHASIS::bold;
-
-STYLE PROFILE_LABEL_KEY_STYLE = fg(WHITE) | EMPHASIS::bold;
-STYLE PROFILE_LABEL_VAL_STYLE = fg(LGREEN) | EMPHASIS::italic | EMPHASIS::bold;
-
-std::string S_ELABEL(std::string_view st){
-	return fmt::format(ENTITY_LABEL_KEY_STYLE, st);
-}
-
-std::string S_ELABEL_V(std::string_view st){
-	return fmt::format(ENTITY_LABEL_VAL_STYLE, st);
-}
-
-std::string S_PLABEL(std::string_view st) {
-	return fmt::format(PROFILE_LABEL_KEY_STYLE, st);
-}
-std::string S_PLABEL_V(std::string_view st) {
-	return fmt::format(PROFILE_LABEL_VAL_STYLE, st);
-}
-
 /* Normal printing */
 void PRINT(std::string_view msg, COLOR color) {
 	fmt::print(fg(color), msg);
@@ -79,7 +49,7 @@ std::string PROMPT(std::string_view msg, std::string_view ans, bool lower_input,
 }
 
 void PROGRAMSTARTING() {
-	//06 Mar 2024 @ 19:13
+	// e.g 06 Mar 2024 @ 19:13
 	PINFO("Starting gpkih - {:%d %h %Y @ %H:%M}\n",
 		std::chrono::system_clock::now());
 };

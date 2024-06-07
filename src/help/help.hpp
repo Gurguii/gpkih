@@ -1,6 +1,8 @@
 #pragma once
 #include <fmt/format.h>
 #include <fmt/core.h>
+#include <unordered_map>
+#include "../printing/printing.hpp"
 #include "../config/config_management.hpp"
 
 using str = std::string;

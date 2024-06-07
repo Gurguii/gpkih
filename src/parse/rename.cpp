@@ -16,7 +16,7 @@ int gpkih::parsers::rename(std::vector<std::string> &opts){
 
 	Profile *profile = db::profiles::get(profile_name);
 	if(profile == nullptr){
-		seterror("couldn't retrieve profile ptr");
+		PERROR("couldn't retrieve profile ptr");
 		return GPKIH_FAIL;
 	}
 	
@@ -26,14 +26,19 @@ int gpkih::parsers::rename(std::vector<std::string> &opts){
 
 	fs::rename(oldpath,newpath);
 
-	if(fs::exists(newpath)){
-		profile->last_modification = std::chrono::system_clock::now();
-		db::profiles::sync();
-		PSUCCESS("renamed profile '{}' to '{}'\n", opts[0], opts[1]);
-		ADD_LOG(L_INFO, "renamed profile '{}' to '{}'", opts[0], opts[1]);
-		return GPKIH_OK;
-	}else{
-		seterror("couldn't rename old file");
+	if(fs::exists(newpath) == false){
+		PERROR("couldn't rename old file");
 		return GPKIH_FAIL;
 	}
+	
+	profile->last_modification = std::chrono::system_clock::now();
+
+	if(db::profiles::sync() == GPKIH_FAIL){
+		return GPKIH_FAIL;
+	}
+	
+	PSUCCESS("renamed profile '{}' to '{}'\n", opts[0], opts[1]);
+	ADD_LOG(L_INFO, "renamed profile '{}' to '{}'", opts[0], opts[1]);
+	
+	return GPKIH_OK;
 }

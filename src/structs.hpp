@@ -1,10 +1,11 @@
 #pragma once
-#include "gpki.hpp" // typename aliases + fmtlib
+#include "gpkih.hpp" // typename aliases
 #include <cstdint>
 #include <unordered_map>
 #include <ctime>
-#include "utils/utils.hpp"
 #include <chrono>
+#include <fmt/format.h>
+#include "memory/memmgmt.hpp"
 
 namespace gpkih {
 enum class PROFILE_FIELDS : uint16_t {
@@ -99,8 +100,8 @@ enum class ENTITY_FIELDS : uint16_t {
 #define E_MAIL ENTITY_FIELDS::subject_email
   status = 1024,
 #define E_STATUS ENTITY_FIELDS::status
-  key_path = 2048,
-#define E_KEYPATH ENTITY_FIELDS::key_path
+  keyPath = 2048,
+#define E_KEYPATH ENTITY_FIELDS::keyPath
   req_path = 4096,
 #define E_REQPATH ENTITY_FIELDS::req_path
   cert_path = 8192,
@@ -123,7 +124,7 @@ static bool operator&(uint16_t lo, ENTITY_FIELDS ro){
 
 /* ENTITY STRING -> ENTITY_FIELD MAP*/
 static inline std::unordered_map<std::string, uint16_t>
-entity_fields_map() {
+entityFieldsMap() {
   return {{"cdate", static_cast<uint16_t>(E_CREATION_DATE)},
           {"cn", static_cast<uint16_t>(ENTITY_FIELDS::subject_cn)},
           {"type", static_cast<uint16_t>(ENTITY_FIELDS::type)},
@@ -133,7 +134,7 @@ entity_fields_map() {
           {"location", static_cast<uint16_t>(ENTITY_FIELDS::subject_location)},
           {"org", static_cast<uint16_t>(ENTITY_FIELDS::subject_organisation)},
           {"mail", static_cast<uint16_t>(ENTITY_FIELDS::subject_email)},
-          {"key", static_cast<uint16_t>(ENTITY_FIELDS::key_path)},
+          {"key", static_cast<uint16_t>(ENTITY_FIELDS::keyPath)},
           {"req", static_cast<uint16_t>(ENTITY_FIELDS::req_path)},
           {"crt", static_cast<uint16_t>(ENTITY_FIELDS::cert_path)},
           {"status", static_cast<uint16_t>(ENTITY_FIELDS::status)}};
@@ -151,21 +152,22 @@ enum class ENTITY_STATUS : uint8_t {
 #define ES_ALL ENTITY_STATUS::all
 };
 
-static inline std::unordered_map<ENTITY_STATUS, std::string> entity_status_to_str{
-  {ENTITY_STATUS::active,"active"},
-  {ENTITY_STATUS::revoked,"revoked"},
-  {ENTITY_STATUS::marked,"marked"},
-};
-
 static inline std::string str_conversion(PROFILE_FIELDS field) {
   return (field & P_NAME ? "name" : "source");
 }
+
 static inline std::string str_conversion(ENTITY_TYPE type) {
   return (type & ET_CA
               ? "ca"
               : (type & ET_SV ? "server" : (type & ET_CL ? "client" : "none")));
 };
+
 static inline std::string str_conversion(ENTITY_STATUS status){
+  static std::unordered_map<ENTITY_STATUS, std::string> entity_status_to_str{
+    {ENTITY_STATUS::active,"active"},
+    {ENTITY_STATUS::revoked,"revoked"},
+    {ENTITY_STATUS::marked,"marked"},
+  };
   auto iter = entity_status_to_str.find(status);
   return iter != entity_status_to_str.end() ? iter->second : "n/a"; 
 }
@@ -174,6 +176,30 @@ template <typename T> std::string to_str(T enumclass) {
   return str_conversion(enumclass);
 };
 
+/**
+ * @struct Profile
+ * @brief Represents a profile which internally represents a PKI.
+ * @var Profile::id 
+ * Unique identifier for the profile.  
+ * @var Profile::name 
+ * Unique profile name.
+ * @var Profile::namelen 
+ * Length of the name (excluding null terminator).
+ * @var Profile::source 
+ * Source of the profile.
+ * @var Profile::sourcelen 
+ * Length of the source (excluding null terminator).
+ * @var Profile::creation_date 
+ * Time when the profile was created.
+ * @var Profile::last_modification 
+ * Time of the last profile modification.
+ * @var Profile::ca_created 
+ * Flag indicating if a Certificate Authority was created for this profile.
+ * @var Profile::sv_count 
+ * Number of server certificates associated with the profile.
+ * @var Profile::cl_count 
+ * Number of client certificates associated with the profile.
+*/
 struct Profile {
   uint64_t id;
   
@@ -191,7 +217,21 @@ struct Profile {
   uint16_t cl_count = 0;
 };
 
-// #define SUBJECT_TEMPLATE "/C=%s/ST=%s/L=%s/O=%s/CN=%s/emailAddress=%s"
+/**
+ * @struct Subject
+ * @brief Information about the subject of an Entity
+ * @var Subject::country 3 letter code indicating country
+ * @var Subject::state state
+ * @var Subject::statelen state len
+ * @var Subject::location location
+ * @var Subject::locationlen location len
+ * @var Subject::organisation organisation
+ * @var Subject::organisationlen organisation len
+ * @var Subject::cn common name (unique per profile)
+ * @var Subject::cnlen common name len
+ * @var Subject::email email 
+ * @var Subject::emaillen email len
+ * */
 struct Subject {
   char country[3]{0};
 
@@ -210,7 +250,21 @@ struct Subject {
   char *email = NULL;
   uint8_t emaillen = 0;
 };
-
+/**
+ * @struct Entity
+ * @brief represents the entity behind each created certificate, holds information about the entity itself and the subject
+ * @var Entity::subject see \ref Subject
+ * @var Entity::type custom enum type indicating the type of entity, valid types are CA,SV,CL, values also include NONE
+ * @var Entity::status custom enum type indicating entity status, valid types are ACTIVE,REVOKED,MARKED(not implemented a way to mark yet)
+ * @var Entity::serial unique serial
+ * @var Entity::creation_date time when Entity was created @note not a string type
+ * @var Entity::keyPath absolute path of file containing private key
+ * @var Entity::keyPathLen size of keyPath
+ * @var Entity::csrPath absolute path of file containing the certificate signing request
+ * @var Entity::csrPathLen size of csrPath
+ * @var Entity::crtPath absolute path of file containing the signed certificate
+ * @var Entity::crtPathLen size of crtPath
+ * */
 struct Entity {
   Subject subject{};
   
@@ -221,14 +275,14 @@ struct Entity {
 
   std::chrono::time_point<std::chrono::system_clock> creation_date = std::chrono::system_clock::now();
 
-  char *key_path = NULL;
-  uint8_t key_path_len = 0;
+  char *keyPath = NULL;
+  uint8_t keyPathLen = 0;
 
-  char *csr_path = NULL;
-  uint8_t csr_path_len = 0;
+  char *csrPath = NULL;
+  uint8_t csrPathLen = 0;
 
-  char *crt_path = NULL;
-  uint8_t crt_path_len = 0;
+  char *crtPath = NULL;
+  uint8_t crtPathLen = 0;
 };
 
 }; // namespace gpkih
@@ -239,6 +293,22 @@ namespace gpkih::profile
   static inline std::string ca_key(Profile& ref) {
     return fmt::format("{}{}pki{}ca{}key",ref.source, SLASH, SLASH, SLASH);
   }
+
+  static inline int ca_key(Profile &profile, Entity &entity){
+    entity.keyPathLen = profile.sourcelen + 11;
+    entity.keyPath = ALLOCATE(entity.keyPathLen);
+    
+    if(entity.keyPath == nullptr){
+      return GPKIH_FAIL;
+    }
+
+    if(entity.keyPathLen != snprintf(entity.keyPath, entity.keyPathLen+1, "%s%cpki%cca%ckey", profile.source, SLASH, SLASH, SLASH)){
+      return GPKIH_FAIL;
+    }
+    
+    return GPKIH_OK;
+  }
+
   static inline fs::path ca_key_fs(Profile& ref) {
     fs::path p{ref.source};
     p/"pki"/"ca"/"key";
@@ -249,6 +319,25 @@ namespace gpkih::profile
       return fmt::format("{}{}pki{}ca{}crt",ref.source, SLASH, SLASH, SLASH);
   }
   
+  static inline int ca_crt(Profile &ref, Entity &entity){
+    entity.crtPathLen = ref.sourcelen + 11;
+    entity.csrPathLen = 2;
+    entity.csrPath = ALLOCATE(entity.csrPathLen);
+    memset(entity.csrPath, 0, 2);
+
+    entity.crtPath = ALLOCATE(entity.crtPathLen);
+    
+    if(entity.crtPath == nullptr){
+      return GPKIH_FAIL;
+    }
+
+    if(entity.crtPathLen != snprintf(entity.crtPath, entity.crtPathLen+1, "%s%cpki%cca%ccrt", ref.source, SLASH, SLASH, SLASH)){
+      return GPKIH_FAIL;
+    };
+
+    return GPKIH_OK;
+  }
+
   static inline fs::path ca_crt_fs(Profile& ref) {
     fs::path p(ref.source);
     p/"pki"/"ca"/"crt";
@@ -261,6 +350,10 @@ namespace gpkih::profile
 
   static inline std::string dir_crl(Profile &ref){
     return fmt::format("{}{}pki{}crl{}", ref.source, SLASH, SLASH, SLASH);
+  }
+  
+  static inline fs::path dir_crl_fs(Profile &ref){
+    return fs::path{ref.source}/"pki"/"crl";
   }
 
   static inline std::string dir_key(Profile &ref){
@@ -297,14 +390,13 @@ namespace gpkih::subject
   static inline std::string openssl_oneliner(Subject &ref){
     std::string _subj;
     
-    if (len(ref.country) != 0){_subj += std::move(fmt::format("/C={}",ref.country)); };
+    if (strlen(ref.country) != 0){_subj += std::move(fmt::format("/C={}",ref.country)); };
     if (ref.state != NULL){_subj += std::move(fmt::format("/ST={}",ref.state)); };
     if (ref.location != NULL){_subj += std::move(fmt::format("/L={}", ref.location));  };
     if (ref.organisation != NULL){_subj += std::move(fmt::format("/O={}",ref.organisation));};
     if (ref.cn != NULL){_subj += std::move(fmt::format("/CN={}",ref.cn));};
     if (ref.email != NULL){_subj += std::move(fmt::format("/emailAddress={}",ref.email));};
 
-    PDEBUG(3,"openssl oneliner ['{}']", _subj);
     return std::move(_subj);
   }
 } // namespace gpkih::subject

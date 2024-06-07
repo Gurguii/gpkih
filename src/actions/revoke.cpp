@@ -45,7 +45,7 @@ int actions::revoke(Profile &profile, std::vector<std::string> &common_names, st
                     gopenssl_path, cert_path, selected_reason);
 
     if (system(command.c_str())) {
-      seterror("command '{}' failed\n", command);
+      PERROR("command '{}' failed\n", command);
       return GPKIH_FAIL;
     }
     

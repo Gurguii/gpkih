@@ -10,7 +10,7 @@ static uint64_t get_id(){
 	std::fstream file(db::profiles::idfile, std::ios::binary | std::ios::in | std::ios::out);
 	
 	if(!file.is_open()){
-		seterror("couldn't open id file '{}' for reading\n", db::profiles::idfile);
+		PERROR("couldn't open id file '{}' for reading\n", db::profiles::idfile);
 		return GPKIH_FAIL;
 	}
 
@@ -18,7 +18,7 @@ static uint64_t get_id(){
 	file.read(reinterpret_cast<char*>(&id), sizeof(decltype(id)));
 
 	if(file.fail()){
-		seterror("couldn't read from id file\n");
+		PERROR("couldn't read from id file\n");
 		return GPKIH_FAIL;
 	}
 
@@ -26,7 +26,7 @@ static uint64_t get_id(){
 	file.seekp(SEEK_SET);
 	file.write(reinterpret_cast<const char*>(&nid), sizeof(decltype(nid)));
 	if(file.fail()){
-		seterror("couldn't write to id file\n");
+		PERROR("couldn't write to id file\n");
 		return GPKIH_FAIL;
 	}
 
@@ -46,7 +46,7 @@ int db::profiles::sync(){
 
 	std::ofstream file(dbpath, std::ios::binary);
 	if(!file.is_open()){
-		seterror("couldn't open db file for writing '{}' - db::prosfiles::sync()\n", dbpath);
+		PERROR("couldn't open db file for writing '{}' - db::prosfiles::sync()\n", dbpath);
 		return GPKIH_FAIL;
 	}
 
@@ -113,7 +113,7 @@ int db::profiles::initialize(size_t &loaded_profiles){
 	// syntax: <id><namelen><name><sourcelen><source><creation_date><last_modification><ca><total_servers><total_clients>
 	std::ifstream file(dbpath, std::ios::binary);
 	if(!file.is_open()){
-		seterror("couldn't open profile.data '{}'",dbpath);
+		PERROR("couldn't open profile.data '{}'",dbpath);
 		return GPKIH_FAIL;
 	}
 
@@ -135,7 +135,7 @@ int db::profiles::initialize(size_t &loaded_profiles){
 
 		p.name = ALLOCATE(p.namelen);
 		if(p.name == NULL){
-			seterror("couldn't allocate memory for profile name\n");
+			PERROR("couldn't allocate memory for profile name\n");
 			return GPKIH_FAIL;
 		}
 		file.read(p.name, p.namelen);
@@ -143,7 +143,7 @@ int db::profiles::initialize(size_t &loaded_profiles){
 		file.read(reinterpret_cast<char*>(&p.sourcelen), sizeof(decltype(p.sourcelen)));
 		p.source = ALLOCATE(p.sourcelen);
 		if(p.source == NULL){
-			seterror("couldn't allocate memory for profile source\n");
+			PERROR("couldn't allocate memory for profile source\n");
 			return GPKIH_FAIL;
 		}
 		file.read(p.source, p.sourcelen);
@@ -156,7 +156,7 @@ int db::profiles::initialize(size_t &loaded_profiles){
 
 		// Add profile to map
      	existing_profiles.emplace(p.name, std::move(p));
-
+     	
      	PDEBUG(2,"loaded profile '{}'",p.name);
      	uint8_t next = file.get();
      	if(next != '%'){
@@ -175,7 +175,7 @@ bool db::profiles::exists(std::string_view profile_name) {
 int db::profiles::add(Profile &buff){
 	PDEBUG(1, "db::profiles::add()");
 	if (exists(buff.name) == true) {
-		seterror("profile with name '{}' already exists", buff.name);
+		PERROR("profile with name '{}' already exists", buff.name);
 		return GPKIH_FAIL;
 	}
 	PDEBUG(3, "adding profile [id:{},name:{},source:{},ca_created:{},sv_count:{},cl_count:{}]", buff.id, buff.name, buff.source, buff.ca_created, buff.sv_count, buff.cl_count);

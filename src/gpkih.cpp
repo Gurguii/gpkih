@@ -1,29 +1,17 @@
-#include "gpki.hpp"
-#include "logger/signals.hpp"
+#include "gpkih.hpp"
+
+#include <future>
 #include "parse/parser.hpp"
-#include "db/entities.hpp"
-#include "printing/printing.hpp"
+#include "logger/signals.hpp"
 
 using namespace gpkih;
 
 constexpr static size_t __dynamic_memory_size = 1024 * 4096; // 4MB
 
-/* Error */
-std::string last_gpkih_error = "";
-void printlasterror() {
-    if (!last_gpkih_error.empty()) {
-        fmt::print(fg(RED), last_gpkih_error + "\n");
-    }
-}
-
 /* Directory names */
 static constexpr const char* DB_DIRNAME  = "db";
 static constexpr const char* CFG_DIRNAME = "config";
 static constexpr const char* LOG_DIRNAME = "logs";
-
-/* Configuration names */
-std::string vpn_conf_filename = "openvpn.conf";
-std::string pki_conf_filename = "pki.conf";
 
 /* Current path */
 static std::string CURRENT_PATH;
@@ -34,11 +22,14 @@ std::string DB_DIRPATH = "";      // proper value set by __set_variables()
 
 static std::string CONF_GPKIH;    // initialized by __set_variables()s
 
-static std::string gpkih_conf_filename = "gpkih.conf";
+static std::string gpkihConfigFilename = "gpkih.conf";
 static std::string LOG_DIRPATH;
 
-char *serial_path = NULL;
-uint64_t serial_path_len = 0;
+char *serialPath = NULL;
+size_t serialPathLen = 0;
+
+bool DRY_RUN = false;
+bool SHOW_HEADER = true;
 
 static int __check_gpkih_install_dir(std::string &path) {
     PDEBUG(2, "__check_gpkih_install_dir()");
@@ -54,11 +45,11 @@ static int __check_gpkih_install_dir(std::string &path) {
         }
 
         if (!fs::create_directories(path)) {
-            seterror("Couldn't create gpkih's root directory '{}'\n", path);
-            return F_NOEXIST;
+            PERROR("Couldn't create gpkih's root directory '{}'\n", path);
+            return GPKIH_FAIL;
         };
 
-        // This is the reason the program requires to be executed from the same dir than config/
+        // This is the reason the program requires to be executed from the same dir than config
         // if the gpkih root dir:
         //      [WINDOWS] $env:localappadata\gpkih 
         //      [LINUX] ~/.config/gpkih 
@@ -67,22 +58,22 @@ static int __check_gpkih_install_dir(std::string &path) {
 
         // Check if configdir exists, else we are not in the proper location, exit.
         if (fs::exists(configdir) == false) {
-            seterror("couldn't find config dir in current directory '{}', exiting...\n");
+            PERROR("couldn't find config dir in current directory '{}', exiting...\n");
             return GPKIH_FAIL;
         }
 
         // Copy config directory
         fs::copy(configdir, CONF_DIRPATH, fs::copy_options::recursive);
         if (!fs::exists(CONF_DIRPATH) || !fs::is_directory(CONF_DIRPATH)) {
-            seterror("couldn't copy '{}' to '{}'\n", configdir, CONF_DIRPATH);
-            return F_NOCREATE;
+            PERROR("couldn't copy '{}' to '{}'\n", configdir, CONF_DIRPATH);
+            return GPKIH_FAIL;
         }
         
         // Create db - logs dir
         for (const std::string& path : { DB_DIRPATH, LOG_DIRPATH }) {
             if (!fs::create_directory(path)) {
-                seterror("couldn't create dir '{}'\n", path);
-                return F_NOCREATE;
+                PERROR("couldn't create dir '{}'\n", path);
+                return GPKIH_FAIL;
             }
         };
     }
@@ -125,7 +116,7 @@ static int __set_variables() {
     DB_DIRPATH      = fmt::format("{}{}{}", GPKIH_BASEDIR, DB_DIRNAME, SLASH);
     CONF_DIRPATH    = fmt::format("{}{}{}", GPKIH_BASEDIR, CFG_DIRNAME, SLASH);
     LOG_DIRPATH     = fmt::format("{}{}{}", GPKIH_BASEDIR, LOG_DIRNAME, SLASH);
-    CONF_GPKIH      = fmt::format("{}{}", CONF_DIRPATH, gpkih_conf_filename);
+    CONF_GPKIH      = fmt::format("{}{}", CONF_DIRPATH, gpkihConfigFilename);
 
     // file used by db::profiles namespace to store/load profiles
     db::profiles::dbpath = fmt::format("{}profiles.data", DB_DIRPATH);
@@ -143,12 +134,12 @@ int main(int argc, const char **args) {
   std::vector <std::string> opts(args+1,args+argc);
 
   for(int i = 0; i < opts.size();){
-    if(opts[i] == "-debug" || opts[i] == "--debug"){
+    std::string_view opt = opts[i];
+    if(opt == "-debug" || opt == "--debug"){
         if(i+1 == opts.size()){
             PERROR("debug level must be given");
             return GPKIH_FAIL;
         }
-
         int debug_level = std::stoi(opts[i+1]);
         if(debug_level > 0 && debug_level <= 3){
             ENABLE_DEBUG_MESSAGES = true;
@@ -157,10 +148,15 @@ int main(int argc, const char **args) {
             PERROR("debug level must be 0-3 (both included)");
             return GPKIH_FAIL;
         }
-
         opts.erase(opts.begin()+i,opts.begin()+i+2);
-    }else if(opts[i] == "-q" || opts[i] == "--quiet"){
+    }else if(opt == "-q" || opt == "--quiet"){
         ENABLE_PRINTING = false;
+        opts.erase(opts.begin()+i);
+    }else if(opt == "-dr" || opt == "--dryrun"){
+        DRY_RUN = true;
+        opts.erase(opts.begin()+i);
+    }else if(opt == "-nh" || opt == "--noheader"){
+        SHOW_HEADER = false;
         opts.erase(opts.begin()+i);
     }else{
         ++i;
@@ -170,15 +166,17 @@ int main(int argc, const char **args) {
   PDEBUG(1,"main()");
 
   Buffer a = Buffer(__dynamic_memory_size);
+  if(a.good() == false){
+    PWARN("Couldn't create Buffer instance...\n");
+    return GPKIH_FAIL;
+  }
   __buff = &a;
 
   if(__set_variables() != GPKIH_OK){
-    printlasterror();
     return GPKIH_FAIL;
   };
 
   if (__check_gpkih_install_dir(GPKIH_BASEDIR) != GPKIH_OK) {
-    printlasterror();
     return GPKIH_FAIL;
   }
 
@@ -188,19 +186,17 @@ int main(int argc, const char **args) {
   // TODO - Add PROPER checks for openssl - openvpn existence (static lib with utils to check and execute commands on both win|lin)
 
   // Launch task to load `gpkih.conf` configuration
-  auto load_gpkih_config = std::async(std::launch::async, Config::load, CONF_GPKIH);
+  auto loadGpkihConfigTask = std::async(std::launch::async, Config::load, CONF_GPKIH);
 
   // Initialize profiles' db
   size_t profile_count = 0;
   if (db::profiles::initialize(profile_count) == GPKIH_FAIL) {
-    printlasterror();
-    load_gpkih_config.wait();
+    loadGpkihConfigTask.wait();
     return -1;
   };
 
   // Wait for Config::load to finish
-  if (load_gpkih_config.get() != GPKIH_OK) {
-    printlasterror();
+  if (loadGpkihConfigTask.get() != GPKIH_OK) {
     return -1;
   }
 
@@ -211,7 +207,6 @@ int main(int argc, const char **args) {
 
   // Parse options
   if (parsers::parse(opts) != GPKIH_OK) {
-    printlasterror();
     return GPKIH_FAIL;
   }
 

@@ -36,17 +36,17 @@ static inline size_t __get_and_set_prop(std::string &&prompt_msg, char *&default
 
 static inline size_t __load_serial(Profile *profile, Entity &entity){
   PDEBUG(2,"__load_serial()");
-  CALLOCATE(serial_path, &serial_path_len, fmt::format("{}{}pki{}serial{}serial", profile->source, SLASH, SLASH, SLASH));
+  CALLOCATE(serialPath, &serialPathLen, fmt::format("{}{}pki{}serial{}serial", profile->source, SLASH, SLASH, SLASH));
 
-  if(!fs::exists(serial_path)){
-    seterror("serial file for profile '{}' not found\n", profile->name);
+  if(!fs::exists(serialPath)){
+    PERROR("serial file for profile '{}' not found\n", profile->name);
     return GPKIH_FAIL;
   }
 
-  std::ifstream file(serial_path);
+  std::ifstream file(serialPath);
 
   if(!file.is_open()){
-    seterror("couldn't open file '{}'\n",serial_path);
+    PERROR("couldn't open file '{}'\n",serialPath);
     return GPKIH_FAIL;
   }
   std::string serial{};
@@ -152,7 +152,7 @@ int parsers::build(std::vector<std::string> &opts) {
   
   profile = db::profiles::get(profilename);
   if(profile == nullptr){
-    seterror("Profile '{}' doesn't exist\n", profilename);
+    PERROR("Profile '{}' doesn't exist\n", profilename);
     return GPKIH_FAIL;
   }
   
@@ -163,7 +163,7 @@ int parsers::build(std::vector<std::string> &opts) {
 
   std::string_view etype = opts[1];
   if(entity_type_map.find(etype.data()) == entity_type_map.end()){
-    seterror("invalid entity type '{}'",etype);
+    PERROR("invalid entity type '{}'",etype);
     return GPKIH_FAIL;
   }
   
@@ -173,15 +173,17 @@ int parsers::build(std::vector<std::string> &opts) {
   /* Profile configuration + Entity manager */
   ProfileConfig config(*profile);
   EntityManager eman(profile->name);
-
-  if(!config.succesfully_loaded){
+  CONFIG_FILE succesfullyLoaded = config.loadedFiles();
+  
+  if( (succesfullyLoaded & CONFIG_PKI) == false){
+    PWARN("couldn't load profile PKI configuration file\n");;
     return GPKIH_FAIL;
   }
 
   if((entity.type & ET_CL || entity.type & ET_SV) && profile->ca_created == false)
   {
     PWARN("CA must be created before creating server/client entities\n");
-    PHINT("{}/gpkih build {} ca -cn MyCA\n",fs::current_path().c_str(), profile->name);
+    PHINT("./gpkih build {} ca -cn MyCA\n",profile->name);
     return GPKIH_OK;
   }
 
@@ -251,7 +253,8 @@ int parsers::build(std::vector<std::string> &opts) {
   if(entity.subject.cn == nullptr){
     // User didn't give common_name (mandatory) with cli opts  
     // prompt the user for subject info
-    __prompt_for_subject(profile->name, entity.subject, config, eman);
+    utils::entities::promptForSubject(profile->name, entity.subject, config, eman);
+    //__prompt_for_subject(profile->name, entity.subject, config, eman);
   }
 
   return build_functions[entity.type](*profile,config,entity,eman);

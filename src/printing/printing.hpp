@@ -6,6 +6,8 @@
 #include <string_view>
 #include <unordered_map>
 
+#include "../logger/logger.hpp"
+
 extern bool ENABLE_DEBUG_MESSAGES;
 extern int DEBUG_LEVEL;
 extern bool ENABLE_PRINTING;
@@ -39,27 +41,12 @@ constexpr COLOR PALE_GOLDEN_ROD = COLOR::pale_golden_rod;
 constexpr COLOR LPINK = COLOR::light_pink;
 constexpr COLOR PINK = COLOR::pink;
 
-/* Defined styles for printing */
-extern STYLE S_NONE;
-extern STYLE S_WARNING;
-extern STYLE S_INFO;
-extern STYLE S_ERROR;
-extern STYLE S_SUCCESS;
-extern STYLE S_HINT;
-
-/* Styling used in action 'list' */
-extern STYLE ENTITY_LABEL_KEY_STYLE;
-extern STYLE ENTITY_LABEL_VAL_STYLE;
-
-extern STYLE PROFILE_LABEL_KEY_STYLE;
-extern STYLE PROFILE_LABEL_VAL_STYLE;
-
-/* Returns styled string */
-extern std::string S_ELABEL(std::string_view st);
-extern std::string S_ELABEL_V(std::string_view st);
-
-extern std::string S_PLABEL(std::string_view st);
-extern std::string S_PLABEL_V(std::string_view st);
+constexpr STYLE S_NONE = fg(T_WHITE);
+constexpr STYLE S_INFO = fg(T_YELLOW) | EMPHASIS::italic;
+constexpr STYLE S_WARNING = fg(TB_YELLOW) | EMPHASIS::bold | EMPHASIS::italic;
+constexpr STYLE S_ERROR = fg(T_RED) | EMPHASIS::bold | EMPHASIS::italic;
+constexpr STYLE S_SUCCESS = fg(T_GREEN) | EMPHASIS::bold;
+constexpr STYLE S_HINT = fg(T_YELLOW) | EMPHASIS::italic;
 
 /* Normal printing */
 extern void PRINT(std::string_view msg, COLOR color);
@@ -67,7 +54,7 @@ extern void PRINT(std::string_view msg, STYLE style = S_NONE);
 
 /* success */
 template <typename ...T> static inline void PSUCCESS(std::string_view fmt, T&& ...args){
-	if(ENABLE_PRINTING){fmt::print("{} {}", fmt::format(S_SUCCESS, "[success]"), fmt::format(fmt, std::forward<T>(args)...));};
+	if(ENABLE_PRINTING){fmt::print("{} {}",fmt::format(S_SUCCESS, "[success]"), fmt::format(fmt, std::forward<T>(args)...));};
 };
 
 /* error */

@@ -19,13 +19,19 @@ int parsers::parse(std::vector<std::string> &args) {
   for (int i = 0; i < args.size();) {
     strview op = args[i];
     if (op == "-y" || op == "--yes") {
-      Config::set("behaviour","autoanswer","yes");
+      if(Config::set("behaviour","autoanswer","yes") == GPKIH_FAIL){
+        PWARN("couldn't set '{}' opt", op);
+      };
       args.erase(args.begin() + i);
     } else if (op == "-noprompt" || op == "--noprompt") {
-      Config::set("behaviour","prompt","no");
+      if(Config::set("behaviour","prompt","no") == GPKIH_FAIL){
+        PWARN("couldn't set '{}' opt", op);
+      };
       args.erase(args.begin() + i);
     }else if (op == "-noprint" || op == "--noprint") {
-      Config::set("behaviour","print_generated_certificate", "no");
+      if(Config::set("behaviour","print_generated_certificate", "no") == GPKIH_FAIL){
+        PWARN("couldn't set '{}' opt", op);
+      };
       args.erase(args.begin() + i);
     }else{
       ++i;

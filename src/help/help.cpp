@@ -68,7 +68,8 @@ void help::usage_brief() {
 Version: {}
 Description {}
 
-Actions: init build revoke gencrl list rename get set remove reset 
+** Available actions **
+init build revoke gencrl list rename get set remove reset 
 
 ** Detailed help **
 For extra help on any action, do:

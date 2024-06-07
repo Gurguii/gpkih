@@ -1,5 +1,5 @@
 #pragma once
-#include "../memmgmt.hpp"
+#include "../memory/memmgmt.hpp"
 
 #ifdef _WIN32
 #include <Windows.h>

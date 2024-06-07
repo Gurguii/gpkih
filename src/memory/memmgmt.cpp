@@ -1,7 +1,9 @@
 #include <cstring>
+#include <cstddef>
+#include <fstream>
+
 #include "memmgmt.hpp"
-#include "printing/printing.hpp"
-#include "utils/utils.hpp"
+
 
 Buffer *__buff = NULL; // this will be initialized by main()
 
@@ -11,14 +13,14 @@ Buffer::Buffer(size_t buffsize){
 	memblock = (char*)malloc(buffsize);
 	
 	if(memblock == NULL){
-	  PERROR("couldn't allocate requested memory");
-	  return;
+	  	return;
 	}
 
 	memset(memblock,0,buffsize);
 	next = memblock;
 
 	_available = buffsize;
+	_good = true;
 };
 
 Buffer::~Buffer(){
@@ -47,7 +49,7 @@ char *Buffer::allocate(size_t bytes){
     				// the Buffer class always add '\0' at the end of the allocated
     				// data so that subsequent allocated data doesn't get printed 
     				// unintentionally on a call to printf() or any trouble with functions
-    				// that rely on the closing \0
+    				// that rely on the closing null byte
     				char *ptr = freed_ptrs[i];
     				freed_ptrs.erase(freed_ptrs.begin() +i);
     				freed_sizes.erase(freed_sizes.begin() +i);
@@ -57,11 +59,18 @@ char *Buffer::allocate(size_t bytes){
     			}
     		}	
     	}
-	    PERROR("not enough memory left to allocate, '{}' bytes available, '{}' bytes requested", _available, bytes);
-	    return NULL;
+    	// Reallocate to fit requested data + 4096 bytes
+    	size_t newSize = Buffer::size + bytes + 4096;
+    	auto newMemBlock = (char*)realloc(Buffer::memblock, newSize);
+	    if(newMemBlock == nullptr){
+			return NULL;	
+	    }
+	    Buffer::memblock = newMemBlock;
+	    Buffer::size = newSize;
+	    next=Buffer::memblock+Buffer::size-4096-bytes;
 	}
 	   
-	char *ptr = next; 
+	char *ptr = next;
 	next+=bytes;
 	*next='\0';
 	++next;
@@ -73,12 +82,12 @@ char *Buffer::allocate(size_t bytes){
 char *Buffer::allocate_and_copy(char * &st, size_t *length, std::string_view src){
 	if(length == nullptr){
 		// Don't set/use length 
-		size_t _len = src.size() + 1;
+		size_t _len = src.size();
 		st = allocate(_len);
 		memcpy(st, src.data(), _len);
 	}else{
 		// Set/use length
-		*length = src.size() +1;
+		*length = src.size();
 		st = allocate(*length);
 		memcpy(st, src.data(), *length);	
 	}
@@ -86,19 +95,22 @@ char *Buffer::allocate_and_copy(char * &st, size_t *length, std::string_view src
 	return st;
 }
 
+bool Buffer::good(){
+	return _good;
+}
+
 size_t Buffer::available(){
 	return _available;
 }
 
-char *Buffer::freeblock(char *&ptr){
+char *Buffer::freeblock(char *ptr){
 	if(ptr < memblock || ptr > (memblock + size)){
 		// Out of memblock, not allocated by this instance
 		return NULL;
 	};
-	size_t length = slen(ptr);
+
+	size_t length = strlen(ptr);
 	memset(ptr, 0, length);
-	
-	PDEBUG(3,"memblock head: {:p} - freed memory: {:p} - bytes freed: {}",memblock,ptr,length);
 	
 	freed_sizes.emplace_back(length);
 	freed_ptrs.emplace_back(ptr);
@@ -106,33 +118,37 @@ char *Buffer::freeblock(char *&ptr){
 	return ptr;
 	//return freed_blocks.try_emplace(length, ptr).second ? ptr : NULL;
 }
+
 /* END - class Buffer */
 
 // TESTING STUFF
 size_t Buffer::dump(const char *path, uint32_t block_size){
 	std::ofstream file(path,std::ios::binary);
 	if(!file.is_open()){
-		PERROR("couldn't open file '{}' for dumping buffer\n", path);
 		return -1;
 	}
 
 	char *current = memblock;
 	size_t iters = size / block_size;
 	size_t rest = size % block_size;
+	size_t written = 0;
 
 	for(int i = 0; i < iters; ++i){
 		file.write(current, block_size);
+		written += block_size;
+		if(file.fail()){
+			fprintf(stderr, "Wrote %lu bytes before failing\n", written);
+		}
 		current+=block_size;
 	}
 
 	file.write(current,rest);
 
 	if(file.fail()){
-		PERROR("error dumping buffer '{}'\n",path);
+		fprintf(stderr, "Failed after writing rest\n");
 		return -1;
 	}
 
 	file.close();
-	PINFO("dumped {} bytes to {}\n", size, path);
 	return 0;
 }

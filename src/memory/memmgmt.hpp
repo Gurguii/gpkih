@@ -1,10 +1,16 @@
 #pragma once
 #include <cstddef>
-#include <string>
-#include <fstream>
-#include <unordered_map>
 #include <cstdint>
 #include <vector>
+#include <fmt/format.h>
+
+struct gpkihException : public std::exception{
+  const char *errmsg;
+  gpkihException(const char *msg):errmsg(msg){};
+  const char *what(){
+    return errmsg;
+  }
+};
 
 class Buffer{
 private:
@@ -16,14 +22,16 @@ private:
   size_t _available;
   size_t size; 
 
+  bool _good = false;
 public:
   Buffer(size_t buffsize);
   ~Buffer();
   char* allocate(size_t bytes);
   char* allocate_and_copy(char *&st, size_t *length, std::string_view src);
+  bool good();
   size_t available();
-  char *freeblock(char *&ptr);
-
+  char *freeblock(char *ptr);
+  
   // TESTING - not working
   size_t dump(const char *path, uint32_t block_size = 4096);
 };
