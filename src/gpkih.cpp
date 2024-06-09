@@ -1,6 +1,8 @@
 #include "gpkih.hpp"
 
 #include <future>
+#include "db/mnck.hpp"
+#include "memory/memmgmt.hpp"
 #include "parse/parser.hpp"
 #include "logger/signals.hpp"
 
@@ -131,13 +133,14 @@ static int __set_variables() {
 
 // PROGRAM ENTRY POINT
 int main(int argc, const char **args) {
+  PDEBUG(1,"main()");
   std::vector <std::string> opts(args+1,args+argc);
 
   for(int i = 0; i < opts.size();){
     std::string_view opt = opts[i];
     if(opt == "-debug" || opt == "--debug"){
         if(i+1 == opts.size()){
-            PERROR("debug level must be given");
+            PERROR("Debug level must be given\n");
             return GPKIH_FAIL;
         }
         int debug_level = std::stoi(opts[i+1]);
@@ -145,7 +148,7 @@ int main(int argc, const char **args) {
             ENABLE_DEBUG_MESSAGES = true;
             DEBUG_LEVEL = debug_level;
         }else{
-            PERROR("debug level must be 0-3 (both included)");
+            PERROR("Debug level must be 0-3 (both included)\n");
             return GPKIH_FAIL;
         }
         opts.erase(opts.begin()+i,opts.begin()+i+2);
@@ -163,14 +166,10 @@ int main(int argc, const char **args) {
     }
   }
 
-  PDEBUG(1,"main()");
-
-  Buffer a = Buffer(__dynamic_memory_size);
-  if(a.good() == false){
-    PWARN("Couldn't create Buffer instance...\n");
+  if(Buffer::initialize(__dynamic_memory_size, gpkihBuffer) != BUFF_OK){
+    PERROR("Couldn't allocate dynamic memory {} bytes\n", __dynamic_memory_size);
     return GPKIH_FAIL;
   }
-  __buff = &a;
 
   if(__set_variables() != GPKIH_OK){
     return GPKIH_FAIL;

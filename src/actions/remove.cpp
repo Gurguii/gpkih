@@ -30,19 +30,18 @@ int actions::remove(std::vector<str> &profiles_to_remove, int remove_all) {
 
   /* Build the success message */
   size_t amount = removed.size();
-  std::stringstream ss{};
-  ss << "Removed [" << amount << "] " << "profile/s: ";
 
+  std::stringstream removedProfileNames{};
   for(const auto &st : removed){
-    ss << st << ",";
+    removedProfileNames << st << ",";
   }
 
   /* Remove trailing comma */
-  std::string s{ss.str()};
+  std::string s{removedProfileNames.str()};
   s.erase(s.end()-1, s.end());
 
-  PSUCCESS("{}\n", s);
-  ADD_LOG(L_INFO, s.c_str());
+  PSUCCESS("Removed profiles: {}\n", s);
+  ADD_LOG(L_INFO, "action:remove removed_profiles:{}",s);
  
   return removed.size();
 }

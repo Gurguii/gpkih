@@ -38,6 +38,7 @@ constexpr const char *vpnConfigExtension = "conf";
 /** filenames **/
 constexpr const char *vpnConfFilename = "openvpn.conf";
 constexpr const char *pkiConfFilename = "pki.conf";
+constexpr const char *opensslConfFilename = "gopenssl.conf";
 
 /** behaviour **/
 extern bool DRY_RUN;

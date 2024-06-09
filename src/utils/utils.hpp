@@ -67,4 +67,6 @@ namespace gpkih::utils::openssl
 namespace gpkih::utils::entities
 {
 	extern int promptForSubject(std::string_view profileName, Subject &buffer, ProfileConfig &config, EntityManager &eman);
+	extern int setCAPaths(Profile &profile, Entity &entity);
+	extern int setPaths(Profile &profile, Entity &entity);
 }

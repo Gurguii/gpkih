@@ -24,6 +24,10 @@ namespace Config
 {
   extern ConfigMap gpkihConfig;
 
+  /// @brief load configuration from given path
+  /// @param filepath configuration file path
+  /// @return GPKIH_OK if file was succesfully loaded else GPKIH_FAIL
+  /// @note this file will only load 1 filepath, no matter how many times it gets called
   extern int load(std::string_view filepath);
 
   /// @brief get the value of a section's key
@@ -51,6 +55,12 @@ namespace Config
   /// @return GPKIH_OK if succeeds else GPKIH_FAIL
   extern int sync();
 }; // namespace Config
+
+namespace Config::behaviour
+{
+  static bool autoanswer;
+  static bool prompt;
+}
 
 // @brief Class to manage profile specific configuration - pki.conf vpn.conf
 class ProfileConfig
@@ -95,19 +105,12 @@ private:
   };
   ConfigMap pkiConfig{
     {"key", {
-      {"creation_format",""},
       {"size",""},
       {"algorithm",""}
     }},    // pki key config will be mapped here
     {"crt", {
       {"days",""},
-      {"creation_format",""}
     }},    // * * certificate
-    {"csr", {
-      {"creation_format",""},
-    }},    // * * certificate requests
-    {"crl", {
-    }},    // * * certificate revocation list
     {"subject",{
       {"email",""},
       {"common_name",""},

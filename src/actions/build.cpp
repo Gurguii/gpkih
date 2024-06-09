@@ -6,34 +6,45 @@
 
 using namespace gpkih;
 
-
 static int __increment_serial(){
   PDEBUG(2,"__increment_serial()");
 
-  std::fstream file(serialPath, std::ios::in | std::ios::out);
+  std::ifstream rfile(serialPath);
   
-  if(!file.is_open()){
-    PERROR("couldn't open serial file '{}' to update serial\n", serialPath);
+  if(!rfile.is_open()){
+    PERROR("Couldn't open serial file '{}' to update serial\n", serialPath);
     return GPKIH_FAIL;
   }
 
   std::string stserial{};
-  file >> stserial;
-  std::string nserial = fmt::format("{:x}",static_cast<decltype(Entity::serial)>(std::stoi(stserial) + 1));
-  PDEBUG(3, "new serial: {}\n", nserial);
-  file.seekp(SEEK_SET);
+  rfile >> stserial;
+
+  std::string nserial = fmt::format("{:x}",static_cast<decltype(Entity::serial)>(std::stoull(stserial,0,16) + 1));
+
+  PDEBUG(1, "nserial:{}", nserial);
+
+  rfile.close();
   
-  if(nserial.size() == 1){
-    file << "0";
+  std::ofstream wfile(serialPath);
+  if(!wfile.is_open()){
+    return GPKIH_FAIL;
   }
 
-  file << nserial;
+  if(nserial.size() == 1){
+    PDEBUG(1,"adding a zero(0)");
+    wfile << "0";
+  }
+
+  wfile << nserial;
+  
+  wfile.close();
+
   return GPKIH_OK;
 }
 
 // Attempts to create the target path (directory or file)
 // - if dir != 0 a directory is created and any missing intermediary
-// directories will be created too, else a file will be created
+// directories will be created too, else a file will be createdPDEBUG
 static int __create_outdir(fs::path &path){
   PDEBUG(2,"__create_outdir({})",path.string());
 
@@ -53,54 +64,44 @@ static int __create_outdir(fs::path &path){
 };
 
 static std::pair<std::string,std::string> __server_client_build_commands(Profile &profile, ConfigMap &pkiconf,
-                                             Entity &entity) {
+                                             Entity &entity, std::string_view days, std::string_view keyAlgo, std::string_view keySize) {
   PDEBUG(2, "__server_client_build_commands()");
 
   Subject &subject = entity.subject;
   // openssl req -newkey {}:{} -out {} -keyout {} -subj '{}' -outform {} -keyform {} -noenc
-  std::string_view key_algo = pkiconf["key"]["algorithm"];
-  std::string_view key_size = pkiconf["key"]["size"];
   
-  // TODO - add entity paths to the csv when created
   // if a client key is created and the configuration is changed afterwards,
   // the format taken won't match with the actual format used when the entity
   // was created, leading to errors
 
-  std::string_view csr_creation_format = pkiconf["csr"]["creation_format"];
-  std::string_view key_creation_format = pkiconf["key"]["creation_format"];
-
   // Set entity certificate request PATH
-  std::string tmp = std::move(fmt::format("{}{}-csr.{}",profile::dir_req(profile), subject.cn, csr_creation_format.data()));
+  std::string tmp = std::move(fmt::format("{}{}-csr.pem",profile::dir_req(profile), subject.cn));
   CALLOCATE(entity.csrPath,reinterpret_cast<size_t*>(&entity.csrPathLen),tmp);
 
   // Set entity key PATH
   tmp.assign("");
-  tmp = std::move(fmt::format("{}{}-key.{}",profile::dir_key(profile), subject.cn, key_creation_format.data()));
+  tmp = std::move(fmt::format("{}{}-key.PEM",profile::dir_key(profile), subject.cn));
   CALLOCATE(entity.keyPath,reinterpret_cast<size_t*>(&entity.keyPathLen),tmp);
 
   tmp.assign("");
 
-  std::string csr_command = std::move(fmt::format("openssl req -newkey {}:{} -out \"{}\" -keyout \"{}\" -subj {} -outform {} -keyform {} -noenc",
-    key_algo,
-    key_size,
+  std::string csr_command = std::move(fmt::format("openssl req -newkey {}:{} -out \"{}\" -keyout \"{}\" -subj {} -noenc",
+    keyAlgo,
+    keySize,
     entity.csrPath,
     entity.keyPath,
-    subject::openssl_oneliner(subject),
-    csr_creation_format,
-    key_creation_format
+    subject::openssl_oneliner(subject)
   ));
   
   // openssl ca -config {} -in {} -out {} -subj '{}' -extfile {}x509{}{} -notext -days +{}
-  std::string_view crt_creation_format = pkiconf["crt"]["creation_format"];
 
   // Set entity certificate PATH
-  tmp = std::move(fmt::format("{}{}-crt.{}",profile::dir_crt(profile), subject.cn, crt_creation_format.data()));
+  tmp = std::move(fmt::format("{}{}-crt.pem",profile::dir_crt(profile), subject.cn));
   CALLOCATE(entity.crtPath,reinterpret_cast<size_t*>(&entity.crtPathLen),tmp);
 
   tmp.assign("");
   
   std::string x509_extensions_file_path = CONF_DIRPATH + "x509" + SLASH + to_str(entity.type);
-  std::string_view days = pkiconf["crt"]["days"];
   
   std::string crt_command = std::move(fmt::format("openssl ca -config \"{}\" -in \"{}\" -out \"{}\" -extfile \"{}\" -days {}",
     profile::gopenssl(profile),
@@ -122,27 +123,17 @@ static std::pair<std::string,std::string> __server_client_build_commands(Profile
   return {std::move(csr_command),std::move(crt_command)};
 }
 
-static std::string __ca_build_command(Profile &profile, ConfigMap &pkiconf, Entity &entity){
+static std::string __ca_build_command(Profile &profile, ConfigMap &pkiconf, Entity &entity, std::string_view days, std::string_view keyAlgo, std::string_view keySize){
   PDEBUG(2, "__ca_build_command()");
 
-  std::string caCertPath = profile::ca_crt(profile);
-  std::string caKeyPath = profile::ca_key(profile);
-  entity.csrPathLen = 3;
-  entity.csrPath = ALLOCATE(entity.csrPathLen);
-  memcpy(entity.csrPath, "N/A", 3);
-  
-  auto days = pkiconf["crt"]["days"];
-
-  PINFO("key: {} csr: {} crt: {}\n", entity.keyPath == NULL ? "N/A" : entity.keyPath, entity.csrPath == NULL ? "N/A" : entity.csrPath, entity.crtPath == NULL ? "N/A" : entity.crtPath);
-  
   std::string command = std::move(fmt::format("openssl req -config {} -new -x509 -out {} -keyout {} -subj {} -set_serial {} -newkey {}:{} -noenc -days {}",
     profile::gopenssl(profile),
-    caCertPath,
-    caKeyPath,
+    entity.crtPath,
+    entity.keyPath,
     subject::openssl_oneliner(entity.subject),
     entity.serial,
-    pkiconf["key"]["algorithm"],
-    pkiconf["key"]["size"],
+    keyAlgo,
+    keySize,
     days
   ));
   
@@ -242,6 +233,7 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
 
     ecrt.close();
     ekey.close();
+
     FREEBLOCK(caCertBuffer);
   }
   return GPKIH_OK;
@@ -268,14 +260,14 @@ int __create_pfx(Profile &profile, Entity &entity){
 }
 
 /* BUILD SELF SIGNED CA certificate */
-int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity, EntityManager &eman){
+int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity, EntityManager &eman,std::string_view days, std::string_view keyAlgo, std::string_view keySize){
   PDEBUG(1,"actions::build_ca()");
 
   bool autoanswer = Config::get("behaviour","autoanswer") == "yes" ? true : false;
   bool prompt = Config::get("behaviour","prompt") == "yes" ? true : false;
 
-  if(!autoanswer && profile.ca_created){
-    auto ans = PROMPT("profile already has CA and\ncreating a new one will cause newly created certificates not to work with older ones , continue?", "[y/n]", true, LGREEN);
+  if(autoanswer == false && profile.ca_created){
+    auto ans = PROMPT("Profile already has CA and\ncreating a new one will cause newly created certificates not to work with older ones , continue?", "[y/n]", true, LGREEN);
     if(ans != "y" && ans != "yes"){
       return GPKIH_FAIL;
     } 
@@ -286,8 +278,10 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity, E
   }; 
 
   ConfigMap &pkiconf = config.get(CONFIG_PKI);
-  std::string command = std::move(__ca_build_command(profile,pkiconf,entity));
-
+  std::string command = std::move(__ca_build_command(profile,pkiconf,entity,days,keyAlgo,keySize));
+  
+  PDEBUG(3, "self-signed CA command - '{}'", command);
+  
   if(system(command.c_str())){
     PERROR("command '{}' failed\n", command);
     return GPKIH_FAIL;
@@ -307,31 +301,23 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity, E
   
   eman.sync();
 
-  PSUCCESS("Certificate authority '{}' created\n", entity.subject.cn);
-  ADD_LOG(L_INFO, "Added CA to profile '{}'", profile.name);
+  //PSUCCESS("Certificate authority '{}' created\n", entity.subject.cn);
+  //ADD_LOG(L_INFO, "profile:{} action:build type:{}", profile.name, to_str(entity.type));
+
   return GPKIH_OK;
 } // actions::build_ca()
 
 /* BUILD SERVER-CLIENT CERTIFICATES */
-int actions::build(Profile &profile, ProfileConfig &config, Entity &entity, EntityManager &eman){
+int actions::build(Profile &profile, ProfileConfig &config, Entity &entity, EntityManager &eman, std::string_view days, std::string_view keyAlgo, std::string_view keySize){
   PDEBUG(1,"actions::build()");
 
-  if(profile.ca_created == false){
-    auto ans = PROMPT("Certificate authority (CA) hasn't been created yet, create?","[y/n]");
-    if(ans == "y" || ans == "yes"){
-      return build_ca(profile, config, entity, eman);
-    }else{
-      PERROR("can't create server/client certificates without CA");
-      return GPKIH_FAIL;
-    }
-  }
 
   ConfigMap &pkiconf = config.get(CONFIG_PKI);
 
   bool autoanswer = Config::get("behaviour","autoanswer") == "yes" ? true : false;
   bool prompt = Config::get("behaviour","prompt") == "yes" ? true : false;
-
-  const auto [req_command, crt_command] = __server_client_build_commands(profile, pkiconf, entity);
+  
+  const auto [req_command, crt_command] = __server_client_build_commands(profile, pkiconf, entity, days, keyAlgo, keySize);
 
   // Create key + csr
   PDEBUG(2,"executing key + certificate request command - {}",req_command);
@@ -368,17 +354,14 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity, Enti
   // Synchronize so that changes take effect
   db::profiles::sync();
   eman.sync();
-
-  PSUCCESS("{} entity '{}' created\n", to_str(entity.type),entity.subject.cn);
-  ADD_LOG(L_INFO, "added entity [profile:{},serial:{},cn:{},type:ca]",profile.name, entity.serial, entity.subject.cn);
   
   // Create inline config file
-  std::vector<Entity> hahahah{entity};
+  std::vector<Entity> entityList{entity};
 
   bool create_inline = pkiconf["output"]["create_inline"] == "yes" ? true : false;
   bool create_pfx = pkiconf["output"]["create_pfx"] == "yes" ? true : false;
 
-  if(create_inline && __create_inline_config(profile, config, hahahah, autoanswer, prompt) == GPKIH_OK){
+  if(create_inline && __create_inline_config(profile, config, entityList, autoanswer, prompt) == GPKIH_OK){
     PSUCCESS("inline config created\n");
   }
 

@@ -4,8 +4,6 @@
 #include <fstream>
 #include <sstream>
 
-static std::string openssl_conf_filename = "gopenssl.conf";
-
 static inline std::vector<std::string> RELATIVE_DIRECTORY_PATHS(){
   return 
   {
@@ -80,7 +78,7 @@ static int __sed(std::string_view src, std::string_view dst,
 }                                                  
 
 template <typename T> static int __is_valid_path(T path) {
-  PDEBUG(2, "__is_valid_path()");
+  PDEBUG(2, "__is_valid_path()", path);
 
   if (gpkih::utils::fs::is_absolute_path(path) == false) {
     return GPKIH_FAIL;
@@ -145,8 +143,8 @@ int __create_pki_filestruct(Profile &profile){
     }
   }
   
-  std::string gopenssl_sed_src = CONF_DIRPATH + openssl_conf_filename;
-  std::string gopenssl_sed_dst = fmt::format("{}{}{}",profile.source,SLASH,openssl_conf_filename);
+  std::string gopenssl_sed_src = fmt::format("{}{}",CONF_DIRPATH,opensslConfFilename);
+  std::string gopenssl_sed_dst = fmt::format("{}{}{}",profile.source,SLASH,opensslConfFilename);
 
 // [Windows] - change \ for / since openssl processes slashes as / in the openssl.conf file
 #ifdef _WIN32
@@ -246,7 +244,15 @@ int actions::init(std::string_view &profileName, std::string_view &profileSource
   
   // Extra questions
   if (Config::get("behaviour", "prompt") == "yes") {
-    bool autoans = Config::get("behaviour", "autoanswer") == "no" ? false : true; 
+    bool autoans = Config::get("behaviour", "autoanswer") == "no" ? false : true;
+    ProfileConfig pconf(profile, CONFIG_PKI);
+    
+    auto pkiconf = pconf.get(CONFIG_PKI);
+    
+    std::string_view keySize = pkiconf["key"]["size"];
+    std::string_view keyAlgo = pkiconf["key"]["algorithm"];
+    std::string_view days = pkiconf["crt"]["days"];
+
     if (autoans) {
       // QUESTION 1 - create dhparam?
       utils::openssl::create_dhparam(fmt::format("{}{}pki{}tls{}dhparam1024",profile.source, SLASH, SLASH, SLASH));
@@ -256,7 +262,7 @@ int actions::init(std::string_view &profileName, std::string_view &profileSource
       ca.type = ET_CA;
       utils::entities::promptForSubject(profile.name, ca.subject, pconf, eman);
 
-      build_ca(profile, pconf, ca, eman);
+      build_ca(profile, pconf, ca, eman, days, keyAlgo, keySize);
     }else{
       auto ans = PROMPT("Create dhparam? " + fmt::format(fg(fmt::terminal_color::bright_green) |
                                                   EMPHASIS::underline,
@@ -273,12 +279,12 @@ int actions::init(std::string_view &profileName, std::string_view &profileSource
         ca.type = ET_CA;
         utils::entities::promptForSubject(profile.name, ca.subject, pconf, eman);
   
-        build_ca(profile, pconf, ca, eman);
+        build_ca(profile, pconf, ca, eman, days, keyAlgo, keySize);
       }
     }
   }
 
-  ADD_LOG(L_INFO,"created profile [name:{},source:{}]",profile.name,profile.source);
-  PSUCCESS("profile '{}' created\n", profile.name);
+  ADD_LOG(L_INFO,"profile:{} action:init source:{}",profile.name,profile.source);
+  PSUCCESS("Profile '{}' created\n", profile.name);
   return GPKIH_OK;
 }

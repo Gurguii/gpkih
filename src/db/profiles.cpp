@@ -6,7 +6,7 @@
 using namespace gpkih;
 
 // Returns id from idfile and increases it, updating the file
-static uint64_t get_id(){
+static uint64_t nextID(){
 	std::fstream file(db::profiles::idfile, std::ios::binary | std::ios::in | std::ios::out);
 	
 	if(!file.is_open()){
@@ -36,6 +36,7 @@ static uint64_t get_id(){
 }
 
 static std::map <std::string_view, Profile > existing_profiles{};
+
 std::map <std::string_view, Profile>* const db::profiles::get(){
 	return &existing_profiles;
 }
@@ -178,9 +179,12 @@ int db::profiles::add(Profile &buff){
 		PERROR("profile with name '{}' already exists", buff.name);
 		return GPKIH_FAIL;
 	}
+	
+
+	buff.id = nextID();
+
 	PDEBUG(3, "adding profile [id:{},name:{},source:{},ca_created:{},sv_count:{},cl_count:{}]", buff.id, buff.name, buff.source, buff.ca_created, buff.sv_count, buff.cl_count);
 
-	buff.id = get_id();
 	existing_profiles.emplace(&buff.name[0], buff);
 	return GPKIH_OK;
 }

@@ -8,6 +8,8 @@
 #include "../printing/printing.hpp"
 #include "../memory/memmgmt.hpp"
 
+#include "config.hpp"
+
 static inline constexpr char sectionOpenDelim = '[';
 static inline constexpr char sectionCloseDelim = ']';
 static inline constexpr const char *emptyChars = "[] ";
@@ -221,6 +223,10 @@ int Config::load(std::string_view filepath){
     gpkihConfigPath = std::string(filepath);
     return __load_file(filepath, gpkihConfig);     
   }
+  
+  testing::behaviour::autoanswer = get("behaviour","autoanswer") == "yes" ? true : false;
+  testing::behaviour::prompt = get("behaviour","prompt") == "yes" ? true : false;
+  
   return GPKIH_FAIL;
 } // Config::load()
 
@@ -398,7 +404,7 @@ int ProfileConfig::set2(CONFIG_FILE file, std::string_view section, std::string_
 
   std::string msg = fmt::format("changed {}.{}.{} to '{}'", file == CONFIG_PKI ? "pki" : "vpn", section, key, val);
   PSUCCESS("{}\n", msg);
-  ADD_LOG(L_INFO, "Profile:{} - {}", this->profile.name, msg);
+  ADD_LOG(L_INFO, "profile:{} action:set {}", this->profile.name, msg);
   return GPKIH_OK;
 }
 

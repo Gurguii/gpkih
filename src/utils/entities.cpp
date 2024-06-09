@@ -22,7 +22,7 @@ static inline size_t __get_and_set_prop(std::string &&promptMsg, char *&defaultV
   if(input.size() <= maxStLen){
     CALLOCATE(st, stlen, input);
   }else{
-    PWARN("max length '{}' exceeded, not allocating memory\n", maxStLen);
+    PWARN("Max length '{}' exceeded, not allocating memory\n", maxStLen);
   }
 
   return GPKIH_OK;
@@ -87,6 +87,54 @@ int utils::entities::promptForSubject(std::string_view profileName, Subject &buf
   // Set email if not set already
   if(buffer.email == nullptr){
     __get_and_set_prop("Email Address",defaults.email, buffer.email, reinterpret_cast<size_t*>(&buffer.emaillen), mail_badchars);  
+  }
+
+  return GPKIH_OK;
+}
+
+int utils::entities::setCAPaths(Profile &profile, Entity &e){
+  e.keyPathLen = profile.sourcelen + 15; // 15 = /pki/ca/key.pem | /pki/ca/crt.pem
+  e.crtPathLen = e.keyPathLen;
+  
+  e.keyPath = ALLOCATE(e.keyPathLen);
+  e.crtPath = ALLOCATE(e.crtPathLen);
+
+  if(e.keyPath == NULL || e.crtPath == NULL){
+    PERROR("smth is null\n");
+    return GPKIH_FAIL;
+  }
+
+  if(e.keyPathLen != snprintf(e.keyPath,e.keyPathLen+1,"%s%cpki%cca%ckey.pem",profile.source,SLASH,SLASH,SLASH)
+    ||
+     e.crtPathLen != snprintf(e.crtPath,e.crtPathLen+1,"%s%cpki%cca%ccrt.pem",profile.source,SLASH,SLASH,SLASH)){
+    PERROR("snprintf() returned different than len\nkey:{}:%lu crt:{}:%lu\n",e.keyPath, e.keyPathLen, e.crtPath, e.crtPathLen);
+    return GPKIH_FAIL;
+  }
+
+  return GPKIH_OK;
+}
+
+int utils::entities::setPaths(Profile &profile, Entity &e){
+  e.keyPathLen = profile.sourcelen + 18 + e.subject.cnlen; // /pki/keys/-key.pem 
+  e.crtPathLen = profile.sourcelen + 19 + e.subject.cnlen; // /pki/certs/-crt.pem
+  e.csrPathLen = profile.sourcelen + 18 + e.subject.cnlen; // /pki/reqs/-csr.pem
+  
+  e.keyPath = ALLOCATE(e.keyPathLen);
+  e.csrPath = ALLOCATE(e.csrPathLen);
+  e.crtPath = ALLOCATE(e.crtPathLen);
+
+  if(e.keyPath == NULL || e.csrPath == NULL || e.crtPath == NULL){
+    PERROR("SMTH IS NULL\n");
+    return GPKIH_FAIL;
+  }
+
+  if(e.keyPathLen != snprintf(e.keyPath, e.keyPathLen+1,"%s%cpki%ckeys%c%s-key.pem",profile.source,SLASH,SLASH,SLASH,e.subject.cn)
+    ||
+     e.csrPathLen != snprintf(e.csrPath, e.csrPathLen+1, "%s%cpki%creqs%c%s-csr.pem",profile.source,SLASH,SLASH,SLASH,e.subject.cn)
+    ||
+     e.crtPathLen != snprintf(e.crtPath, e.crtPathLen+1, "%s%cpki%ccerts%c%s-crt.pem",profile.source,SLASH,SLASH,SLASH,e.subject.cn)){
+    PERROR("snprintf() returned different than len\nkey:{} csr:{} crt:{}\n",e.keyPath, e.csrPath, e.crtPath);
+    return GPKIH_FAIL;
   }
 
   return GPKIH_OK;

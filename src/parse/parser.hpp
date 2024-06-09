@@ -33,11 +33,9 @@ extern int rename(std::vector<std::string> &opts);
 extern int reset(std::vector<std::string> &opts);
 
 /// @brief retrieve general/profile configuration
-/// partially implemented
 extern int get(std::vector<std::string> &opts);
 
 /// @brief change general/profile configuration
-/// unimplemented
 extern int set(std::vector<std::string> &opts);
 
 /// @brief generate key

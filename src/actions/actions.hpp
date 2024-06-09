@@ -21,6 +21,6 @@ extern int list_entities(std::string_view profile_name, uint16_t fields);
 
 extern int remove(std::vector<std::string> &profiles_to_remove, int remove_all = 0);
 
-extern int build_ca(Profile &profile, ProfileConfig &pkiconf, Entity &entity, EntityManager &eman);
-extern int build(Profile &profile, ProfileConfig &config, Entity &entity, EntityManager &eman);
+extern int build_ca(Profile &profile, ProfileConfig &pkiconf, Entity &entity, EntityManager &eman, std::string_view days, std::string_view keyAlgo, std::string_view keySize);
+extern int build(Profile &profile, ProfileConfig &config, Entity &entity, EntityManager &eman, std::string_view days, std::string_view keyAlgo, std::string_view keySize);
 } // namespace gpkih::actions

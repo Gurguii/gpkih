@@ -62,14 +62,14 @@ int actions::revoke(Profile &profile, std::vector<std::string> &common_names, st
   eman.sync();
 
   std::stringstream ss{};
-  ss << "Revoked certificates: ";
   for(const auto &view : revoked_cns){
     ss << view << ",";
   }
   std::string s{ss.str()};
   s.erase(s.end()-1, s.end());
 
-  PSUCCESS("{}\n", s);
+  PSUCCESS("Revoked entities: {}\n", s);
+  ADD_LOG(L_INFO,"profile:{} action:revoke entities:{}",profile.name,s);
 
   /* Extra questions */
   bool prompt = Config::get("behaviour","prompt") == "yes" ? true : false;

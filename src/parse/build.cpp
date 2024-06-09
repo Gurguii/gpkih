@@ -1,41 +1,10 @@
 #include "parser.hpp"
-#include <chrono>
-#include <cstring>
-#include <filesystem>
-#include <iostream>
-#include <fstream>
-#include <thread>
-
-static inline std::string badchars = "~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?¿\t\n\r";
-static inline std::string mail_badchars = "~`!#$%^&*()-_=+[{]}\\|;:'\",<>/?¿\t\n\r";
 
 using namespace gpkih;
 
-static inline size_t __get_and_set_prop(std::string &&prompt_msg, char *&default_val, char *&st, size_t* stlen, std::string &badcharlist = badchars, size_t max_st_len = 254) {
-  PDEBUG(2,"__get_and_set_prop()");
-
-  std::string input = PROMPT(prompt_msg);
-
-  if (input.empty()) {
-    CALLOCATE(st, stlen, default_val);
-    return 0;
-  }
-
-  if(REMOVE_BADCHAR(input, badcharlist)){
-    PWARN("badchars were removed\n");
-  };
-
-  if(input.size() <= max_st_len){
-    CALLOCATE(st, stlen, input);
-  }else{
-    PWARN("max length '{}' exceeded\n", max_st_len);
-  }
-
-  return 0;
-}
-
 static inline size_t __load_serial(Profile *profile, Entity &entity){
   PDEBUG(2,"__load_serial()");
+
   CALLOCATE(serialPath, &serialPathLen, fmt::format("{}{}pki{}serial{}serial", profile->source, SLASH, SLASH, SLASH));
 
   if(!fs::exists(serialPath)){
@@ -49,87 +18,19 @@ static inline size_t __load_serial(Profile *profile, Entity &entity){
     PERROR("couldn't open file '{}'\n",serialPath);
     return GPKIH_FAIL;
   }
+
   std::string serial{};
   file >> serial;
   file.close();
 
-  entity.serial = std::stoi(serial);
+  entity.serial = std::stoull(serial,NULL,16);
 
-  PDEBUG(3, "loaded serial: %lu\n", entity.serial);
-
-  return GPKIH_OK;
-};
-
-static inline int __prompt_for_subject(std::string_view profile_name, Subject &buffer, ProfileConfig &config, EntityManager &eman)
-{
-  PDEBUG(2,"__prompt_for_subject()");
-
-  Subject defaults = config.default_subject();
-
-  std::string input{};
-
-  // Set country if not set already
-  if(len(buffer.country) == 0){
-    PROMPT(fmt::format("Country Name (2 letter code) [{}]",defaults.country));
-    if (!input.empty() && input.size() == 2) {
-      memcpy(buffer.country, input.c_str(), input.size() + 1);
-    }else{
-      memcpy(buffer.country, defaults.country, 2);
-    }
-  }
-
-  // Set state name if not set already
-  if(buffer.state == nullptr){
-    __get_and_set_prop(fmt::format("State or Province Name (full name) [{}]",defaults.state),defaults.state,buffer.state,reinterpret_cast<size_t*>(&buffer.statelen));  
-  }
-
-  // Set location if not set already
-  if(buffer.location == nullptr){
-    __get_and_set_prop(fmt::format("Locality Name [{}]",defaults.location),defaults.location, buffer.location,reinterpret_cast<size_t*>(&buffer.locationlen));
-  }
-  
-  // Set organisation if not set already
-  if(buffer.organisation == nullptr){
-    __get_and_set_prop(fmt::format("Organisation Name [{}]",defaults.organisation),defaults.organisation, buffer.organisation,reinterpret_cast<size_t*>(&buffer.organisationlen));
-  }
-  
-  input.assign("");
-
-  // *MANDATORY Set common name
-  for(;;) {
-    input = PROMPT("Common Name", false, RED);
-    if (input.empty()) {
-      // Common name can't be empty
-      PWARN("common name can't be empty\n");
-      continue;
-    } else if (eman.exists(input)) {
-      // Common name can't be duplicated
-      PWARN("Entity with CN '{}' already exists in profile '{}'\n",
-      input, profile_name);
-      continue;
-    }else if(HAS_BADCHAR(input, badchars)) {
-      continue;
-    }
-
-    // Got proper cn
-    CALLOCATE(buffer.cn, reinterpret_cast<size_t*>(&buffer.cnlen), input);
-    input.assign("");
-    break;
-  }
-  
-  // Set email if not set already
-  if(buffer.email == nullptr){
-    __get_and_set_prop("Email Address",defaults.email, buffer.email, reinterpret_cast<size_t*>(&buffer.emaillen), mail_badchars);  
+  if(entity.serial <= 0){
+    PERROR("didn't load serial properly\n");
+    return GPKIH_FAIL;
   }
 
   return GPKIH_OK;
-}
-
-static inline std::unordered_map<ENTITY_TYPE,int(*)(Profile&,ProfileConfig&,Entity&,EntityManager&)> build_functions
-{
-  {ET_CA,actions::build_ca},
-  {ET_CL,actions::build},
-  {ET_SV,actions::build}
 };
 
 using namespace gpkih;
@@ -157,13 +58,13 @@ int parsers::build(std::vector<std::string> &opts) {
   }
   
   if(opts.size() == 1){
-    PERROR("entity type must be specified - ca|sv|cl\n");
+    PERROR("Entity type must be specified - ca|sv|cl\n");
     return GPKIH_OK;
   }
 
   std::string_view etype = opts[1];
   if(entity_type_map.find(etype.data()) == entity_type_map.end()){
-    PERROR("invalid entity type '{}'",etype);
+    PERROR("Invalid entity type '{}'",etype);
     return GPKIH_FAIL;
   }
   
@@ -174,9 +75,9 @@ int parsers::build(std::vector<std::string> &opts) {
   ProfileConfig config(*profile);
   EntityManager eman(profile->name);
   CONFIG_FILE succesfullyLoaded = config.loadedFiles();
-  
+
   if( (succesfullyLoaded & CONFIG_PKI) == false){
-    PWARN("couldn't load profile PKI configuration file\n");;
+    PWARN("Couldn't load profile PKI configuration file\n");;
     return GPKIH_FAIL;
   }
 
@@ -193,17 +94,12 @@ int parsers::build(std::vector<std::string> &opts) {
   // override default build params with user arguments
   for (int i = 0; i < opts.size(); ++i) {
     std::string_view opt = opts[i];
-    PDEBUG(3, "opt:{}",opt);
+
     if(opt == "-algo" || opt == "--algorithm"){
       // check its a valid algorithm
       config.set(CONFIG_PKI,"key","algorithm",std::move(opts[++i]));
-    }
-    else if(opt == "-keysize" || opt == "--keysize") {
+    } else if(opt == "-keysize" || opt == "--keysize") {
       config.set(CONFIG_PKI,"key","size",std::move(opts[++i]));
-    } else if (opt == "-keyformat") {
-      config.set(CONFIG_PKI,"key","creation_format",std::move(opts[++i]));
-    } else if (opt == "-outformat") {
-      config.set(CONFIG_PKI,"csr","creation_format",std::move(opts[++i]));
     } else if(opt == "-cn" || opt == "--common-name"){
       CALLOCATE(entity.subject.cn, reinterpret_cast<size_t*>(&entity.subject.cnlen), opts[++i]);
       if(eman.exists(entity.subject.cn)){
@@ -251,11 +147,65 @@ int parsers::build(std::vector<std::string> &opts) {
   }
 
   if(entity.subject.cn == nullptr){
-    // User didn't give common_name (mandatory) with cli opts  
-    // prompt the user for subject info
+    // User didn't give common_name (mandatory to build a certificate) with cli opts  
     utils::entities::promptForSubject(profile->name, entity.subject, config, eman);
-    //__prompt_for_subject(profile->name, entity.subject, config, eman);
   }
 
-  return build_functions[entity.type](*profile,config,entity,eman);
+  int rcode = GPKIH_FAIL;
+  
+  auto pkiconf = config.get(CONFIG_PKI);
+
+  bool autoanswer = Config::get("behaviour","autoanswer") == "yes" ? true : false;
+  bool prompt = Config::get("behaviour","prompt") == "yes" ? true : false;
+  
+  std::string_view keySize = pkiconf["key"]["size"];
+  std::string_view keyAlgo = pkiconf["key"]["algorithm"];
+  std::string_view days = pkiconf["crt"]["days"];
+
+  // TODO - load paths here.
+  if(entity.type & ET_CA){
+    
+    if(utils::entities::setCAPaths(*profile, entity) != GPKIH_OK){
+      PERROR("smth failed on setCAPaths()\n");
+      return GPKIH_FAIL;
+    };
+
+    PINFO("key:{} crt:{}\n", entity.keyPath, entity.crtPath);
+    
+    rcode = actions::build_ca(*profile,config,entity,eman,days,keyAlgo,keySize);
+  
+  }else if(entity.type & ET_CL || entity.type & ET_SV){
+    
+    if(profile->ca_created == false){
+      auto ans = PROMPT("Certificate authority (CA) hasn't been created yet, create?","[y/n]",true);
+      
+      if(ans == "y" && ans == "yes"){
+        PERROR("Can't create server/client certificates without CA\n");
+        return GPKIH_FAIL;  
+      }
+
+      Entity nent;
+      utils::entities::promptForSubject(profile->name, nent.subject, config, eman);
+      if(actions::build_ca(*profile, config, nent, eman, days, keyAlgo, keySize) == GPKIH_FAIL){
+        return GPKIH_FAIL;
+      }
+    }
+
+    if(utils::entities::setPaths(*profile,entity) != GPKIH_OK){
+      PERROR("smth failed on setPaths()\n");
+      return GPKIH_FAIL;
+    }
+    PINFO("key:{} csr: {} crt:{}\n", entity.keyPath, entity.csrPath, entity.crtPath);
+    
+    rcode = actions::build(*profile,config,entity,eman,days,keyAlgo,keySize);
+  }
+
+  if(rcode == GPKIH_FAIL){
+    return rcode;
+  }
+
+  PSUCCESS("Entity '{}' created\n", entity.subject.cn);
+  ADD_LOG(L_INFO, "profile:{} action:build serial:{} cn:{} type:{}",profile->name, entity.serial, entity.subject.cn, to_str(entity.type));
+  
+  return GPKIH_OK;
 }

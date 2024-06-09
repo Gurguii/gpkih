@@ -1,182 +1,16 @@
 #pragma once
-#include "gpkih.hpp" // typename aliases
 #include <cstdint>
 #include <unordered_map>
 #include <ctime>
 #include <chrono>
 #include <fmt/format.h>
+
 #include "memory/memmgmt.hpp"
+#include "gpkih.hpp"
 
 namespace gpkih {
-enum class PROFILE_FIELDS : uint16_t {
-  all = 511,
-#define P_ALL PROFILE_FIELDS::all
-  none = 0,
-#define P_NONE PROFILE_FIELDS::none
-  name = 2,
-#define P_NAME PROFILE_FIELDS::name
-  source = 4,
-#define P_SRC PROFILE_FIELDS::source
-  creation_date = 8,
-#define P_CREATION_DATE PROFILE_FIELDS::creation_date
-  last_modification = 16,
-#define P_LAST_MODIFICATION PROFILE_FIELDS::last_modification
-  id = 32,
-#define P_ID PROFILE_FIELDS::id
-  ca_created = 64,
-#define P_CA_CREATED PROFILE_FIELDS::ca_created
-  sv_count = 128,
-#define P_SV_COUNT PROFILE_FIELDS::sv_count
-  cl_count = 256,
-#define P_CL_COUNT PROFILE_FIELDS::cl_count 
-};
 
-/* PROFILE OPERATORS */
-static PROFILE_FIELDS operator|(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
-  return static_cast<PROFILE_FIELDS>((uint16_t)lo | (uint16_t)ro);
-};
-static bool operator&(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
-  return static_cast<bool>((uint16_t)lo & (uint16_t)ro);
-}
-static bool operator&(uint16_t lo, PROFILE_FIELDS ro) {
-  return static_cast<bool>(static_cast<uint16_t>(lo) & static_cast<uint16_t>(ro));
-}
-
-/* PROFILE STRING -> PROFILE_FIELD MAP */
-static inline std::unordered_map<std::string, uint16_t>
-profile_fields_map() {
-  return {
-      {"id",static_cast<uint16_t>(PROFILE_FIELDS::id)},
-      {"name", static_cast<uint16_t>(PROFILE_FIELDS::name)},
-      {"source", static_cast<uint16_t>(PROFILE_FIELDS::source)},
-      
-      {"cdate", static_cast<uint16_t>(PROFILE_FIELDS::creation_date)},
-      {"creation_date", static_cast<uint16_t>(PROFILE_FIELDS::creation_date)},
-
-      {"lmod", static_cast<uint16_t>(PROFILE_FIELDS::last_modification)},
-      {"last_modification", static_cast<uint16_t>(PROFILE_FIELDS::last_modification)},
-
-      {"ca", static_cast<uint16_t>(PROFILE_FIELDS::ca_created)},
-      {"sv", static_cast<uint16_t>(PROFILE_FIELDS::sv_count)},
-      {"cl", static_cast<uint16_t>(PROFILE_FIELDS::cl_count)}
-  };
-}
-
-enum class ENTITY_TYPE {
-  none = 0,
-#define ET_NONE ENTITY_TYPE::none
-  ca = 2,
-#define ET_CA ENTITY_TYPE::ca
-  client = 4,
-#define ET_CL ENTITY_TYPE::client
-  server = 8,
-#define ET_SV ENTITY_TYPE::server
-};
-
-static inline std::unordered_map<std::string, ENTITY_TYPE> entity_type_map{
-    {"ca", ET_CA}, {"server", ET_SV}, {"client", ET_CL}, {"sv",ET_SV}, {"cl",ET_CL}};
-static inline int operator&(ENTITY_TYPE lo, ENTITY_TYPE ro) { return (uint16_t)lo & (uint16_t)ro; }
-
-enum class ENTITY_FIELDS : uint16_t {
-  none = 0,
-#define E_NONE ENTITY_FIELDS::none
-  creation_date = 2,
-#define E_CREATION_DATE ENTITY_FIELDS::creation_date
-  subject_cn = 4,
-#define E_COMMON ENTITY_FIELDS::subject_cn
-  type = 8,
-#define E_TYPE ENTITY_FIELDS::type
-  serial = 16,
-#define E_SERIAL ENTITY_FIELDS::serial
-  subject_country = 32,
-#define E_COUNTRY ENTITY_FIELDS::subject_country
-  subject_state = 64,
-#define E_STATE ENTITY_FIELDS::subject_state
-  subject_location = 128,
-#define E_LOCATION ENTITY_FIELDS::subject_location
-  subject_organisation = 256,
-#define E_ORG ENTITY_FIELDS::subject_organisation
-  subject_email = 512,
-#define E_MAIL ENTITY_FIELDS::subject_email
-  status = 1024,
-#define E_STATUS ENTITY_FIELDS::status
-  keyPath = 2048,
-#define E_KEYPATH ENTITY_FIELDS::keyPath
-  req_path = 4096,
-#define E_REQPATH ENTITY_FIELDS::req_path
-  cert_path = 8192,
-#define E_CRTPATH ENTITY_FIELDS::cert_path
-  all = 16383,
-#define E_ALL ENTITY_FIELDS::all
-};
-
-/* ENTITY OPERATORS */
-static ENTITY_FIELDS operator|(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
-  return static_cast<ENTITY_FIELDS>(static_cast<uint16_t>(lo) |
-                                    static_cast<uint16_t>(ro));
-}
-static bool operator&(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
-  return static_cast<uint16_t>(lo) & static_cast<uint16_t>(ro);
-}
-static bool operator&(uint16_t lo, ENTITY_FIELDS ro){
-  return static_cast<bool>(static_cast<uint16_t>(lo) & static_cast<uint16_t>(ro));
-}
-
-/* ENTITY STRING -> ENTITY_FIELD MAP*/
-static inline std::unordered_map<std::string, uint16_t>
-entityFieldsMap() {
-  return {{"cdate", static_cast<uint16_t>(E_CREATION_DATE)},
-          {"cn", static_cast<uint16_t>(ENTITY_FIELDS::subject_cn)},
-          {"type", static_cast<uint16_t>(ENTITY_FIELDS::type)},
-          {"serial", static_cast<uint16_t>(ENTITY_FIELDS::serial)},
-          {"country", static_cast<uint16_t>(ENTITY_FIELDS::subject_country)},
-          {"state", static_cast<uint16_t>(ENTITY_FIELDS::subject_state)},
-          {"location", static_cast<uint16_t>(ENTITY_FIELDS::subject_location)},
-          {"org", static_cast<uint16_t>(ENTITY_FIELDS::subject_organisation)},
-          {"mail", static_cast<uint16_t>(ENTITY_FIELDS::subject_email)},
-          {"key", static_cast<uint16_t>(ENTITY_FIELDS::keyPath)},
-          {"req", static_cast<uint16_t>(ENTITY_FIELDS::req_path)},
-          {"crt", static_cast<uint16_t>(ENTITY_FIELDS::cert_path)},
-          {"status", static_cast<uint16_t>(ENTITY_FIELDS::status)}};
-}
-
-enum class ENTITY_STATUS : uint8_t {
-  none = 0,
-  active = 2,
-#define ES_ACTIVE ENTITY_STATUS::active
-  revoked = 4,
-#define ES_REVOKED ENTITY_STATUS::revoked
-  marked = 8,
-#define ES_MARKED ENTITY_STATUS::marked
-  all = 15,
-#define ES_ALL ENTITY_STATUS::all
-};
-
-static inline std::string str_conversion(PROFILE_FIELDS field) {
-  return (field & P_NAME ? "name" : "source");
-}
-
-static inline std::string str_conversion(ENTITY_TYPE type) {
-  return (type & ET_CA
-              ? "ca"
-              : (type & ET_SV ? "server" : (type & ET_CL ? "client" : "none")));
-};
-
-static inline std::string str_conversion(ENTITY_STATUS status){
-  static std::unordered_map<ENTITY_STATUS, std::string> entity_status_to_str{
-    {ENTITY_STATUS::active,"active"},
-    {ENTITY_STATUS::revoked,"revoked"},
-    {ENTITY_STATUS::marked,"marked"},
-  };
-  auto iter = entity_status_to_str.find(status);
-  return iter != entity_status_to_str.end() ? iter->second : "n/a"; 
-}
-
-template <typename T> std::string to_str(T enumclass) {
-  return str_conversion(enumclass);
-};
-
-/**
+ /**
  * @struct Profile
  * @brief Represents a profile which internally represents a PKI.
  * @var Profile::id 
@@ -216,6 +50,173 @@ struct Profile {
   uint16_t sv_count = 0;
   uint16_t cl_count = 0;
 };
+
+enum class PROFILE_FIELDS : uint16_t {
+  all = 511,
+  none = 0,
+  name = 2,
+  source = 4,
+  creation_date = 8,
+  last_modification = 16,
+  id = 32,
+  ca_created = 64,
+  sv_count = 128,
+  cl_count = 256,
+};
+
+constexpr PROFILE_FIELDS  P_ALL = PROFILE_FIELDS::all;
+constexpr PROFILE_FIELDS  P_NONE = PROFILE_FIELDS::none;
+constexpr PROFILE_FIELDS  P_NAME = PROFILE_FIELDS::name;
+constexpr PROFILE_FIELDS  P_SRC = PROFILE_FIELDS::source;
+constexpr PROFILE_FIELDS  P_CREATION_DATE = PROFILE_FIELDS::creation_date;
+constexpr PROFILE_FIELDS  P_LAST_MODIFICATION = PROFILE_FIELDS::last_modification;
+constexpr PROFILE_FIELDS  P_ID = PROFILE_FIELDS::id;
+constexpr PROFILE_FIELDS  P_CA_CREATED = PROFILE_FIELDS::ca_created;
+constexpr PROFILE_FIELDS  P_SV_COUNT = PROFILE_FIELDS::sv_count;
+constexpr PROFILE_FIELDS  P_CL_COUNT = PROFILE_FIELDS::cl_count;
+
+/* PROFILE OPERATORS */
+static PROFILE_FIELDS operator|(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
+  return static_cast<PROFILE_FIELDS>((uint16_t)lo | (uint16_t)ro);
+};
+static bool operator&(PROFILE_FIELDS lo, PROFILE_FIELDS ro) {
+  return static_cast<bool>((uint16_t)lo & (uint16_t)ro);
+}
+static bool operator&(uint16_t lo, PROFILE_FIELDS ro) {
+  return static_cast<bool>(static_cast<uint16_t>(lo) & static_cast<uint16_t>(ro));
+}
+
+/* PROFILE STRING -> PROFILE_FIELD MAP */
+static inline std::unordered_map<std::string, uint16_t>
+profile_fields_map() {
+    return {
+      {"id",static_cast<uint16_t>(PROFILE_FIELDS::id)},
+      {"name", static_cast<uint16_t>(PROFILE_FIELDS::name)},
+      {"source", static_cast<uint16_t>(PROFILE_FIELDS::source)},
+      {"cdate", static_cast<uint16_t>(PROFILE_FIELDS::creation_date)},
+      {"creation_date", static_cast<uint16_t>(PROFILE_FIELDS::creation_date)},
+      {"lmod", static_cast<uint16_t>(PROFILE_FIELDS::last_modification)},
+      {"last_modification", static_cast<uint16_t>(PROFILE_FIELDS::last_modification)},
+      {"ca", static_cast<uint16_t>(PROFILE_FIELDS::ca_created)},
+      {"sv", static_cast<uint16_t>(PROFILE_FIELDS::sv_count)},
+      {"cl", static_cast<uint16_t>(PROFILE_FIELDS::cl_count)}
+    };
+}
+
+static inline std::string to_str(PROFILE_FIELDS field) {
+    return (field & P_NAME ? "name" : "source");
+}
+
+enum class ENTITY_TYPE {
+  none = 0,
+#define ET_NONE ENTITY_TYPE::none
+  ca = 2,
+#define ET_CA ENTITY_TYPE::ca
+  client = 4,
+#define ET_CL ENTITY_TYPE::client
+  server = 8,
+#define ET_SV ENTITY_TYPE::server
+};
+
+static inline std::unordered_map<std::string, ENTITY_TYPE> entity_type_map{
+    {"ca", ET_CA}, {"server", ET_SV}, {"client", ET_CL}, {"sv",ET_SV}, {"cl",ET_CL}};
+static inline int operator&(ENTITY_TYPE lo, ENTITY_TYPE ro) { return (uint16_t)lo & (uint16_t)ro; }
+
+enum class ENTITY_FIELDS : uint16_t {
+  none = 0,
+  creation_date = 2,
+  subject_cn = 4,
+  type = 8,
+  serial = 16,
+  subject_country = 32,
+  subject_state = 64,
+  subject_location = 128,
+  subject_organisation = 256,
+  subject_email = 512,
+  status = 1024,
+  keyPath = 2048,
+  req_path = 4096,
+  cert_path = 8192,
+  all = 16383,
+};
+
+constexpr ENTITY_FIELDS  E_NONE =  ENTITY_FIELDS::none;
+constexpr ENTITY_FIELDS  E_CREATION_DATE =  ENTITY_FIELDS::creation_date;
+constexpr ENTITY_FIELDS  E_COMMON =  ENTITY_FIELDS::subject_cn;
+constexpr ENTITY_FIELDS  E_TYPE =  ENTITY_FIELDS::type;
+constexpr ENTITY_FIELDS  E_SERIAL =  ENTITY_FIELDS::serial;
+constexpr ENTITY_FIELDS  E_COUNTRY =  ENTITY_FIELDS::subject_country;
+constexpr ENTITY_FIELDS  E_STATE =  ENTITY_FIELDS::subject_state;
+constexpr ENTITY_FIELDS  E_LOCATION =  ENTITY_FIELDS::subject_location;
+constexpr ENTITY_FIELDS  E_ORG =  ENTITY_FIELDS::subject_organisation;
+constexpr ENTITY_FIELDS  E_MAIL =  ENTITY_FIELDS::subject_email;
+constexpr ENTITY_FIELDS  E_STATUS =  ENTITY_FIELDS::status;
+constexpr ENTITY_FIELDS  E_KEYPATH =  ENTITY_FIELDS::keyPath;
+constexpr ENTITY_FIELDS  E_REQPATH =  ENTITY_FIELDS::req_path;
+constexpr ENTITY_FIELDS  E_CRTPATH =  ENTITY_FIELDS::cert_path;
+constexpr ENTITY_FIELDS  E_ALL =  ENTITY_FIELDS::all;
+
+/* ENTITY OPERATORS */
+static ENTITY_FIELDS operator|(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
+  return static_cast<ENTITY_FIELDS>(static_cast<uint16_t>(lo) |
+                                    static_cast<uint16_t>(ro));
+}
+static bool operator&(ENTITY_FIELDS lo, ENTITY_FIELDS ro) {
+  return static_cast<uint16_t>(lo) & static_cast<uint16_t>(ro);
+}
+static bool operator&(uint16_t lo, ENTITY_FIELDS ro){
+  return static_cast<bool>(static_cast<uint16_t>(lo) & static_cast<uint16_t>(ro));
+}
+
+/* ENTITY STRING -> ENTITY_FIELD MAP*/
+static inline std::unordered_map<std::string, uint16_t>
+entityFieldsMap() {
+  return {
+    {"cdate", static_cast<uint16_t>(E_CREATION_DATE)},
+    {"cn", static_cast<uint16_t>(ENTITY_FIELDS::subject_cn)},
+    {"type", static_cast<uint16_t>(ENTITY_FIELDS::type)},
+    {"serial", static_cast<uint16_t>(ENTITY_FIELDS::serial)},
+    {"country", static_cast<uint16_t>(ENTITY_FIELDS::subject_country)},
+    {"state", static_cast<uint16_t>(ENTITY_FIELDS::subject_state)},
+    {"location", static_cast<uint16_t>(ENTITY_FIELDS::subject_location)},
+    {"org", static_cast<uint16_t>(ENTITY_FIELDS::subject_organisation)},
+    {"mail", static_cast<uint16_t>(ENTITY_FIELDS::subject_email)},
+    {"key", static_cast<uint16_t>(ENTITY_FIELDS::keyPath)},
+    {"req", static_cast<uint16_t>(ENTITY_FIELDS::req_path)},
+    {"crt", static_cast<uint16_t>(ENTITY_FIELDS::cert_path)},
+    {"status", static_cast<uint16_t>(ENTITY_FIELDS::status)}
+  };
+}
+
+enum class ENTITY_STATUS : uint8_t {
+  active = 2,
+  revoked = 4,
+  marked = 8,
+  all = 15,
+};
+constexpr ENTITY_STATUS ES_ACTIVE = ENTITY_STATUS::active;
+constexpr ENTITY_STATUS ES_REVOKED = ENTITY_STATUS::revoked;
+constexpr ENTITY_STATUS ES_MARKED = ENTITY_STATUS::marked;
+constexpr ENTITY_STATUS ES_ALL = ENTITY_STATUS::all;
+
+static inline std::string to_str(ENTITY_TYPE type) {
+  return (type & ET_CA
+              ? "ca"
+              : (type & ET_SV ? "server" : (type & ET_CL ? "client" : "none")));
+};
+
+static inline std::string to_str(ENTITY_STATUS status){
+  switch(status){
+    case ES_ACTIVE:
+      return "active";
+    case ES_REVOKED:
+      return "revoked";
+    case ES_MARKED:
+      return "marked";
+    default:
+      return "unknown";
+  }
+}
 
 /**
  * @struct Subject
@@ -265,28 +266,51 @@ struct Subject {
  * @var Entity::crtPath absolute path of file containing the signed certificate
  * @var Entity::crtPathLen size of crtPath
  * */
+struct keyInfo{
+  char *path = NULL;
+  uint32_t pathLen = 0;
+  
+  char format[4]{0}; // PEM | DER
+  
+  char *algo = NULL; // ed25519, rsa...
+  uint8_t algoLen = 0;
+  
+  size_t size;
+};
+
+struct crtInfo{
+  char *path= NULL;
+  uint32_t pathLen = 0;
+
+  char format[4]{0}; // PEM | DER
+};
+
 struct Entity {
   Subject subject{};
   
-  ENTITY_TYPE type = ENTITY_TYPE::none; // ca-sv-cl
-  ENTITY_STATUS status = ENTITY_STATUS::active;
+  ENTITY_TYPE type = ET_NONE; // ca-sv-cl
+  ENTITY_STATUS status = ES_ACTIVE;
   
   size_t serial = 0;
 
   std::chrono::time_point<std::chrono::system_clock> creation_date = std::chrono::system_clock::now();
+  std::chrono::time_point<std::chrono::system_clock> expirationDate; // set by build action based on days configuration
 
   char *keyPath = NULL;
-  uint8_t keyPathLen = 0;
+  uint32_t keyPathLen = 0;
 
   char *csrPath = NULL;
-  uint8_t csrPathLen = 0;
+  uint32_t csrPathLen = 0;
 
   char *crtPath = NULL;
-  uint8_t crtPathLen = 0;
+  uint32_t crtPathLen = 0;
+
+  // !NEW-UNIMPLEMENTED - these members aren't loaded into/from data files
+  struct keyInfo{};
+  struct crtInfo{};
 };
 
 }; // namespace gpkih
-
 
 namespace gpkih::profile
 {

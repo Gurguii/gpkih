@@ -38,7 +38,7 @@ int gpkih::parsers::rename(std::vector<std::string> &opts){
 	}
 	
 	PSUCCESS("renamed profile '{}' to '{}'\n", opts[0], opts[1]);
-	ADD_LOG(L_INFO, "renamed profile '{}' to '{}'", opts[0], opts[1]);
+	ADD_LOG(L_INFO, "profile:{} action:rename oldname:{}",opts[1],opts[0]);
 	
 	return GPKIH_OK;
 }
