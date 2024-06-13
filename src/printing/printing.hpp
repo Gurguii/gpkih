@@ -6,8 +6,6 @@
 #include <string_view>
 #include <unordered_map>
 
-#include "../logger/logger.hpp"
-
 extern bool ENABLE_DEBUG_MESSAGES;
 extern int DEBUG_LEVEL;
 extern bool ENABLE_PRINTING;
@@ -48,6 +46,13 @@ constexpr STYLE S_ERROR = fg(T_RED) | EMPHASIS::bold | EMPHASIS::italic;
 constexpr STYLE S_SUCCESS = fg(T_GREEN) | EMPHASIS::bold;
 constexpr STYLE S_HINT = fg(T_YELLOW) | EMPHASIS::italic;
 
+ 
+#ifdef GPKIH_ENABLE_DEBUGGING
+inline static constexpr bool DEBUG_COMPILED = true;
+#else
+inline static constexpr bool DEBUG_COMPILED = false;
+#endif
+
 /* Normal printing */
 extern void PRINT(std::string_view msg, COLOR color);
 extern void PRINT(std::string_view msg, STYLE style = S_NONE);
@@ -78,7 +83,8 @@ template <typename ...T> static inline void PHINT(std::string_view fmt, T&& ...a
 };
 
 /* debug */
-template <typename ...T> static inline void PDEBUG(int dlevel, std::string_view fmt, T&& ...args) {
+template <typename ...T> static void PDEBUG(int dlevel, std::string_view fmt, T&& ...args) {
+#ifdef GPKIH_ENABLE_DEBUGGING
 	if(ENABLE_DEBUG_MESSAGES && (dlevel <= DEBUG_LEVEL)){
 		switch(dlevel){
 			case 1:
@@ -86,11 +92,11 @@ template <typename ...T> static inline void PDEBUG(int dlevel, std::string_view 
 				break;
 			;;
 			case 2:
-				fmt::print("\t{}\n", fmt::format(fmt, std::forward<T>(args)...));
+				fmt::print("  {}\n", fmt::format(fmt, std::forward<T>(args)...));
 				break;
 			;;
 			case 3:
-				fmt::print("\t\t{}\n", fmt::format(fmt, std::forward<T>(args)...));
+				fmt::print("    {}\n", fmt::format(fmt, std::forward<T>(args)...));
 				break;
 			;;
 			default:
@@ -98,17 +104,14 @@ template <typename ...T> static inline void PDEBUG(int dlevel, std::string_view 
 			;;
 		}		
 	}
+#else
+	return;
+#endif
 }
 
 /* prompt */
 extern std::string PROMPT(std::string_view msg, std::string_view ans, bool lower_input = false, COLOR icon_color = LGREEN);
 extern std::string PROMPT(std::string_view msg, bool lower_input = false, COLOR icon_color = LGREEN);
-
-// Message to print when starting
-extern void PROGRAMSTARTING();
-
-// Message to print when exiting
-extern void PROGRAMEXITING();
 
 // Message to print when an unknown option is found when parsing
 extern void UNKNOWN_OPTION_MESSAGE(std::string_view opt);

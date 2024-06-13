@@ -1,24 +1,24 @@
 #pragma once
-#include "../gpkih.hpp"
-#include "../structs.hpp" // struct Profile | struct Entity | struct Subject
+#include "../structs.hpp"
+#include <unordered_map>
 
 namespace gpkih {
 using ConfigMap = std::unordered_map<std::string, std::unordered_map<std::string, std::string>>;
 
 enum class CONFIG_FILE
 {
-    _none = 0,
-  #define CONFIG_NONE CONFIG_FILE::_none
-    _all = 7,
-  #define CONFIG_ALL CONFIG_FILE::_all
-    _vpn = 2,
-  #define CONFIG_VPN CONFIG_FILE::_vpn
-    _pki = 4,
-  #define CONFIG_PKI CONFIG_FILE::_pki
-    _gpkih = 1,
-  #define CONFIG_GPKIH CONFIG_FILE::_gpkih
-};
-  
+  none = 0,
+  all = 7,
+  vpn = 2,
+  pki = 4,
+  gpkih = 1,
+};  
+constexpr CONFIG_FILE CFILE_NONE = CONFIG_FILE::none;
+constexpr CONFIG_FILE CFILE_ALL = CONFIG_FILE::all;
+constexpr CONFIG_FILE CFILE_VPN = CONFIG_FILE::vpn;
+constexpr CONFIG_FILE CFILE_PKI = CONFIG_FILE::pki;
+constexpr CONFIG_FILE CFILE_GPKIH = CONFIG_FILE::gpkih;
+
 // Namespace to manage gpkih.conf
 namespace Config
 {
@@ -66,7 +66,7 @@ namespace Config::behaviour
 class ProfileConfig
 {
 private:
-  CONFIG_FILE succesfullyLoadedFiles = CONFIG_NONE;
+  CONFIG_FILE succesfullyLoadedFiles = CFILE_NONE;
   fs::path vpnConfigPath;
   fs::path pkiConfigPath;
   Profile &profile;
@@ -129,14 +129,14 @@ public:
   /// @note this is experimental, used by set2()
   const char *lastError();
 
-  /// @return CONFIG_FILE with the succesfully loaded configuration files, specific config file can be checked by doing CONFIG_FILE & (CONFIG_VPN | CONFIG_PKI)
+  /// @return CONFIG_FILE with the succesfully loaded configuration files, specific config file can be checked by doing CONFIG_FILE & (CFILE_VPN | CFILE_PKI)
   const CONFIG_FILE loadedFiles();
 
   /// @brief Print requested file/s, by default prints both VPN - PKI
-  void print(CONFIG_FILE files = CONFIG_ALL);
+  void print(CONFIG_FILE files = CFILE_ALL);
 
   /// @brief ProfileConfig constructor
-  ProfileConfig(Profile &profile, CONFIG_FILE file_to_load = CONFIG_ALL);
+  ProfileConfig(Profile &profile, CONFIG_FILE file_to_load = CFILE_ALL);
   Subject default_subject();
 
   /// @brief Dumps common vpn config + client|server specific configuration (depending on ENTITY_TYPE) to outpath.
@@ -147,7 +147,7 @@ public:
   bool dump(std::string_view outpath, CONFIG_FILE files);
 
   /// @brief retrieve const pointer to desired file's mapped config
-  /// @return pointer to mapped config or NULL
+  /// @return pointer to mapped config or nullptr
   ConfigMap* const getptr(CONFIG_FILE file);
   
   /// @brief retrieve desired file's mapped config

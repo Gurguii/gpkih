@@ -5,6 +5,10 @@ bool ENABLE_DEBUG_MESSAGES = false;
 int DEBUG_LEVEL = 1;
 bool ENABLE_PRINTING = true;
 
+#ifndef GPKIH_ENABLE_DEBUGGING
+bool warned = false;
+#endif
+
 /* Normal printing */
 void PRINT(std::string_view msg, COLOR color) {
 	fmt::print(fg(color), msg);
@@ -12,7 +16,21 @@ void PRINT(std::string_view msg, COLOR color) {
 void PRINT(std::string_view msg, STYLE style) {
 	fmt::print(style, msg);
 }
-
+void PSUCESS2(std::string_view msg){
+	fmt::print("{} - {}", fmt::format(S_SUCCESS, "success"), msg);
+}
+void PERROR2(std::string_view msg){
+	fmt::print("{} - {}", fmt::format(S_ERROR, "error"), msg);
+}
+void PHINT2(std::string_view msg){
+	fmt::print("{} - {}", fmt::format(S_HINT, "hint"), msg);
+}
+void PINFO2(std::string_view msg){
+	fmt::print("{} - {}", fmt::format(S_INFO, "info"), msg);
+}
+void PWARN2(std::string_view msg){
+	fmt::print("{} - {}", fmt::format(S_WARNING, "warning"), msg);
+}
 /* Used to style PROMPT components: icon - body - answers */
 static inline std::string PROMPT_icon(COLOR icon_color) {
 	return fmt::format(fg(icon_color), "-> ");
@@ -47,17 +65,6 @@ std::string PROMPT(std::string_view msg, std::string_view ans, bool lower_input,
 	}		
 	return std::move(input);
 }
-
-void PROGRAMSTARTING() {
-	// e.g 06 Mar 2024 @ 19:13
-	PINFO("Starting gpkih - {:%d %h %Y @ %H:%M}\n",
-		std::chrono::system_clock::now());
-};
-
-void PROGRAMEXITING() {
-	PINFO("Exiting gpkih - {:%d %h %Y @ %H:%M}\n",
-		std::chrono::system_clock::now());
-};
 
 void UNKNOWN_OPTION_MESSAGE(std::string_view opt) {
 	fmt::print(fg(COLOR::antique_white), " [parsing] unknown option '{}'\n", opt);

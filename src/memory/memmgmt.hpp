@@ -4,53 +4,31 @@
 #include <vector>
 #include <fmt/format.h>
 
-/// @brief UNUSED custom exception
-struct gpkihException : public std::exception{
-  const char *errmsg;
-  gpkihException(const char *msg):errmsg(msg){};
-  const char *what(){
-    return errmsg;
-  }
-};
-
-enum class BUFFER_CREATION_RESULT{
-  already_initialized,
-  success,
-  fail
-};
-constexpr const BUFFER_CREATION_RESULT BUFF_OK = BUFFER_CREATION_RESULT::success;
-constexpr const BUFFER_CREATION_RESULT BUFF_FAIL = BUFFER_CREATION_RESULT::fail;
-constexpr const BUFFER_CREATION_RESULT BUFF_ALREADY_INITIALIZED = BUFFER_CREATION_RESULT::already_initialized;
-
 class Buffer{
 private:
-  std::vector<size_t> freed_sizes{};
-  std::vector<char*> freed_ptrs{};
+  std::vector<std::pair<size_t,char*>>freedBlocks{};
 
-  char *memBlock = NULL;
-  size_t memBlockSize = 0;
+  char *memBlock = nullptr;
+  const size_t memBlockSize = 0;
+  
+  char *next = nullptr;
+  size_t availableBytes;
 
-  char *next = NULL;
-  size_t __availableBytes;
-  bool __good = false;
-
-  Buffer(size_t buffsize);
+  std::string lastError;
 public:
-  // TODO - develop this ( make ctor private )
-  static BUFFER_CREATION_RESULT initialize(size_t buffSize, Buffer *&ptr);
-
+  explicit Buffer(size_t size);
   ~Buffer();
 
   char* allocate(size_t bytes);
   char* allocate_and_copy(char *&st, size_t *length, std::string_view src);
   
-  bool good();
   size_t available();
   
-  char *freeblock(char *ptr);
-  size_t dump(const char *path, uint32_t block_size = 4096);
+  char *freeblock(char *ptr, size_t *size = nullptr);
+  size_t dump(const char *path, uint32_t blockSize = 4096);
   size_t size();
 
+  const std::string &getLastError();
   const char *const head();
 };
 
@@ -65,5 +43,5 @@ extern Buffer *gpkihBuffer;
 #define ALLOCATE gpkihBuffer->allocate
 #define AVAILABLE_MEMORY gpkihBuffer->available()
 #define CALLOCATE gpkihBuffer->allocate_and_copy
-#define FREEBLOCK gpkihBuffer->freeblock
+#define FREE_MEMORY_BLOCK gpkihBuffer->freeblock
 #define BUFFER_DUMP gpkihBuffer->dump

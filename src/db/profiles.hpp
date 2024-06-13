@@ -4,12 +4,7 @@
 #include <map>
 #include <string>
 #include <string_view>
-#include <vector>
-
 #include "../structs.hpp"
-#include "../utils/utils.hpp"
-#include "../memory/memmgmt.hpp"
-#include "mnck.hpp"
 
 namespace gpkih::db::profiles 
 {
@@ -17,7 +12,7 @@ namespace gpkih::db::profiles
 	  - Profiles will be stored in binary form
 	  - Each line will contain a profile
 
-    syntax: <id><namelen><name><sourcelen><source><creation_date><last_modification><ca><total_servers><total_clients>
+    syntax: <id><namelen><name><sourcelen><source><creationDate><last_modification><ca><total_servers><total_clients>
     	
     namelen: uint8_t indicating length of name
     name: char array
@@ -37,7 +32,7 @@ namespace gpkih::db::profiles
   inline std::string dbpath{}; // set by main()
   inline std::string idfile{}; // set by main()                         
 
-  extern std::map <std::string_view, Profile>* const get();
+  extern std::map<std::string_view, Profile>* const get();
 
   /// @brief writes existing_profiles to db, effectively updating values if any got modified after the last initialize()
   /// @return GPKIH_OK if profiles in existing_profiles where succesfully overriden in profiles.data, else GPKIH_FAIL
@@ -59,8 +54,8 @@ namespace gpkih::db::profiles
   /// @param GPKIH_OK on success else GPKIH_FAIL
   extern int remove(std::string_view profile_name);					      
   
-  /// @return number of profiles deleted or -1 if any error
-  extern int remove_all();											                  
+  /// @return number of files
+  extern size_t remove_all(size_t *deletedFiles = nullptr);											                  
   
   /// @param profile_id id of desired profile
   /// @param pinfo sturct Profile buffer to load data to  

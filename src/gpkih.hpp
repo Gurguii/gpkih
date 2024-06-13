@@ -3,6 +3,7 @@
 #include <string>
 #include <string_view>
 #include <filesystem>
+#include "logger/logger.hpp"
 
 // Custom typenames
 using str     = std::string;
@@ -24,7 +25,6 @@ constexpr char EOL = '\n';
 #include <Windows.h>
 constexpr char SLASH = '\\';
 constexpr const char *vpnConfigExtension = "ovpn";
-
 #else
 
 /* LINUX STUFF */
@@ -44,13 +44,14 @@ constexpr const char *opensslConfFilename = "gopenssl.conf";
 extern bool DRY_RUN;
 extern bool SHOW_HEADER;
 
-/** external **/
-extern char *serialPath;
-extern size_t serialPathLen;
-
 extern std::string GPKIH_BASEDIR;
 extern std::string CONF_DIRPATH;
 extern std::string DB_DIRPATH;
+
+extern gpkih::Logger *gpkihLogger;
+#define ADD_LOG gpkihLogger->addLog
+//extern Logger *programLogger;
+//extern Buffer *programBuffer;
 
 /* Custom return codes */
 enum class GPKIH_RETURN_CODES : int{

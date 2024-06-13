@@ -24,8 +24,9 @@ pmList["zypper"]="install"
 pmList["guix"]="install"
 
 pm="" # package manager to use if a package is required to be installed
-pmInstallOpt="" # package manager subopt to install e.g 'install' on apt
-commands=("cmake -DCMAKE_EXPORT_COMPILE_COMMANDS=1 .." "make -j" "cp $buildDir/gpkih $binaryOutpath") # [!] note : this will be executed inside build/ 
+pmInstallOpt="" # package manager subopt to install e.g 'install' on aptÇ
+
+commands=("cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=1" "make -j" "cp $buildDir/gpkih $binaryOutpath") # [!] note : this will be executed inside build/ 
 #############################################################################
 
 function __setPackageManager(){
@@ -104,17 +105,21 @@ function __runDockerTests(){
                 printf "[+] Don't have permissions to list dockers, maybe run with sudo? exiting...\n"
                 exit 1
         fi
-
-        # Empty any previous `results` contents
+        
+        # Empty any previous `results` contents and create if not existing
         > "$dockerResultsFile"
+
+        # Set permissions to allow others (docker _gpkih user) writing to it
+        chmod 766 "$dockerResultsFile"
 
         if [ ! -e "$dockerResultsFile" ]; then
                 printf "[!] Can't write to results file '%s', aborting...\n" "$dockerResultsFile" && exit 0
         fi
 
         cd "$dockerDir" || { printf "[!] Couldn't cd to docker directory '%s'\n" "$dockerDir"; }
-
+        
         for os in "${dockerOsList[@]}"; do
+                
                 # -T : no TTY, required to avoid 'no input TTY available' problems
                 # --rm : deletes the container when stopped, which will be after the command returns
                 compileCmd="docker-compose run --quiet-pull -T --rm $os bash ./compile.sh /home/gpkih/docker/results"
@@ -133,10 +138,11 @@ function usage(){
 
 Usage: ./setup <subopts>
 * subopts *
-  -h      | --help          = display this message and exit
-  -q      | --quiet         = don't print anything to console 0:success else failure
-  -docker | --docker        = used for developing, will create ${#dockerOsList[@]} containers to test compiling and running gpkih: ${dockerOsList[@]}
-  -docs   | --documentation = create doxygen documentation - *not super fancy*
+  -h      | --help             = display this message and exit
+  -q      | --quiet            = don't print anything to console 0:success else failure
+  -docker | --docker           = used for developing, will create ${#dockerOsList[@]} containers to test compiling and running gpkih: ${dockerOsList[@]}
+  -docs   | --documentation    = create doxygen documentation - *not super fancy*
+  -d      | --define <KEY>     = add preprocessor directive to the cmake command (GPKIH_ENABLE_DEBUGGING)
 EOF
         exit 0
 }
@@ -157,21 +163,27 @@ function main(){
         
         cd "$buildDir"
         
-        for arg in "${args[@]}"; do
-                if [[ "${arg,,}" == "-h" || "${arg,,}" == "--help" ]]; then
-                usage
-                elif [[ "${arg,,}" == "-q" || "${arg,,}" == "--quiet" ]]; then
+        for (( i=0 ; i < $argc ; ++i )); do
+                arg="${args[$i],,}"
+                if [[ "$arg" == "-h" || "$arg" == "--help" ]]; then
+                        usage
+                elif [[ "$arg" == "-q" || "$arg" == "--quiet" ]]; then
                         verbose=false
-                elif [[ "${arg,,}" == "-docker" || "${arg,,}" == "--docker" ]]; then
+                elif [[ "$arg" == "-docker" || "$arg" == "--docker" ]]; then
                         __runDockerTests
-                elif [[ "${arg,,}" == "-docs" || "${arg,,}" == "--documentation" ]]; then
+                elif [[ "$arg" == "-docs" || "$arg" == "--documentation" ]]; then
                         __generateDocumentation
+                elif [[ "$arg" == "-d" || "$arg" == "--define" ]]; then
+                        if ! grep -q "=" <<< "${args[++i]}"; then
+                                printf "[!] Missing equal sign '=' on -d | --define option, syntax KEY=VAL\n" && exit 0
+                        fi
+                        commands[0]="${commands[0]} -D${args[++i]}"
                 fi
         done
-        
+#        printf "%s\n" "${commands[0]}" && exit 0
+
         for command in "${commands[@]}"; do
                 $verbose && printf "[running] %s\n" "$command" 
-                
                 if $verbose; then
                   $command 2>> "$logStderr" 
                 else

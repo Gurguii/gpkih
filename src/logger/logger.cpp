@@ -4,7 +4,23 @@
 
 using namespace gpkih;
 
-Logger *program_logger = NULL;
+Logger *program_logger = nullptr;
+
+static const auto toBytes = [](size_t number, char unit){
+	switch(unit){
+		case 'g':
+			return static_cast<size_t>(number * 1024 * 1024 * 1024);
+		case 'm':
+			return static_cast<size_t>(number * 1024 * 1024);
+		case 'k':
+			return static_cast<size_t>(number * 1024);
+		case 'b':
+			return static_cast<size_t>(number);
+		default:
+			// assume bytes
+			return static_cast<size_t>(-1);
+	} 
+};
 
 /* std::string -> Level map */
 static std::unordered_map<str,Level> __str_level_map
@@ -15,24 +31,64 @@ static std::unordered_map<str,Level> __str_level_map
 };
 
 /* std::string -> FormatField map */
-static std::unordered_map<str, FormatField> __str_ffield_map
+static std::unordered_map<str, LogMsgField> __str_ffield_map
 {
-	{"type", FormatField::msg_type},
-	{"time", FormatField::msg_time},
-	{"content", FormatField::msg_content}
+	{"type", LogMsgField::type},
+	{"time", LogMsgField::time},
+	{"content", LogMsgField::content}
 };
 
-void Logger::set_basedir(std::string &&bdir){
+void Logger::setBaseDir(std::string &&bdir){
 	Logger::basedir = fs::path(bdir);
 };
 
-std::string Logger::get_basedir(){
+std::string Logger::getBaseDir(){
 	return Logger::basedir;
 }
 
 Logger::~Logger() {
 	logstream.close();
 } // Logger::~Logger
+
+static std::string format_msg(Level& level, const LogMsgField& fields, std::string&& msg) {
+	static std::unordered_map<Level, std::string> level2string{
+		{L_INFO, "info"},
+		{L_WARN, "warning"},
+		{L_ERROR,"error"},
+	};
+	std::ostringstream log;
+	// log syntax - [date] [level] [msg]
+	fields & LogMsgField::time    && log << fmt::format("[{:%d %h %Y @ %H:%M}] ", std::chrono::system_clock::now());
+	fields & LogMsgField::type    && log << fmt::format("[{}] ", level2string[level]);
+	fields & LogMsgField::content && log << msg << '\n';
+	return std::move(log.str());
+} // Logger::format_msg();
+
+int Logger::addLog(Level level, std::string_view msg){
+	size_t size = msg.size();
+
+	while(this->msize < this->csize + size){
+		--size;
+	}
+
+	if(this->msize == this->csize + size){
+		// Adding this log will reach max size 
+		// note: the whole log message might not fit
+		logstream.write(&msg[0], size);
+		fprintf(stderr, "Maximum log size '%lu' reached not adding any more logs\n", this->msize);
+		return GPKIH_FAIL;
+	}
+
+	if(logstream.is_open() == false) {
+		fprintf(stderr, "Can't open log file '%s'\n", this->logpath.c_str());
+		return GPKIH_FAIL;
+	}
+	
+	logstream.write(&msg[0], size);
+	this->csize+=size;
+
+	return GPKIH_OK;
+};
 
 Logger::Logger(std::string &&filename)
 :logpath(Logger::basedir/filename+=".log"),ppfile(Logger::basedir/filename+=".data"){
@@ -60,10 +116,6 @@ Logger::Logger(std::string &&filename)
 	// Create streams
 	this->logstream = std::ofstream(this->logpath, std::ios::app);
 
-	if(this->logstream.is_open() == false){
-		_ok = false;
-	}
-	
 	/* END - File checking */
 	
 	this->csize = fs::file_size(logpath);
@@ -75,36 +127,22 @@ Logger::Logger(std::string &&filename)
 		return; 		
 	}
 
-	size_t number = std::stoull(&msizestr[0],NULL,10);
+	size_t number = std::stoull(&msizestr[0],nullptr,10);
 	char unit = tolower(msizestr[msizestr.size()-1]);
 
-	switch(unit){
-	case 'g':
-		this->msize = static_cast<size_t>(number * 1024 * 1024 * 1024);
-		break;
-	case 'm':
-		this->msize = static_cast<size_t>(number * 1024 * 1024);
-		break;
-	case 'k':
-		this->msize = static_cast<size_t>(number * 1024);
-		break;
-	case 'b':
-		this->msize = static_cast<size_t>(number);
-		break;
-	default:
-		// assume bytes
+	if((this->msize = toBytes(number, unit)) == -1){
 		PWARN("invalid unit in logs.max_size '{}'\n", unit);
-		break;
-	} 
+		return;
+	}
 
 	// set includedFormatFields
-	this->includedFormatFields = FormatField::NONE;
+	this->includedFields = LogMsgField::none;
 	str token;
 	sstream ss(Config::get("logs", "includedFormatFields").data());
 	while (getline(ss, token, ':')) {
 		if (__str_ffield_map.find(token) != __str_ffield_map.end()) {
 			// it exists, add field
-			includedFormatFields = includedFormatFields | __str_ffield_map[token];
+			includedFields = includedFields | __str_ffield_map[token];
 		}
 	}
 
@@ -112,25 +150,17 @@ Logger::Logger(std::string &&filename)
 	ss.clear();
 
 	// set include_levels
-	this->includedLogLevels = L_NONE;
+	this->includedLevels = L_NONE;
 
-	ss = std::move(sstream(Config::get("logs", "includedLogLevels").data()));
+	ss = std::move(sstream(Config::get("logs", "includedLevels").data()));
 	while (getline(ss, token, ':')) {
 		if (__str_level_map.find(token) != __str_level_map.end()) {
 			// it exists, add field
-			includedLogLevels = includedLogLevels | __str_level_map[token];
+			includedLevels = includedLevels | __str_level_map[token];
 		}
 	}
 	
 	return;
 } // Logger::Logger()
-
-bool Logger::ok(){
-	return _ok;
-}
-
-const FormatField& Logger::ffields(){
-	return this->includedFormatFields;
-}
 
 Logger *gpkih_logger = nullptr; 

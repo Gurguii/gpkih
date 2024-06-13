@@ -3,6 +3,9 @@
 #include <iostream> // std::cin
 #include <fstream>
 #include <sstream>
+#include <stdexcept>
+#include "../db/profiles.hpp"
+#include "../utils/utils.hpp"
 
 static inline std::vector<std::string> RELATIVE_DIRECTORY_PATHS(){
   return 
@@ -80,27 +83,28 @@ static int __sed(std::string_view src, std::string_view dst,
 template <typename T> static int __is_valid_path(T path) {
   PDEBUG(2, "__is_valid_path()", path);
 
-  if (gpkih::utils::fs::is_absolute_path(path) == false) {
+  if (IS_ABSOLUTE_PATH(path) == false) {
     return GPKIH_FAIL;
   };
   try {
     if (fs::exists(path)) {
       auto ans = PROMPT("File or directory already exists, remove?", "[y/n]", true);
       if (ans == "y" || ans == "yes") {
-        if(fs::remove_all(path) == true){
-          return GPKIH_OK;
+        fs::remove_all(path);
+        if(fs::exists(path) == true){
+          PERROR("Couldn't remove '{}' recursively",path);
+          return GPKIH_FAIL;  
         }
-        PERROR("couldn't remove '{}' recursively",path);
         return GPKIH_FAIL;
       }
       return GPKIH_OK;
     };
   } catch (std::exception ex) {
-    PERROR("permission denied in '{}'\n", path);
+    PERROR("Permission denied in '{}' - {}\n", path, ex.what());
     return GPKIH_OK;
   }
 
-  return 1;
+  return GPKIH_OK;
 }
 
 using namespace gpkih;
@@ -112,7 +116,7 @@ int __create_pki_filestruct(Profile &profile){
     std::string path = fmt::format("{}{}{}",profile.source, SLASH, relative);
   
     if (!fs::create_directories(path)) {
-      PERROR("couldn't create directory '{}'", path);
+      PERROR("Couldn't create directory '{}'", path);
       // Remove the profile source dir
       // fs::remove_all(profile.source);
       return GPKIH_FAIL;
@@ -126,7 +130,7 @@ int __create_pki_filestruct(Profile &profile){
 
     std::ofstream(path, std::ios::app).write(p.second.c_str(), p.second.size());
     if (!fs::exists(path)) {
-      PERROR("couldn't create file " + p.first);
+      PERROR("Couldn't create file " + p.first);
       return GPKIH_FAIL;
     }
   }
@@ -202,7 +206,7 @@ static int __check_profile_info(std::string_view &profileName, std::string_view 
     CALLOCATE(profile.name,reinterpret_cast<size_t*>(&profile.namelen),profileName);
   }
 
-  if (profileSource.empty() || !__is_valid_path(profileSource) || profileSource.size() > 254) {
+  if (profileSource.empty() || __is_valid_path(profileSource) == GPKIH_FAIL || profileSource.size() > 254) {
     std::string psource;
     do {
       psource = PROMPT("Profile source dir (absolute path)");
@@ -226,7 +230,7 @@ static int __check_profile_info(std::string_view &profileName, std::string_view 
 
 int actions::init(std::string_view &profileName, std::string_view &profileSource) {
   Profile profile;
-  profile.last_modification = profile.creation_date = std::chrono::system_clock::now();
+  profile.last_modification = profile.creationDate = std::chrono::system_clock::now();
   
   if(__check_profile_info(profileName, profileSource, profile) == GPKIH_FAIL){
     return GPKIH_FAIL;
@@ -245,46 +249,72 @@ int actions::init(std::string_view &profileName, std::string_view &profileSource
   // Extra questions
   if (Config::get("behaviour", "prompt") == "yes") {
     bool autoans = Config::get("behaviour", "autoanswer") == "no" ? false : true;
-    ProfileConfig pconf(profile, CONFIG_PKI);
+    ProfileConfig pconf(profile, CFILE_PKI);
     
-    auto pkiconf = pconf.get(CONFIG_PKI);
-    
-    std::string_view keySize = pkiconf["key"]["size"];
-    std::string_view keyAlgo = pkiconf["key"]["algorithm"];
-    std::string_view days = pkiconf["crt"]["days"];
+    auto pkiconf = pconf.getptr(CFILE_PKI);
+    std::string_view keySize;
+    std::string_view keyAlgo;
+    std::string_view days;
+
+    Entity ca;
+    ca.type = ET_CA;
+    bool caBuilt = false;
+
+    try{
+      keySize= pkiconf->at("key").at("size");
+      keyAlgo= pkiconf->at("key").at("algorithm");
+      days= pkiconf->at("crt").at("days");
+    }catch(const std::out_of_range &err){
+      PERROR("Retrieving pki.key.size pki.key.algo pki.crt.days - {}\n",err.what());
+      return GPKIH_FAIL;
+    }
 
     if (autoans) {
       // QUESTION 1 - create dhparam?
       utils::openssl::create_dhparam(fmt::format("{}{}pki{}tls{}dhparam1024",profile.source, SLASH, SLASH, SLASH));
+      
       // QUESTION 2 - create ca?
-      ProfileConfig pconf(profile, CONFIG_PKI);
-      Entity ca;
-      ca.type = ET_CA;
+      // also had to manually set the type
       utils::entities::promptForSubject(profile.name, ca.subject, pconf, eman);
-
-      build_ca(profile, pconf, ca, eman, days, keyAlgo, keySize);
+      utils::entities::setCAPaths(profile,ca);
+      utils::entities::loadSerial(profile,ca);
+      ca.expirationDate = ca.creationDate + std::chrono::seconds(3600*24*std::stoull(days.data(),nullptr,10));
+      if(build_ca(profile, pconf, ca, eman, days, keyAlgo, keySize) == GPKIH_OK){
+        caBuilt = true;
+      };
+      
     }else{
       auto ans = PROMPT("Create dhparam? " + fmt::format(fg(fmt::terminal_color::bright_green) |
                                                   EMPHASIS::underline,
                                               "(highly recommended)"),
              "[y/n]", true);
+
       if (ans == "y" || ans == "yes") {
-        utils::openssl::create_dhparam(fmt::format("{}{}pki{}tls{}dhparam1024",profile.source, SLASH, SLASH, SLASH));
+        utils::openssl::create_dhparam(fmt::format("{}{}pki{}tls{}dhparam1024",profile.source, SLASH, SLASH, SLASH), 1024);
       }
 
       ans = PROMPT("Create CA?","[y/n]",true);
+
       if(ans == "y" || ans == "yes"){
-        ProfileConfig pconf(profile, CONFIG_PKI);
-        Entity ca;
-        ca.type = ET_CA;
         utils::entities::promptForSubject(profile.name, ca.subject, pconf, eman);
-  
-        build_ca(profile, pconf, ca, eman, days, keyAlgo, keySize);
+        utils::entities::setCAPaths(profile,ca);
+        utils::entities::loadSerial(profile,ca);
+        ca.expirationDate = ca.creationDate + std::chrono::seconds(3600*24*std::stoull(days.data(),nullptr,10));
+        if(build_ca(profile, pconf, ca, eman, days, keyAlgo, keySize) == GPKIH_OK){
+          caBuilt = true;
+        };
       }
+    }
+
+    if(caBuilt == true){
+      profile.ca_created = true;
+      eman.add(ca);
+      eman.sync();
+      db::profiles::sync();
     }
   }
 
-  ADD_LOG(L_INFO,"profile:{} action:init source:{}",profile.name,profile.source);
+  ADD_LOG(L_INFO,fmt::format("profile:{} action:init source:{}",profile.name,profile.source));
   PSUCCESS("Profile '{}' created\n", profile.name);
   return GPKIH_OK;
 }

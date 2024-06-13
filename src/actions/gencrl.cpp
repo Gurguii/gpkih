@@ -21,7 +21,7 @@ int actions::gencrl(Profile &profile) {
   }
 
   PSUCCESS("Generated CRL - {}\n", crlPath);
-  ADD_LOG(L_INFO,"profile:{} action:gencrl",profile.name);
+  ADD_LOG(L_INFO,fmt::format("profile:{} action:gencrl",profile.name));
   
   return GPKIH_OK;
 }

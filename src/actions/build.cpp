@@ -4,43 +4,8 @@
 #include <iostream>
 #include <fstream>
 
+#include "../utils/utils.hpp"
 using namespace gpkih;
-
-static int __increment_serial(){
-  PDEBUG(2,"__increment_serial()");
-
-  std::ifstream rfile(serialPath);
-  
-  if(!rfile.is_open()){
-    PERROR("Couldn't open serial file '{}' to update serial\n", serialPath);
-    return GPKIH_FAIL;
-  }
-
-  std::string stserial{};
-  rfile >> stserial;
-
-  std::string nserial = fmt::format("{:x}",static_cast<decltype(Entity::serial)>(std::stoull(stserial,0,16) + 1));
-
-  PDEBUG(1, "nserial:{}", nserial);
-
-  rfile.close();
-  
-  std::ofstream wfile(serialPath);
-  if(!wfile.is_open()){
-    return GPKIH_FAIL;
-  }
-
-  if(nserial.size() == 1){
-    PDEBUG(1,"adding a zero(0)");
-    wfile << "0";
-  }
-
-  wfile << nserial;
-  
-  wfile.close();
-
-  return GPKIH_OK;
-}
 
 // Attempts to create the target path (directory or file)
 // - if dir != 0 a directory is created and any missing intermediary
@@ -80,7 +45,7 @@ static std::pair<std::string,std::string> __server_client_build_commands(Profile
 
   // Set entity key PATH
   tmp.assign("");
-  tmp = std::move(fmt::format("{}{}-key.PEM",profile::dir_key(profile), subject.cn));
+  tmp = std::move(fmt::format("{}{}-key.pem",profile::dir_key(profile), subject.cn));
   CALLOCATE(entity.keyPath,reinterpret_cast<size_t*>(&entity.keyPathLen),tmp);
 
   tmp.assign("");
@@ -90,7 +55,7 @@ static std::pair<std::string,std::string> __server_client_build_commands(Profile
     keySize,
     entity.csrPath,
     entity.keyPath,
-    subject::openssl_oneliner(subject)
+    utils::entities::opensslOneliner(subject)
   ));
   
   // openssl ca -config {} -in {} -out {} -subj '{}' -extfile {}x509{}{} -notext -days +{}
@@ -130,7 +95,7 @@ static std::string __ca_build_command(Profile &profile, ConfigMap &pkiconf, Enti
     profile::gopenssl(profile),
     entity.crtPath,
     entity.keyPath,
-    subject::openssl_oneliner(entity.subject),
+    utils::entities::opensslOneliner(entity.subject),
     entity.serial,
     keyAlgo,
     keySize,
@@ -167,47 +132,33 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
 
   std::ifstream(caCertPath).read(caCertBuffer, caCertSize);
 
-  fs::path profile_dir_key = std::move(profile::dir_key_fs(profile));
-  fs::path profile_dir_crt = std::move(profile::dir_crt_fs(profile));
-  
   for (auto &entity : entities) 
   {
-    fs::path entity_directory = profile.source;
-    entity_directory /= "packs";
-    entity_directory /= entity.subject.cn;
-
-    if (__create_outdir(entity_directory)) {
+    auto entityDir = fs::path{profile.source} / "packs" / entity.subject.cn;
+    if (__create_outdir(entityDir) == GPKIH_FAIL) {
       return GPKIH_FAIL;
     };
 
-    fs::path entity_config_file = entity_directory / fmt::format("inline_{}.{}",entity.subject.cn,vpnConfigExtension);
+    auto entityInlinePath = entityDir / fmt::format("inline_{}.{}",entity.subject.cn,vpnConfigExtension);
 
-    if(config.dump_vpn_conf(entity_config_file, entity.type) == false){
+    if(config.dump_vpn_conf(entityInlinePath, entity.type) == false){
       return GPKIH_FAIL;
     }
 
-    ConfigMap &pkiconf = config.get(CONFIG_PKI);
-    
-    std::string_view key_extension = pkiconf["key"]["creation_format"];
-    std::string_view crt_extension = pkiconf["crt"]["creation_format"];
-
     if (!fs::exists(entity.keyPath)) {
-      PERROR("missing entity '{}' key\n", entity.subject.cn);
+      PERROR("Missing entity '{}' key\n", entity.subject.cn);
       return GPKIH_FAIL;
     }
 
     if(!fs::exists(entity.crtPath)){
-      PERROR("missing entity crt '{}'\n", entity.subject.cn);
+      PERROR("Missing entity crt '{}'\n", entity.subject.cn);
       return GPKIH_FAIL;
     }
     
-    size_t entity_key_size = fs::file_size(entity.keyPath);
-    size_t entity_crt_size = fs::file_size(entity.crtPath);
-    
-    std::ofstream file(entity_config_file, std::ios::app);
+    std::ofstream file(entityInlinePath, std::ios::app);
     
     if (!file.is_open()) {
-      PERROR("couldn't open entity config file '{}'\n", entity_config_file.string());
+      PERROR("Couldn't open entity config file '{}'\n", entityInlinePath.string());
       return GPKIH_FAIL;
     }
 
@@ -215,12 +166,12 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
     std::ifstream ecrt(entity.crtPath);
 
     if (!ekey.is_open()) {
-      PERROR("couldn't open entity key file '{}'\n", entity.keyPath);
+      PERROR("Couldn't open entity key file '{}'\n", entity.keyPath);
       return GPKIH_FAIL;
     }
 
     if (!ecrt.is_open()) {
-      PERROR("couldn't open entity certificate file '{}'\n", entity.crtPath);
+      PERROR("Couldn't open entity certificate file '{}'\n", entity.crtPath);
       return GPKIH_FAIL;
     }
 
@@ -234,7 +185,7 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
     ecrt.close();
     ekey.close();
 
-    FREEBLOCK(caCertBuffer);
+    //FREE_MEMORY_BLOCK(caCertBuffer);
   }
   return GPKIH_OK;
 }
@@ -242,17 +193,18 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
 int __create_pfx(Profile &profile, Entity &entity){
   PDEBUG(2, "__create_pfx()");
 
-  fs::path entity_dir = fmt::format("{}{}packs{}{}",profile.source,SLASH,SLASH,entity.subject.cn);
+  auto entityDir = fs::path{profile.source}/"packs"/entity.subject.cn;
+  auto outpathPfx = entityDir / entity.subject.cn;
 
-  if(__create_outdir(entity_dir) == GPKIH_FAIL){
+  if(__create_outdir(entityDir) == GPKIH_FAIL){
     return GPKIH_FAIL;
   };
 
   std::string command = fmt::format("openssl pkcs12 -export -inkey {} -in {} -out {}.pfx",
-    entity.keyPath,entity.crtPath,(entity_dir/entity.subject.cn).string());
+    entity.keyPath,entity.crtPath,outpathPfx.string());
 
   if(system(command.c_str())){
-    PERROR("command '{}' failed\n", command);
+    PERROR("Command '{}' failed\n", command);
     return GPKIH_FAIL;
   }
 
@@ -273,11 +225,7 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity, E
     } 
   }
 
-  if(profile::ca_key(profile, entity) == GPKIH_FAIL || profile::ca_crt(profile, entity) == GPKIH_FAIL){
-    return GPKIH_FAIL;
-  }; 
-
-  ConfigMap &pkiconf = config.get(CONFIG_PKI);
+  ConfigMap &pkiconf = config.get(CFILE_PKI);
   std::string command = std::move(__ca_build_command(profile,pkiconf,entity,days,keyAlgo,keySize));
   
   PDEBUG(3, "self-signed CA command - '{}'", command);
@@ -287,22 +235,11 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity, E
     return GPKIH_FAIL;
   }
 
-  __increment_serial();
+  utils::entities::incrementSerial(profile, entity);
   
-  // Add entity to entity database
-  eman.add(entity);
-
   // Update profile modification date + ca_created status
   profile.last_modification = std::chrono::system_clock::now();
   profile.ca_created = 1;
-
-  // Synchronize so that changes take effect
-  db::profiles::sync();
-  
-  eman.sync();
-
-  //PSUCCESS("Certificate authority '{}' created\n", entity.subject.cn);
-  //ADD_LOG(L_INFO, "profile:{} action:build type:{}", profile.name, to_str(entity.type));
 
   return GPKIH_OK;
 } // actions::build_ca()
@@ -311,8 +248,7 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity, E
 int actions::build(Profile &profile, ProfileConfig &config, Entity &entity, EntityManager &eman, std::string_view days, std::string_view keyAlgo, std::string_view keySize){
   PDEBUG(1,"actions::build()");
 
-
-  ConfigMap &pkiconf = config.get(CONFIG_PKI);
+  ConfigMap &pkiconf = config.get(CFILE_PKI);
 
   bool autoanswer = Config::get("behaviour","autoanswer") == "yes" ? true : false;
   bool prompt = Config::get("behaviour","prompt") == "yes" ? true : false;
@@ -335,9 +271,6 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity, Enti
     return GPKIH_FAIL;
   }
 
-  // Add entity to database
-  eman.add(entity);
-  
   // Update modification time + client/server count
   profile.last_modification = std::chrono::system_clock::now();
   switch(entity.type){
@@ -351,10 +284,6 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity, Enti
       break;
   }
 
-  // Synchronize so that changes take effect
-  db::profiles::sync();
-  eman.sync();
-  
   // Create inline config file
   std::vector<Entity> entityList{entity};
 

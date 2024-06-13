@@ -21,7 +21,7 @@ int actions::revoke(Profile &profile, std::vector<std::string> &common_names, st
   for (std::string &cn : common_names) {
     Entity *entity = nullptr;
     std::string selected_reason{};
-    std::string cert_path = base_dir + SLASH + cn + "-crt.PEM";
+    std::string cert_path = base_dir + SLASH + cn + "-crt.pem";
     
     if(eman.exists(cn, entity) == false){
       PWARN("entity '{}' doesn't exist\n", cn);
@@ -69,7 +69,7 @@ int actions::revoke(Profile &profile, std::vector<std::string> &common_names, st
   s.erase(s.end()-1, s.end());
 
   PSUCCESS("Revoked entities: {}\n", s);
-  ADD_LOG(L_INFO,"profile:{} action:revoke entities:{}",profile.name,s);
+  ADD_LOG(L_INFO,fmt::format("profile:{} action:revoke entities:{}",profile.name,s));
 
   /* Extra questions */
   bool prompt = Config::get("behaviour","prompt") == "yes" ? true : false;

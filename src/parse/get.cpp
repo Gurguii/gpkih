@@ -1,7 +1,3 @@
-#include <fmt/color.h>
-#include <unordered_map>
-#include <sstream>
-
 #include "parser.hpp"
 #include "../experimental/formatter.hpp"
 
@@ -83,10 +79,10 @@ static size_t __handleScopePrinting (strview &scope_opt, std::vector<str> &opts,
 
 	if(file == "pki")
 	{
-		config = pconfig.getptr(CONFIG_PKI);
+		config = pconfig.getptr(CFILE_PKI);
 	}else if(file == "vpn")
 	{
-		config = pconfig.getptr(CONFIG_VPN);
+		config = pconfig.getptr(CFILE_VPN);
 
 	}else {
 		PWARN("unknown scope '{}'\n", file);
@@ -123,7 +119,7 @@ static size_t __handleScopePrinting (strview &scope_opt, std::vector<str> &opts,
 		return next_pos;
 	}
 
-	std::unordered_map<str,str> *mappedSection = NULL;
+	std::unordered_map<str,str> *mappedSection = nullptr;
 
 	for(auto &kv : *config){
 		if(kv.first == section){
@@ -132,7 +128,7 @@ static size_t __handleScopePrinting (strview &scope_opt, std::vector<str> &opts,
 		}
 	}
 
-	if(mappedSection == NULL){
+	if(mappedSection == nullptr){
 		return next_pos;
 	}
 
@@ -264,14 +260,14 @@ int parsers::get(std::vector<str> &opts)
 	// Profile exists, load its config
 	ProfileConfig pconfig(profile);
 
-	if ( (pconfig.loadedFiles() & CONFIG_ALL) == false ) {
+	if ( (pconfig.loadedFiles() & CFILE_ALL) == false ) {
 		return GPKIH_FAIL;
 	}
 
 	std::unordered_map<strview, ConfigMap*>scopeConfigMap = 
 	{
-		{"pki", pconfig.getptr(CONFIG_PKI)},
-		{"vpn", pconfig.getptr(CONFIG_VPN)}
+		{"pki", pconfig.getptr(CFILE_PKI)},
+		{"vpn", pconfig.getptr(CFILE_VPN)}
 	};
 
 	auto ffinfo = gpkih_default_formatinfo();

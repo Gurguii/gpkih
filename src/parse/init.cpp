@@ -5,18 +5,18 @@ using namespace gpkih;
 int parsers::init(std::vector<std::string> &opts) {
   opts.push_back("\0");
 
-  std::string_view profile_name, profile_source;
+  std::string_view profileName, profileSource;
   for (int i = 0; i < opts.size() - 1; ++i) {
     std::string_view opt = opts[i];
     if (opt == "-n" || opt == "--name") {
-      profile_name = opts[++i];
+      profileName = opts[++i];
     } else if (opt == "-s" || opt == "--source") {
-      profile_source = opts[++i];
+      profileSource = opts[++i];
     } else {
       UNKNOWN_OPTION_MESSAGE(opt);
     }
   }
   
-  actions::init(profile_name,profile_source);
+  actions::init(profileName,profileSource);
   return 0;
 }

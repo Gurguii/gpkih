@@ -13,7 +13,7 @@ std::string utils::env::get_environment_variable(std::string_view varname)
     #ifdef _WIN32
     // [Windows]
     size_t size = 0;
-    getenv_s(&size, NULL, 0, varname.data());
+    getenv_s(&size, nullptr, 0, varname.data());
     if(size == 0){
         return {};
     }
@@ -23,7 +23,7 @@ std::string utils::env::get_environment_variable(std::string_view varname)
     return std::move(env);
     #else
     // [Linux]
-    if(secure_getenv(varname.data()) == NULL){
+    if(secure_getenv(varname.data()) == nullptr){
         return {};
     }
     return std::string{secure_getenv(varname.data())};

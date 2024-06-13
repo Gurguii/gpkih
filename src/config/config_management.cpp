@@ -4,11 +4,8 @@
 #include <cstring>
 #include <sstream>
 #include <fstream>
-#include <unordered_map>
 #include "../printing/printing.hpp"
 #include "../memory/memmgmt.hpp"
-
-#include "config.hpp"
 
 static inline constexpr char sectionOpenDelim = '[';
 static inline constexpr char sectionCloseDelim = ']';
@@ -29,7 +26,7 @@ static int __syncFile(std::string_view srcConfigPath, ConfigMap *cmap){
   std::ofstream dst{tmpPath};
 
   if(!src.is_open()){
-    PERROR("Couldn't open old configuration file '{}' for reading\n", "FILL");
+    PERROR("Couldn't open old configuration file '{}' for reading\n", srcConfigPath);
     return GPKIH_FAIL;
   }
 
@@ -224,9 +221,6 @@ int Config::load(std::string_view filepath){
     return __load_file(filepath, gpkihConfig);     
   }
   
-  testing::behaviour::autoanswer = get("behaviour","autoanswer") == "yes" ? true : false;
-  testing::behaviour::prompt = get("behaviour","prompt") == "yes" ? true : false;
-  
   return GPKIH_FAIL;
 } // Config::load()
 
@@ -299,13 +293,13 @@ ProfileConfig::ProfileConfig(Profile &prof, CONFIG_FILE filesToLoad):profile(pro
   pkiConfigPath = path/pkiConfFilename;
 
   /* Load pki.conf */
-  if (filesToLoad & CONFIG_PKI && __load_file(pkiConfigPath, this->pkiConfig) == GPKIH_OK) {
-    succesfullyLoadedFiles = succesfullyLoadedFiles | CONFIG_PKI;
+  if (filesToLoad & CFILE_PKI && __load_file(pkiConfigPath, this->pkiConfig) == GPKIH_OK) {
+    succesfullyLoadedFiles = succesfullyLoadedFiles | CFILE_PKI;
   }
 
   /* Load openvpn.conf */
-  if (filesToLoad & CONFIG_VPN && __load_file(vpnConfigPath, this->vpnConfig)) {
-    succesfullyLoadedFiles =  succesfullyLoadedFiles | CONFIG_VPN;
+  if (filesToLoad & CFILE_VPN && __load_file(vpnConfigPath, this->vpnConfig)) {
+    succesfullyLoadedFiles =  succesfullyLoadedFiles | CFILE_VPN;
   }
 } // ProfileConfig::ProfileConfig()
 
@@ -328,10 +322,10 @@ ConfigMap* const ProfileConfig::getptr(CONFIG_FILE file) {
   PDEBUG(1, "ProfileConfig::getptr()");
 
   switch (file) {
-  case CONFIG_VPN:
+  case CFILE_VPN:
     return &this->vpnConfig;
     break;
-  case CONFIG_PKI:
+  case CFILE_PKI:
     return &this->pkiConfig;
     break;
   default:
@@ -343,7 +337,7 @@ ConfigMap& ProfileConfig::get(CONFIG_FILE file){
   PDEBUG(1, "ProfileConfig::get()");
 
   switch(file){
-    case CONFIG_VPN:
+    case CFILE_VPN:
       return this->vpnConfig;
     default:
       return this->pkiConfig;
@@ -360,9 +354,9 @@ int ProfileConfig::set(CONFIG_FILE file, std::string_view section, std::string_v
   PDEBUG(1, "ProfileConfig::set()");
 
   try{
-    if(file & CONFIG_PKI){
+    if(file & CFILE_PKI){
       pkiConfig.at(section.data()).at(key.data()) = val;
-    }else if(file & CONFIG_VPN){
+    }else if(file & CFILE_VPN){
       vpnConfig.at(section.data()).at(key.data()) = val;
     }else{
       return GPKIH_FAIL;
@@ -378,21 +372,21 @@ int ProfileConfig::set2(CONFIG_FILE file, std::string_view section, std::string_
   PDEBUG(1, "ProfileConfig::set2()");
 
   try{
-    if(file & CONFIG_PKI){
+    if(file & CFILE_PKI){
       pkiConfig.at(section.data()).at(key.data()) = val;
-    }else if(file & CONFIG_VPN){
+    }else if(file & CFILE_VPN){
       vpnConfig.at(section.data()).at(key.data()) = val;
     }else{
       return GPKIH_FAIL;
     }
   }catch(const std::out_of_range &err){
-    if(file & CONFIG_PKI){
+    if(file & CFILE_PKI){
       if(pkiConfig.find(section.data()) == pkiConfig.end()){
         PERROR("Section '{}' doesn't exist in pki file\n", section.data());
       }else{
         PERROR("Key '{}' doesn't exist in pki file section '{}'\n", key.data(), section.data());
       }
-    }else if(file & CONFIG_VPN){
+    }else if(file & CFILE_VPN){
       if(vpnConfig.find(section.data()) == vpnConfig.end()){
         PERROR("Section '{}' doesn't exist in vpn file\n", section.data());
       }else{
@@ -402,9 +396,9 @@ int ProfileConfig::set2(CONFIG_FILE file, std::string_view section, std::string_
     return GPKIH_FAIL;
   }
 
-  std::string msg = fmt::format("changed {}.{}.{} to '{}'", file == CONFIG_PKI ? "pki" : "vpn", section, key, val);
+  std::string msg = fmt::format("changed {}.{}.{} to '{}'", file == CFILE_PKI ? "pki" : "vpn", section, key, val);
   PSUCCESS("{}\n", msg);
-  ADD_LOG(L_INFO, "profile:{} action:set {}", this->profile.name, msg);
+  ADD_LOG(L_INFO, fmt::format("profile:{} action:set {}", this->profile.name, msg));
   return GPKIH_OK;
 }
 
@@ -434,10 +428,10 @@ bool ProfileConfig::key_exists(CONFIG_FILE file, std::string_view section, std::
   }
 
   switch(file){
-    case CONFIG_PKI:
+    case CFILE_PKI:
       sptr = &pkiConfig[section.data()];
       break;
-    case CONFIG_VPN:
+    case CFILE_VPN:
       sptr = &vpnConfig[section.data()];
       break;
     default:
@@ -518,14 +512,14 @@ bool ProfileConfig::dump_vpn_conf(fs::path &outpath, ENTITY_TYPE type) {
 int ProfileConfig::sync(CONFIG_FILE files){
   PDEBUG(1, "ProfileConfig::sync()");
   
-  if (files & CONFIG_VPN){
+  if (files & CFILE_VPN){
     PDEBUG(2, "syncing VPN - {}\n", vpnConfigPath.string());
     if(__syncFile(vpnConfigPath.c_str(), &vpnConfig) == GPKIH_FAIL){
       return GPKIH_FAIL;
     }
   }
 
-  if (files & CONFIG_PKI){
+  if (files & CFILE_PKI){
     PDEBUG(2, "syncing PKI - {}\n", pkiConfigPath.string());
     if(__syncFile(pkiConfigPath.c_str(), &pkiConfig) == GPKIH_FAIL){
       return GPKIH_FAIL;

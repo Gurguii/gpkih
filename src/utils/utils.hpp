@@ -16,13 +16,13 @@ namespace gpkih::utils::env
 
 namespace gpkih::utils::str
 {
-	/// @brief retrieve (does not check st == NULL) size of null terminated string
+	/// @brief retrieve (does not check st == nullptr) size of null terminated string
 	/// @return number of characters
 	extern size_t length(const char *st);
 	#define len gpkih::utils::str::length
 	
-	/// @brief retrieve (checks if st == NULL) size of null terminated string
-	/// @return number of characters or -1 if st == NULL
+	/// @brief retrieve (checks if st == nullptr) size of null terminated string
+	/// @return number of characters or -1 if st == nullptr
 	extern size_t slength(const char *st);
 	#define slen gpkih::utils::str::slength
 
@@ -69,4 +69,7 @@ namespace gpkih::utils::entities
 	extern int promptForSubject(std::string_view profileName, Subject &buffer, ProfileConfig &config, EntityManager &eman);
 	extern int setCAPaths(Profile &profile, Entity &entity);
 	extern int setPaths(Profile &profile, Entity &entity);
+	extern int loadSerial(Profile &profile, Entity &entity);
+	extern int incrementSerial(Profile &profile, Entity &entity);
+	[[ nodiscard("Why the fuck do you ask for the oneliner if you're not using it?")]] extern  std::string opensslOneliner(Subject &ref);
 }

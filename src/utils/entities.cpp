@@ -1,8 +1,8 @@
 #include "utils.hpp"
-
+#include <fstream>
 using namespace gpkih;
 
-static inline std::string badchars = "~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?¿\t\n\r";
+static inline std::string badchars = "~`!@#$%^&*()-_=+[{]}\\|;:'\",<.>/?¿\t\n\r ";
 static inline std::string mail_badchars = "~`!#$%^&*()-_=+[{]}\\|;:'\",<>/?¿\t\n\r";
 
 static inline size_t __get_and_set_prop(std::string &&promptMsg, char *&defaultValue, char *&st, size_t* stlen, std::string &badcharlist = badchars, size_t maxStLen = 254) {
@@ -29,7 +29,7 @@ static inline size_t __get_and_set_prop(std::string &&promptMsg, char *&defaultV
 }
 
 int utils::entities::promptForSubject(std::string_view profileName, Subject &buffer, ProfileConfig &config, EntityManager &eman){
-	  PDEBUG(2,"__prompt_for_subject()");
+	 PDEBUG(2,"__prompt_for_subject()");
 
   Subject defaults = config.default_subject();
 
@@ -67,14 +67,15 @@ int utils::entities::promptForSubject(std::string_view profileName, Subject &buf
     input = PROMPT("Common Name", false, RED);
     if (input.empty()) {
       // Common name can't be empty
-      PWARN("common name can't be empty\n");
+      PWARN("Common name can't be empty\n");
       continue;
     } else if (eman.exists(input)) {
       // Common name can't be duplicated
       PWARN("Entity with CN '{}' already exists in profile '{}'\n",
       input, profileName);
       continue;
-    }else if(HAS_BADCHAR(input, badchars)) {
+    }else if(HAS_BADCHAR(input, badchars)){
+      PWARN("Detected bad chars in common name, please avoid using special characters or spaces\n");
       continue;
     }
 
@@ -99,7 +100,7 @@ int utils::entities::setCAPaths(Profile &profile, Entity &e){
   e.keyPath = ALLOCATE(e.keyPathLen);
   e.crtPath = ALLOCATE(e.crtPathLen);
 
-  if(e.keyPath == NULL || e.crtPath == NULL){
+  if(e.keyPath == nullptr || e.crtPath == nullptr){
     PERROR("smth is null\n");
     return GPKIH_FAIL;
   }
@@ -123,8 +124,8 @@ int utils::entities::setPaths(Profile &profile, Entity &e){
   e.csrPath = ALLOCATE(e.csrPathLen);
   e.crtPath = ALLOCATE(e.crtPathLen);
 
-  if(e.keyPath == NULL || e.csrPath == NULL || e.crtPath == NULL){
-    PERROR("SMTH IS NULL\n");
+  if(e.keyPath == nullptr || e.csrPath == nullptr || e.crtPath == nullptr){
+    PERROR("SMTH IS nullptr\n");
     return GPKIH_FAIL;
   }
 
@@ -138,4 +139,81 @@ int utils::entities::setPaths(Profile &profile, Entity &e){
   }
 
   return GPKIH_OK;
+}
+
+int utils::entities::loadSerial(Profile &profile, Entity &entity){
+  PDEBUG(2,"__load_serial()");
+  std::string serialPath = fmt::format("{}{}pki{}serial{}serial", profile.source, SLASH, SLASH, SLASH);
+
+  if(!std::filesystem::exists(serialPath)){
+    PERROR("serial file for profile '{}' not found - '{}'\n", profile.name, serialPath);
+    return GPKIH_FAIL;
+  }
+
+  std::ifstream file(serialPath);
+
+  if(!file.is_open()){
+    PERROR("couldn't open file '{}'\n",serialPath);
+    return GPKIH_FAIL;
+  }
+
+  std::string serial{};
+  file >> serial;
+  file.close();
+
+  try{
+    entity.serial = std::stoull(serial,nullptr,16);  
+  }catch(const std::invalid_argument &err){
+    PINFO("Loading serial failed, generating random serial...\n");
+    entity.serial = rand();
+  }
+
+  return GPKIH_OK;
+};
+
+int utils::entities::incrementSerial(Profile &profile, Entity &entity){
+  PDEBUG(2,"__increment_serial()");
+  std::string serialPath = fmt::format("{}{}pki{}serial{}serial", profile.source, SLASH, SLASH, SLASH);
+
+  std::ifstream rfile(serialPath);
+  
+  if(!rfile.is_open()){
+    PERROR("Couldn't open serial file '{}' to update serial\n", serialPath);
+    return GPKIH_FAIL;
+  }
+
+  std::string nserial{};
+  rfile >> nserial;
+
+  nserial = fmt::format("{:x}",static_cast<decltype(Entity::serial)>(std::stoull(nserial,0,16) + 1));
+
+  rfile.close();
+  
+  std::ofstream wfile(serialPath);
+  if(!wfile.is_open()){
+    return GPKIH_FAIL;
+  }
+
+  if(nserial.size() == 1){
+    wfile << "0";
+  }
+
+  wfile << nserial;
+  
+  wfile.close();
+
+  return GPKIH_OK;
+}
+
+std::string utils::entities::opensslOneliner(Subject &ref){
+    std::ostringstream ss;
+    
+    strlen(ref.country) != 0 && ss << fmt::format("/C={}",ref.country);
+    ref.state != nullptr && ss << fmt::format("/ST={}",ref.state);
+    ref.location != nullptr && ss << fmt::format("/L={}", ref.location);
+    ref.organisation != nullptr && ss << fmt::format("/O={}",ref.organisation);
+    ref.cn != nullptr && ss << fmt::format("/CN={}",ref.cn);
+    ref.email != nullptr && ss << fmt::format("/emailAddress={}",ref.email);
+
+    return ss.str();
 }

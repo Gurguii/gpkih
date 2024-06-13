@@ -1,7 +1,9 @@
 #include "profiles.hpp"
-#include <sstream>
 #include <fstream> // std::ifstream | std::ofstream
 #include <iostream> // std::cin
+#include "../printing/printing.hpp"
+#include "../memory/memmgmt.hpp"
+#include "mnck.hpp"
 
 using namespace gpkih;
 
@@ -67,7 +69,7 @@ int db::profiles::sync(){
 		file.write(reinterpret_cast<const char *>(&p.sourcelen), sizeof(decltype(p.sourcelen)));
 		file.write(p.source, p.sourcelen);	
 		
-		file.write(reinterpret_cast<const char*>(&p.creation_date), sizeof(decltype(p.creation_date)));
+		file.write(reinterpret_cast<const char*>(&p.creationDate), sizeof(decltype(p.creationDate)));
 
 		file.write(reinterpret_cast<const char*>(&p.last_modification), sizeof(decltype(p.last_modification)));
 
@@ -111,7 +113,7 @@ int db::profiles::initialize(size_t &loaded_profiles){
 	}
 
 	// File already exists, load profiles
-	// syntax: <id><namelen><name><sourcelen><source><creation_date><last_modification><ca><total_servers><total_clients>
+	// syntax: <id><namelen><name><sourcelen><source><creationDate><last_modification><ca><total_servers><total_clients>
 	std::ifstream file(dbpath, std::ios::binary);
 	if(!file.is_open()){
 		PERROR("couldn't open profile.data '{}'",dbpath);
@@ -135,7 +137,7 @@ int db::profiles::initialize(size_t &loaded_profiles){
 		file.read(reinterpret_cast<char*>(&p.namelen), sizeof(decltype(p.namelen)));
 
 		p.name = ALLOCATE(p.namelen);
-		if(p.name == NULL){
+		if(p.name == nullptr){
 			PERROR("couldn't allocate memory for profile name\n");
 			return GPKIH_FAIL;
 		}
@@ -143,13 +145,13 @@ int db::profiles::initialize(size_t &loaded_profiles){
 
 		file.read(reinterpret_cast<char*>(&p.sourcelen), sizeof(decltype(p.sourcelen)));
 		p.source = ALLOCATE(p.sourcelen);
-		if(p.source == NULL){
+		if(p.source == nullptr){
 			PERROR("couldn't allocate memory for profile source\n");
 			return GPKIH_FAIL;
 		}
 		file.read(p.source, p.sourcelen);
 
-		file.read(reinterpret_cast<char*>(&p.creation_date), sizeof(decltype(p.creation_date)));
+		file.read(reinterpret_cast<char*>(&p.creationDate), sizeof(decltype(p.creationDate)));
 		file.read(reinterpret_cast<char*>(&p.last_modification), sizeof(decltype(p.last_modification)));
 		file.read(reinterpret_cast<char*>(&p.ca_created), sizeof(decltype(p.ca_created)));
 		file.read(reinterpret_cast<char*>(&p.sv_count), sizeof(decltype(p.sv_count)));
@@ -200,23 +202,38 @@ int db::profiles::remove(std::string_view profile_name) {
 	return GPKIH_OK;
 }
 
-int db::profiles::remove_all() {
+size_t db::profiles::remove_all(size_t *deletedFiles) {
 	PDEBUG(1, "db::profiles::remove_all()");
 	int pcount = 0;
-
+	size_t _deletedFiles = 0;
 	for(auto &kv : existing_profiles){
 		if(fs::exists(kv.second.source)){
-			PDEBUG(3, "deleting source file - {}",kv.second.source);
-			fs::remove_all(kv.second.source);
-			fs::remove_all(fmt::format("{}{}_entities.data",DB_DIRPATH,kv.first));
+			size_t n;
+			n = fs::remove_all(kv.second.source);
+			if(n == 0){
+				PERROR("Couldn't remove profile '{}' path '{}'\n", kv.second.name, kv.second.source);
+				continue;
+			};
+
+			_deletedFiles += n;
+			n = fs::remove_all(fmt::format("{}{}_entities.data",DB_DIRPATH,kv.first));
+			
+			if( n == 0){
+				PERROR("Couldn't remove entity db for profile '{}'\n", kv.second.name);
+				continue;
+			};
+			_deletedFiles += n;
 			++pcount;
 		}
 	}
 
 	existing_profiles.clear();
-	fs::remove(dbpath);
-	
-	return pcount;
+
+	if(deletedFiles != nullptr){
+		*deletedFiles = _deletedFiles;
+	}
+
+	return GPKIH_OK;
 }
 
 int db::profiles::load(uint64_t profile_id, Profile &pinfo){

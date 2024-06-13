@@ -33,9 +33,9 @@ size_t __handleScopedProfile(std::vector<std::string>::iterator &iter, std::vect
 	}
 
 	if(scfile == "pki"){
-		cfile = CONFIG_PKI;	
+		cfile = CFILE_PKI;	
 	}else if(scfile == "vpn"){
-		cfile = CONFIG_VPN;
+		cfile = CFILE_VPN;
 	}else{
 		PWARN("Invalid configuration file '{}' not among valid options: pki|vpn\n", scfile.c_str());
 		while(iter != end && iter->c_str()[0] != '@'){
@@ -116,7 +116,7 @@ size_t __handleScopedProfile(std::vector<std::string>::iterator &iter, std::vect
 int __handleGpkih(std::vector<std::string> &opts){
 	PDEBUG(1, "__handleGpkih()");
 
-	const char *section = NULL;
+	const char *section = nullptr;
 	for(auto current = opts.begin(); current != opts.end(); ++current){
 		if((*current)[0] == '@'){
 			section = current->c_str()+1;
@@ -180,7 +180,7 @@ int __handleProfile(std::vector<std::string> &opts){
 	PDEBUG(2, "__handleProfile()");
 
 	Profile profile;
-	CONFIG_FILE alteredFiles = CONFIG_NONE;
+	CONFIG_FILE alteredFiles = CFILE_NONE;
 
 	if(db::profiles::load(opts[0], profile) == GPKIH_FAIL){
 		PWARN("Profile '{}' doesn't exist\n", opts[0]);
@@ -240,16 +240,16 @@ int __handleProfile(std::vector<std::string> &opts){
 		ConfigMap *cptr;
 
 		if(cfilestr == "vpn"){
-			cfile = CONFIG_VPN;
+			cfile = CFILE_VPN;
 		}else if(cfilestr == "pki"){
-			cfile = CONFIG_PKI;
+			cfile = CFILE_PKI;
 		}else{
 			PERROR("Invalid configuration file '{}' not among: vpn | pki\n", cfilestr);
 			continue;
 		}
 
 		cptr = pconf.getptr(cfile);
-		if(cptr == NULL){
+		if(cptr == nullptr){
 			return GPKIH_FAIL;
 		}
 
@@ -262,10 +262,10 @@ int __handleProfile(std::vector<std::string> &opts){
 
 	if(DRY_RUN == false){
 		// Sync config to update changes
-		if(alteredFiles & CONFIG_PKI && pconf.sync(CONFIG_PKI) == GPKIH_FAIL){
+		if(alteredFiles & CFILE_PKI && pconf.sync(CFILE_PKI) == GPKIH_FAIL){
 			return GPKIH_FAIL;
 		}
-		if(alteredFiles & CONFIG_VPN && pconf.sync(CONFIG_VPN) == GPKIH_FAIL){
+		if(alteredFiles & CFILE_VPN && pconf.sync(CFILE_VPN) == GPKIH_FAIL){
 			return GPKIH_FAIL;
 		}
 		return GPKIH_OK;

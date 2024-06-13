@@ -30,7 +30,6 @@ configure_platform()
 # Look for FMT
 find_library(FMT_LIBRARY NAMES ${FMT_LIBRARY_NAMES} PATHS ${FMT_LIBRARY_PATH})
 
-# TEST
 if(NOT FMT_LIBRARY)
   message(STATUS "FMT lib not found in system")
   # Set outpath for FMT source code
@@ -70,16 +69,6 @@ set(gpkih_printing_implementation "${gpkih_printing_src}/printing.cpp")
 add_library(gpkih_printing_lib STATIC "${gpkih_printing_implementation}")
 target_include_directories(gpkih_printing_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
 
-# Lib - config_management
-set (gpkih_config_definition
-    "${GPKIH_SRC_DIR}/config/config_management.hpp")
-set (gpkih_config_implementation
-    "${GPKIH_SRC_DIR}/config/config_management.cpp"
-)
-add_library(gpkih_config_management_lib STATIC "${gpkih_config_implementation}")
-target_include_directories(gpkih_config_management_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
-target_link_libraries(gpkih_config_management_lib PUBLIC "${gpkih_utils_lib}")
-
 # Lib - logger
 set(gpkih_logger_src "${GPKIH_SRC_DIR}/logger")
 set(gpkih_logging_definition 
@@ -92,7 +81,16 @@ set(gpkih_logging_implementation
 )
 add_library(gpkih_logging_lib STATIC "${gpkih_logging_implementation}")
 target_include_directories(gpkih_logging_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
-target_link_libraries(gpkih_logging_lib PUBLIC "${gpkih_printing_lib}")
+
+# Lib - config_management
+set (gpkih_config_definition
+    "${GPKIH_SRC_DIR}/config/config_management.hpp")
+set (gpkih_config_implementation
+    "${GPKIH_SRC_DIR}/config/config_management.cpp"
+)
+add_library(gpkih_config_management_lib STATIC "${gpkih_config_implementation}")
+target_include_directories(gpkih_config_management_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
+
 # Lib - actions
 set(gpkih_actions_src "${GPKIH_SRC_DIR}/actions")
 set (gpkih_actions_definition
@@ -162,10 +160,7 @@ set(gpkih_parse_implementation
     "${gpkih_parse_src}/reset.cpp"
 )
 add_library(gpkih_parse_lib STATIC "${gpkih_parse_implementation}")
-target_include_directories(gpkih_parse_lib PUBLIC
-        "${FMT_LIBRARY_INCLUDE}"
-)
-target_link_libraries(gpkih_parse_lib PRIVATE gpkih_printing_lib)
+target_include_directories(gpkih_parse_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
 
 # Lib - formatter
 set(gpkih_formatter_src "${GPKIH_SRC_DIR}/experimental")
@@ -208,6 +203,14 @@ add_executable(gpkih
 set(GPKIH_LIBS gpkih_parse_lib gpkih_db_lib gpkih_actions_lib 
     gpkih_config_management_lib gpkih_help_lib
     gpkih_logging_lib gpkih_formatter_lib gpkih_printing_lib gpkih_cli_lib gpkih_utils_lib gpkih_memmgmt_lib)
+
+# Optional gpkih capabilities
+if(GPKIH_ENABLE_DEBUGGING)
+    message(STATUS "GPKIH Debugging capabilities ENABLED")
+    set_property(TARGET gpkih ${GPKIH_LIBS} PROPERTY COMPILE_DEFINITIONS GPKIH_ENABLE_DEBUGGING)
+else()
+    message(STATUS "GPKIH Debugging capabilities DISABLED")
+endif()
 
 if(FMT_LIBRARY)
     # Compile with FMT found in the system

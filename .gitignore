@@ -7,6 +7,5 @@ CMakeSettings.json
 out
 .tools
 .cache
-docker/*results
 misc
 documentation/

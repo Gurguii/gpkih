@@ -1,14 +1,14 @@
 #include "gpkih.hpp"
 
 #include <future>
-#include "db/mnck.hpp"
 #include "memory/memmgmt.hpp"
 #include "parse/parser.hpp"
 #include "logger/signals.hpp"
+#include "utils/utils.hpp"
 
 using namespace gpkih;
 
-constexpr static size_t __dynamic_memory_size = 1024 * 4096; // 4MB
+constexpr static size_t __dynamic_memory_size = 4096 * 1024; // 4MB
 
 /* Directory names */
 static constexpr const char* DB_DIRNAME  = "db";
@@ -18,16 +18,17 @@ static constexpr const char* LOG_DIRNAME = "logs";
 /* Current path */
 static std::string CURRENT_PATH;
 
-std::string GPKIH_BASEDIR = "";   // proper value set by __set_platform_dependant_variables()
-std::string CONF_DIRPATH = "";    // proper value set by __set_variables()
-std::string DB_DIRPATH = "";      // proper value set by __set_variables()
+std::string GPKIH_BASEDIR = "";   // proper value set by __setPlatformDependantVariables()
+std::string CONF_DIRPATH = "";    // proper value set by __setVariables()
+std::string DB_DIRPATH = "";      // proper value set by __setVariables()
 
-static std::string CONF_GPKIH;    // initialized by __set_variables()s
+static std::string CONF_GPKIH;    // initialized by __setVariables()s
 
 static std::string gpkihConfigFilename = "gpkih.conf";
 static std::string LOG_DIRPATH;
 
-char *serialPath = NULL;
+Logger *gpkihLogger = nullptr;
+char *serialPath = nullptr;
 size_t serialPathLen = 0;
 
 bool DRY_RUN = false;
@@ -82,9 +83,9 @@ static int __check_gpkih_install_dir(std::string &path) {
   return GPKIH_OK;
 }
 
-static int __set_platform_dependant_variables()
+static int __setPlatformDependantVariables()
 {
-    PDEBUG(2,"__set_platform_dependant_variables()");
+    PDEBUG(2,"__setPlatformDependantVariables()");
 
     #ifdef _WIN32
     GPKIH_BASEDIR = utils::env::get_environment_variable("LOCALAPPDATA");
@@ -107,10 +108,10 @@ static int __set_platform_dependant_variables()
     return GPKIH_OK;
 }
 
-static int __set_variables() {
-    PDEBUG(2,"__set_variables()");
+static int __setVariables() {
+    PDEBUG(2,"__setVariables()");
 
-    if (__set_platform_dependant_variables() != GPKIH_OK) {
+    if (__setPlatformDependantVariables() != GPKIH_OK) {
         return GPKIH_FAIL;
     }
 
@@ -131,47 +132,89 @@ static int __set_variables() {
     return GPKIH_OK;
 }
 
-// PROGRAM ENTRY POINT
-int main(int argc, const char **args) {
-  PDEBUG(1,"main()");
-  std::vector <std::string> opts(args+1,args+argc);
+static int __setBuffer(){
+    static Buffer __mainGpkihBuffer(__dynamic_memory_size);
+    if(__mainGpkihBuffer.head() == nullptr){
+        PERROR("{}\n",__mainGpkihBuffer.getLastError());
+        return GPKIH_FAIL;
+    }
+    gpkihBuffer = &__mainGpkihBuffer;
+    return GPKIH_OK;
+}
 
-  for(int i = 0; i < opts.size();){
-    std::string_view opt = opts[i];
-    if(opt == "-debug" || opt == "--debug"){
-        if(i+1 == opts.size()){
-            PERROR("Debug level must be given\n");
-            return GPKIH_FAIL;
+static int __setLogger(){
+    if(gpkihLogger != nullptr){
+        return GPKIH_FAIL;
+    }
+    Logger::setBaseDir(std::move(fs::path(GPKIH_BASEDIR)/"logs").string());
+    static Logger __mainGpkihLogger(fs::path(GPKIH_BASEDIR)/"gpkih");
+    gpkihLogger = &__mainGpkihLogger;
+    return GPKIH_OK;
+}
+
+static int __parseGlobals(std::vector<std::string> &opts){
+    for(int i = 0; i < opts.size();){
+        std::string_view opt = opts[i];
+        if(opt == "-q" || opt == "--quiet"){
+            ENABLE_PRINTING = false;
+            opts.erase(opts.begin()+i);
+        }else if(opt == "-dr" || opt == "--dryrun"){
+            DRY_RUN = true;
+            opts.erase(opts.begin()+i);
+        }else if(opt == "-nh" || opt == "--noheader"){
+            SHOW_HEADER = false;
+            opts.erase(opts.begin()+i);
         }
-        int debug_level = std::stoi(opts[i+1]);
-        if(debug_level > 0 && debug_level <= 3){
-            ENABLE_DEBUG_MESSAGES = true;
-            DEBUG_LEVEL = debug_level;
-        }else{
+        else if(opt == "-debug" || opt == "--debug"){
+            #ifndef GPKIH_ENABLE_DEBUGGING
+            PWARN("This version of gpkih wasn't compiled with debugging capabilities\n");
+            PHINT("For such thing, you can compile gpkih using the setup script: ./setup -d GPKIH_ENABLE_DEBUGGING=ON\n");
+            #endif
+    
+            if(i+1 == opts.size()){
+                #ifndef GPKIH_ENABLE_DEBUGGING
+                opts.erase(opts.begin()+i);
+                continue;
+                #endif
+                PERROR("Debug level must be given\n");
+                return GPKIH_FAIL;
+            }
+    
+            int debugLevel = std::stoi(opts[i+1]);
+    
+            if(debugLevel > 0 && debugLevel <= 3){
+                ENABLE_DEBUG_MESSAGES = true;
+                DEBUG_LEVEL = debugLevel;
+                opts.erase(opts.begin()+i,opts.begin()+i+2);
+                ++i;
+                continue;
+            }
+
+            #ifdef GPKIH_ENABLE_DEBUGGING
             PERROR("Debug level must be 0-3 (both included)\n");
             return GPKIH_FAIL;
+            #endif
+            
+        }else{
+            ++i;    
         }
-        opts.erase(opts.begin()+i,opts.begin()+i+2);
-    }else if(opt == "-q" || opt == "--quiet"){
-        ENABLE_PRINTING = false;
-        opts.erase(opts.begin()+i);
-    }else if(opt == "-dr" || opt == "--dryrun"){
-        DRY_RUN = true;
-        opts.erase(opts.begin()+i);
-    }else if(opt == "-nh" || opt == "--noheader"){
-        SHOW_HEADER = false;
-        opts.erase(opts.begin()+i);
-    }else{
-        ++i;
     }
-  }
+  return GPKIH_OK;
+}
 
-  if(Buffer::initialize(__dynamic_memory_size, gpkihBuffer) != BUFF_OK){
-    PERROR("Couldn't allocate dynamic memory {} bytes\n", __dynamic_memory_size);
+// PROGRAM ENTRY POINT
+int main(int argc, const char **args) {
+  std::vector <std::string> opts(args+1,args+argc);
+
+  if(__parseGlobals(opts) == GPKIH_FAIL){
     return GPKIH_FAIL;
   }
 
-  if(__set_variables() != GPKIH_OK){
+  if(__setBuffer() != GPKIH_OK){
+    return GPKIH_FAIL;
+  }
+
+  if(__setVariables() != GPKIH_OK){
     return GPKIH_FAIL;
   };
 
@@ -191,18 +234,17 @@ int main(int argc, const char **args) {
   size_t profile_count = 0;
   if (db::profiles::initialize(profile_count) == GPKIH_FAIL) {
     loadGpkihConfigTask.wait();
-    return -1;
+    return GPKIH_FAIL;
   };
 
   // Wait for Config::load to finish
   if (loadGpkihConfigTask.get() != GPKIH_OK) {
-    return -1;
+    return GPKIH_FAIL;
   }
 
-  /* Initialize program logger */
-  Logger::set_basedir(std::move(fs::path(GPKIH_BASEDIR)/"logs").string());
-  Logger pl = Logger("gpkih");
-  gpkih_logger = &pl;
+  if(__setLogger() == GPKIH_FAIL){
+    return GPKIH_FAIL;
+  }
 
   // Parse options
   if (parsers::parse(opts) != GPKIH_OK) {

@@ -22,7 +22,7 @@ note: -cn|-ef will only affect when a profile is given, else only profiles will 
   source: source dir
 
   - Dates -
-  cdate | creation_date: creation
+  cdate | creationDate: creation
   lmod | last_modification: last modification
   
   - Entities -

@@ -1,6 +1,7 @@
 #include "entities.hpp"
 #include "mnck.hpp"
 #include "../memory/memmgmt.hpp"
+#include <stdexcept>
 
 using namespace gpkih;
 
@@ -14,9 +15,12 @@ EntityManager::EntityManager(std::string_view profile_name){
 
 	if(fs::exists(dbpath) == false){
 		std::ofstream file(dbpath, std::ios::binary);
+		
 		if(!file.is_open()){
-			throw "couldn't create entities' dbpath";
+			PERROR("Couldn't create entities' dbpath\n");
+			return;
 		}
+
 		mnck::dump(file, current_size);
 		file.close();
 		return;
@@ -30,14 +34,17 @@ EntityManager::EntityManager(std::string_view profile_name){
 	std::ifstream file(dbpath, std::ios::binary);
 
 	if(!file.is_open()){
-		throw "couldn't open entities' dbpath to load data";
+		PERROR("Couldn't open entities' dbpath to load data\n");
+		return;
 	}
 
 	// Check magic number
 	if(mnck::check(file, current_size) == false){
+		PDEBUG(2,"Failed magic number check");
 		return;
 	}
 
+	PDEBUG(2, "Loading {} entities", current_size);
 	for(int i = 0;i < current_size; ++i){
 		Entity tmp{};
 		Subject &sub = tmp.subject;
@@ -45,57 +52,58 @@ EntityManager::EntityManager(std::string_view profile_name){
 		file.read(reinterpret_cast<char*>(&tmp.serial), sizeof(decltype(Entity::serial)));
 
 		file.read(reinterpret_cast<char*>(&sub.cnlen), sizeof(decltype(Subject::cnlen)));
-		if((sub.cn = ALLOCATE(sub.cnlen)) == NULL){
+		if((sub.cn = ALLOCATE(sub.cnlen)) == nullptr){
 			break;
 		}
 		file.read(sub.cn, sub.cnlen);
 
 		file.read(reinterpret_cast<char*>(&tmp.type), sizeof(decltype(Entity::type)));
 
-		file.read(reinterpret_cast<char*>(&tmp.creation_date), sizeof(decltype(Entity::creation_date)));
-
+		file.read(reinterpret_cast<char*>(&tmp.creationDate), sizeof(decltype(Entity::creationDate)));
+		file.read(reinterpret_cast<char*>(&tmp.expirationDate), sizeof(decltype(Entity::expirationDate)));
+		
 		file.read(reinterpret_cast<char*>(&tmp.status), sizeof(decltype(Entity::status)));
 
 		file.read(sub.country, sizeof(sub.country));
 
 		file.read(reinterpret_cast<char*>(&sub.locationlen), sizeof(decltype(Subject::locationlen)));
-		if((sub.location = ALLOCATE(sub.locationlen)) == NULL){
+		if((sub.location = ALLOCATE(sub.locationlen)) == nullptr){
 			break;
 		}
 		file.read(sub.location, sub.locationlen);
 
 		file.read(reinterpret_cast<char*>(&sub.organisationlen), sizeof(decltype(Subject::organisationlen)));
-		if((sub.organisation = ALLOCATE(sub.organisationlen)) == NULL){
+		if((sub.organisation = ALLOCATE(sub.organisationlen)) == nullptr){
 			break;
 		}
 		file.read(sub.organisation, sub.organisationlen);
 	
 		file.read(reinterpret_cast<char*>(&sub.statelen), sizeof(decltype(Subject::statelen)));
-		if((sub.state = ALLOCATE(sub.statelen)) == NULL){
+		if((sub.state = ALLOCATE(sub.statelen)) == nullptr){
 			break;
 		}
 		file.read(sub.state, sub.statelen);
 
 		file.read(reinterpret_cast<char*>(&sub.emaillen), sizeof(decltype(Subject::emaillen)));
-		if((sub.email = ALLOCATE(sub.emaillen)) == NULL){
+		if((sub.email = ALLOCATE(sub.emaillen)) == nullptr){
 			break;
 		}
 		file.read(sub.email, sub.emaillen);
 	
 		file.read(reinterpret_cast<char*>(&tmp.keyPathLen), sizeof(decltype(Entity::keyPathLen)));
-		if((tmp.keyPath = ALLOCATE(tmp.keyPathLen)) == NULL){
+		if((tmp.keyPath = ALLOCATE(tmp.keyPathLen)) == nullptr){
 			break;
 		}
 		file.read(tmp.keyPath, tmp.keyPathLen);
 
 		file.read(reinterpret_cast<char*>(&tmp.csrPathLen), sizeof(decltype(Entity::csrPathLen)));
-		if((tmp.csrPath = ALLOCATE(tmp.csrPathLen)) == NULL){
+		if((tmp.csrPath = ALLOCATE(tmp.csrPathLen)) == nullptr){
 			break;
 		}
 		file.read(tmp.csrPath, tmp.csrPathLen);
 
 		file.read(reinterpret_cast<char*>(&tmp.crtPathLen), sizeof(decltype(Entity::crtPathLen)));
-		if((tmp.crtPath = ALLOCATE(tmp.crtPathLen) )== NULL){
+		if((tmp.crtPath = ALLOCATE(tmp.crtPathLen) )== nullptr){
 			break;
 		}
 		file.read(tmp.crtPath, tmp.crtPathLen);
@@ -106,12 +114,14 @@ EntityManager::EntityManager(std::string_view profile_name){
 			PERROR("couldn't emplace entity [serial:{},cn:{}]",tmp.serial,sub.cn);
 			continue;
 		}
-
+		PDEBUG(3, "Loaded entity {} - {} - {}", tmp.subject.cn, tmp.keyPath, tmp.serial);
 		uint8_t next = file.get();
 		if(next != '%'){
 			break;
 		}		
 	}
+	
+	file.close();
 }
 
 int EntityManager::sync(){
@@ -124,12 +134,15 @@ int EntityManager::sync(){
 	}
 
 	if(mnck::dump(file, current_size) == false){
+		PDEBUG(2,"File '{}' does not have a proper magic number");
 		return GPKIH_FAIL;
 	}
 
 	for(const auto &kv : entities){
-		const gpkih::Entity &entity = kv.second;
-		const gpkih::Subject &subject = kv.second.subject;
+		PDEBUG(3,"Writing entity {} {}", kv.second.subject.cn, kv.second.serial);
+
+		const Entity &entity = kv.second;
+		const Subject &subject = kv.second.subject;
 
 		file.write(reinterpret_cast<const char*>(&entity.serial),sizeof(decltype(entity.serial)));
 		
@@ -138,18 +151,18 @@ int EntityManager::sync(){
 	
 		file.write(reinterpret_cast<const char*>(&entity.type), sizeof(decltype(entity.type)));
 	
-		file.write(reinterpret_cast<const char*>(&entity.creation_date), sizeof(decltype(entity.creation_date)));
-		
+		file.write(reinterpret_cast<const char*>(&entity.creationDate), sizeof(decltype(entity.creationDate)));
+		file.write(reinterpret_cast<const char *>(&entity.expirationDate), sizeof(decltype(entity.expirationDate)));
+
 		file.write(reinterpret_cast<const char*>(&entity.status), sizeof(decltype(entity.status)));
 
 		file.write(subject.country,sizeof(subject.country));
 	
 		file.write(reinterpret_cast<const char*>(&subject.locationlen),sizeof(decltype(subject.locationlen)));
-		//PDEBUG(3, "subject.location = {}\n", subject.location);
+
 		file.write(subject.location,subject.locationlen);
 	
 		file.write(reinterpret_cast<const char *>(&subject.organisationlen),sizeof(decltype(subject.organisationlen)));
-		//PDEBUG(3, "subject.organisation = {} len = {}\n", subject.organisation, subject.organisationlen);
 		file.write(subject.organisation,subject.organisationlen);
 	
 		file.write(reinterpret_cast<const char*>(&subject.statelen), sizeof(decltype(subject.statelen)));
@@ -182,8 +195,7 @@ int EntityManager::add(gpkih::Entity &entity){
 	if(entities.find(entity.subject.cn) == entities.end()){
 		const auto [iter, success] = entities.emplace(entity.subject.cn, entity);
 		if(success){
-			++current_size;
-			return GPKIH_OK;
+			return ++current_size;
 		}
 	}
 
@@ -193,7 +205,7 @@ int EntityManager::add(gpkih::Entity &entity){
 bool EntityManager::exists(std::string_view cn){
 	PDEBUG(1,"EntityManager::exists({})",cn);
 
-	return entities.find(cn) != entities.end() ? true : false;
+	return entities.find(cn) != entities.end();
 }
 
 bool EntityManager::exists(size_t serial){

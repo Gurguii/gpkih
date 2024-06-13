@@ -1,7 +1,9 @@
 #pragma once
+#include <unordered_map>
 #include <vector>
-#include "../actions/actions.hpp" // database.hpp gpkih.hpp structs.hpp
-#include "../gpkih.hpp"
+#include <string>
+#include "../actions/actions.hpp"
+#include "../db/profiles.hpp"
 
 namespace gpkih::parsers 
 {
@@ -43,7 +45,7 @@ extern int set(std::vector<std::string> &opts);
 extern int genkey(std::vector<std::string> &opts);
 } // namespace gpkih::parsers
 
-inline std::unordered_map<str, int (*)(std::vector<std::string> &opts)> ACTION_PARSERS
+inline std::unordered_map<std::string, int (*)(std::vector<std::string> &opts)> ACTION_PARSERS
 {
   {"init", gpkih::parsers::init},     {"list", gpkih::parsers::list},
   {"build", gpkih::parsers::build},   {"revoke", gpkih::parsers::revoke},

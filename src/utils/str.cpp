@@ -31,7 +31,7 @@ size_t utils::str::length(const char *st){
 }
 
 size_t utils::str::slength(const char *st){
-	if(st == NULL){
+	if(st == nullptr){
 		return -1;
 	}
 	size_t l = 0;
