@@ -12,7 +12,8 @@ srcDir="$baseDir/src"
 binaryOutpath="$baseDir/gpkih"
 cmakelists="$baseDir/CMakeLists.txt"
 logStderr="$baseDir/.error.log"
-verbose=true
+logStdout="$baseDir/.out.log"
+quiet=false
 dockerOsList=(debian ubuntu archlinux fedora alpine)
 
 declare -A pmList
@@ -26,7 +27,10 @@ pmList["guix"]="install"
 pm="" # package manager to use if a package is required to be installed
 pmInstallOpt="" # package manager subopt to install e.g 'install' on aptÇ
 
-commands=("cmake .. -DCMAKE_EXPORT_COMPILE_COMMANDS=1" "make -j" "cp $buildDir/gpkih $binaryOutpath") # [!] note : this will be executed inside build/ 
+GPKIH_ENABLE_DEBUGGING=false
+
+#-DCMAKE_EXPORT_COMPILE_COMMANDS=1 -> create a build/compile_commands.json that comes in handy for certain scenarios
+commands=("cmake .." "make -j" "cp $buildDir/gpkih $binaryOutpath") # [!] note : this will be executed inside build/ 
 #############################################################################
 
 function __setPackageManager(){
@@ -39,6 +43,7 @@ function __setPackageManager(){
         done
         
         if [ -z "$pm" ]; then
+                $quiet && exit 1
                 printf "Couldn't set package manager, not in the following list?:"
                 for i in "${!pmList[@]}"; do
                         printf " %s" "$i"
@@ -51,27 +56,28 @@ function __generateDocumentation(){
         local doxyfile="$baseDir/src/Doxyfile"
 
         if (( $EUID == 0 )); then
-                printf "Won't generate documentation as root\n" && exit 0
+                printf "Won't generate documentation as root\n" && exit 1
         fi
 
-        [ ! -e "$doxyfile" ] && { printf "Doxyfile not found: '%s'\n" "$doxyfile"; exit 0; }
+        [ ! -e "$doxyfile" ] && { $quiet || printf "Doxyfile not found: '%s'\n" "$doxyfile"; exit 1; }
         
         # Check for doxygen
         if ! command -v doxygen &>/dev/null; then
+                $quiet && exit 1
                 read -rp "Doxygen not installed, install? y/n: " ans
                 if [[ "${ans,,}" != "y" && "${ans,,}" != "yes" ]]; then
-                        exit 0
+                        exit 1
                 fi
                 __setPackageManager
-                sudo $pm $pmInstallOpt doxygen || { printf "Couldn't install doxygen\n"; exit 1; }
-                (( $? != 0 )) && exit 0
+                sudo $pm $pmInstallOpt doxygen || { $quiet || printf "Couldn't install doxygen\n"; exit 1; }
+                (( $? != 0 )) && exit 1
         fi
 
         cd "$srcDir" && doxygen "$doxyfile" 1>/dev/null 2>"$logStderr"
 
-        (( $? != 0 )) && { printf "Failed running doxygen command: 'doxygen %s'\nError logs can be found at '%s'\n" "$doxyfile" "$logStderr"; exit 0; }
+        (( $? != 0 )) && { $quiet || printf "Failed running doxygen command: 'doxygen %s'\nError logs can be found at '%s'\n" "$doxyfile" "$logStderr"; exit 0; }
 
-        printf "Doxygen documentation succesfully created, can be found at '%s'\n" "$baseDir/documentation"
+        $quiet || printf "Doxygen documentation succesfully created, can be found at '%s'\n" "$baseDir/documentation"
         exit 0
 }
 
@@ -87,22 +93,22 @@ function __runDockerTests(){
                         exit 0
                 fi
                 __setPackageManager
-                sudo $pm $pmInstallOpt docker || { printf "[!] Couldn't install docker aborting...\n"; exit 1; }
+                sudo $pm $pmInstallOpt docker || { $quiet || printf "[!] Couldn't install docker aborting...\n"; exit 1; }
         fi
 
         # Check that service is running
         if ! systemctl is-active docker --quiet; then
                 # Try to manually start it
                 if systemctl start docker --quiet; then
-                        printf "[+] Docker service started\n"
+                        $quiet || printf "[+] Docker service started\n"
                 else
-                        printf "[!] Couldn't start service docker, exiting...\n"
+                        $quiet || printf "[!] Couldn't start service docker, exiting...\n"
                         exit $?
                 fi
         fi
 
         if ! docker ps &>/dev/null; then
-                printf "[+] Don't have permissions to list dockers, maybe run with sudo? exiting...\n"
+                $quiet || printf "[+] Don't have permissions to list dockers, maybe run with sudo? exiting...\n"
                 exit 1
         fi
         
@@ -113,20 +119,19 @@ function __runDockerTests(){
         chmod 766 "$dockerResultsFile"
 
         if [ ! -e "$dockerResultsFile" ]; then
-                printf "[!] Can't write to results file '%s', aborting...\n" "$dockerResultsFile" && exit 0
+                $quiet || printf "[!] Can't write to results file '%s', aborting...\n" "$dockerResultsFile" && exit 0
         fi
 
-        cd "$dockerDir" || { printf "[!] Couldn't cd to docker directory '%s'\n" "$dockerDir"; }
+        cd "$dockerDir" || { $quiet || printf "[!] Couldn't cd to docker directory '%s'\n" "$dockerDir"; }
         
         for os in "${dockerOsList[@]}"; do
-                
                 # -T : no TTY, required to avoid 'no input TTY available' problems
                 # --rm : deletes the container when stopped, which will be after the command returns
                 compileCmd="docker-compose run --quiet-pull -T --rm $os bash ./compile.sh /home/gpkih/docker/results"
-                printf "[+] Operating System: %s" "$os"
+                $quiet || printf "[+] Operating System: %s" "$os"
                 $compileCmd &
                 waitpid $!
-                printf "\r[+] Operating System: %s - %s\n" "$os" "$(grep -E "^Status" "$dockerResultsFile" | tail -1 | awk '{print $2}')"
+                $quiet || printf "\r[+] Operating System: %s - %s\n" "$os" "$(grep -E "^Status" "$dockerResultsFile" | tail -1 | awk '{print $2}')"
         done 
 
         exit 0
@@ -134,69 +139,92 @@ function __runDockerTests(){
 
 function usage(){
         cat << EOF
-# Gpkih setup script
+Name: gpkih setup script
+Description: helps compiling the tool, generating documentation and testing in other OSes
+Usage: ./setup <options>
 
-Usage: ./setup <subopts>
-* subopts *
-  -h      | --help             = display this message and exit
-  -q      | --quiet            = don't print anything to console 0:success else failure
-  -docker | --docker           = used for developing, will create ${#dockerOsList[@]} containers to test compiling and running gpkih: ${dockerOsList[@]}
-  -docs   | --documentation    = create doxygen documentation - *not super fancy*
-  -d      | --define <KEY>     = add preprocessor directive to the cmake command (GPKIH_ENABLE_DEBUGGING)
+* Options *
+  -h      | --help              = display this message and exit
+  -q      | --quiet             = don't print anything to console 0:success else failure
+  -docker | --docker            = used for developing, will create ${#dockerOsList[@]} containers to test compiling and running gpkih: ${dockerOsList[@]}
+  -docs   | --documentation     = create doxygen documentation - *not super fancy*
+  -d      | --define <KEY=VAL>  = add preprocessing directives
+  -ed     | --enable-debugging  = enable debugging capabilities
 EOF
         exit 0
 }
 
-function main(){
-        
-        if [ -e "$logStderr" ]; then
-                rm "$logStderr" || { printf "[!] Don't have permissions to remove previous stderr log '%s', aborting ...\n" "$logStderr"; exit 1; }
-        fi
-        
-        if ! [ -e "$buildDir" ]; then
-                mkdir "$buildDir"
-                if (( $? != 0 )); then
-                        $verbose && printf "[!] Couldn't create build dir '%s'\n" "$buildDir"
-                        exit 1
-                fi
-        fi
-        
-        cd "$buildDir"
-        
+function parse(){
+
+        for (( i=0 ; i < $argc ; ++i )); do
+                arg="${args[$i],,}"
+                if [[ "$arg" == "-q" || "$arg" == "--quiet" ]]; then
+                        quiet=true
+                        args=("${args[@]:0:$i}" "${args[@]:$i}")
+                        break
+                fi 
+        done
+
         for (( i=0 ; i < $argc ; ++i )); do
                 arg="${args[$i],,}"
                 if [[ "$arg" == "-h" || "$arg" == "--help" ]]; then
                         usage
-                elif [[ "$arg" == "-q" || "$arg" == "--quiet" ]]; then
-                        verbose=false
                 elif [[ "$arg" == "-docker" || "$arg" == "--docker" ]]; then
                         __runDockerTests
                 elif [[ "$arg" == "-docs" || "$arg" == "--documentation" ]]; then
                         __generateDocumentation
                 elif [[ "$arg" == "-d" || "$arg" == "--define" ]]; then
-                        if ! grep -q "=" <<< "${args[++i]}"; then
-                                printf "[!] Missing equal sign '=' on -d | --define option, syntax KEY=VAL\n" && exit 0
+                        if ! grep -q '=' <<< "${args[++i]}"; then 
+                                $quiet || printf "[!] Wrong syntax '%s', right syntax KEY=VAL\nnote the missing '='\n" "${args[++i]}"
+                                exit 1
                         fi
                         commands[0]="${commands[0]} -D${args[++i]}"
+                elif [[ "$arg" == "--enable-debugging" ]]; then
+                        GPKIH_ENABLE_DEBUGGING=true
                 fi
         done
-#        printf "%s\n" "${commands[0]}" && exit 0
+
+        if $GPKIH_ENABLE_DEBUGGING; then
+                $quiet || printf "[+] Debugging capabilities ENABLED\n" && commands[0]="${commands[0]} -DGPKIH_ENABLE_DEBUGGING=1"
+        else
+                $quiet || printf "[+] Debugging capabilities DISABLED\n" && commands[0]="${commands[0]} -DGPKIH_ENABLE_DEBUGGING=0"
+        fi
+
+}
+
+function main(){
+        
+        &>/dev/null > "$logStderr"  || printf "[!] Don't have permissions to write stdout log file '%s'\n" "$logStderr"
+        &>/dev/null > "$logStdout"  || printf "[!] Don't have permissions to write stderr log file '%s'\n" "$logStdout"
+
+        parse
+
+        if ! [ -e "$buildDir" ]; then
+                mkdir "$buildDir"
+                if (( $? != 0 )); then
+                        $quiet || printf "[!] Couldn't create build dir '%s'\n" "$buildDir"
+                        exit 1
+                fi
+        fi
+        
+        cd "$buildDir"
 
         for command in "${commands[@]}"; do
-                $verbose && printf "[running] %s\n" "$command" 
-                if $verbose; then
-                  $command 2>> "$logStderr" 
+                
+                if $quiet; then
+                        $command &>/dev/null
                 else
-                  $command &>/dev/null
+                        printf "[running] %s\n" "$command"
+                        $command 1>> "$logStdout" 2>> "$logStderr" 
                 fi
                 
                 if (( $? != 0 )); then
-                        $verbose && printf "Something failed running '%s', check '%s' for more information\n" "$command" "$logStderr"
+                        $quiet || printf "Something failed running '%s'\ncheck '%s' for more information\n" "$command" "$logStderr"
                         exit $?
                 fi 
         done
         
-        $verbose && printf "[info] gpkih succesfully compiled: %s\n" "$binaryOutpath"
+        $quiet || printf "[info] gpkih succesfully compiled: %s\n[info] out logs can be found at '%s'\n" "$binaryOutpath" "$logStdout"
         exit 0        
 }
 

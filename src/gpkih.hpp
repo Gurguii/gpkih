@@ -4,6 +4,7 @@
 #include <string_view>
 #include <filesystem>
 #include "logger/logger.hpp"
+#include "memory/memmgmt.hpp"
 
 // Custom typenames
 using str     = std::string;
@@ -25,6 +26,7 @@ constexpr char EOL = '\n';
 #include <Windows.h>
 constexpr char SLASH = '\\';
 constexpr const char *vpnConfigExtension = "ovpn";
+
 #else
 
 /* LINUX STUFF */
@@ -48,15 +50,26 @@ extern std::string GPKIH_BASEDIR;
 extern std::string CONF_DIRPATH;
 extern std::string DB_DIRPATH;
 
-extern gpkih::Logger *gpkihLogger;
-#define ADD_LOG gpkihLogger->addLog
-//extern Logger *programLogger;
-//extern Buffer *programBuffer;
+// Buffer instance to manage dynamically allocated memory, used by any part of the program
+// that would require allocating dynamic memory (malloc()) started by main() to 'MAYBE, NOT YET'
+// allow modification of the buffer size from configuration file 'gpkih.conf'
+extern Buffer *gpkihBuffer;
+extern Logger *gpkihLogger;
 
 /* Custom return codes */
 enum class GPKIH_RETURN_CODES : int{
   __we_good = 0,
-#define GPKIH_OK static_cast<int>(GPKIH_RETURN_CODES::__we_good)
   __we_bad = 1,  
-#define GPKIH_FAIL static_cast<int>(GPKIH_RETURN_CODES::__we_bad)
 };
+constexpr int GPKIH_OK = static_cast<int>(GPKIH_RETURN_CODES::__we_good);
+constexpr int GPKIH_FAIL = static_cast<int>(GPKIH_RETURN_CODES::__we_bad);
+
+#define ADD_LOG gpkihLogger->addLog
+
+#define BUFFER_PTR gpkihBuffer;
+#define BUFFER *gpkihBuffer
+#define ALLOCATE gpkihBuffer->allocate
+#define AVAILABLE_MEMORY gpkihBuffer->available()
+#define CALLOCATE gpkihBuffer->allocate_and_copy
+#define FREE_MEMORY_BLOCK gpkihBuffer->freeblock
+#define BUFFER_DUMP gpkihBuffer->dump

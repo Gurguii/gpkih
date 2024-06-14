@@ -206,14 +206,14 @@ int utils::entities::incrementSerial(Profile &profile, Entity &entity){
 }
 
 std::string utils::entities::opensslOneliner(Subject &ref){
-    std::ostringstream ss;
-    
-    strlen(ref.country) != 0 && ss << fmt::format("/C={}",ref.country);
-    ref.state != nullptr && ss << fmt::format("/ST={}",ref.state);
-    ref.location != nullptr && ss << fmt::format("/L={}", ref.location);
-    ref.organisation != nullptr && ss << fmt::format("/O={}",ref.organisation);
-    ref.cn != nullptr && ss << fmt::format("/CN={}",ref.cn);
-    ref.email != nullptr && ss << fmt::format("/emailAddress={}",ref.email);
-
-    return ss.str();
+  std::ostringstream ss;
+  
+  strlen(ref.country) != 0 && ss << fmt::format("/C={}",ref.country);
+  ref.state != nullptr && ss << fmt::format("/ST={}",ref.state);
+  ref.location != nullptr && ss << fmt::format("/L={}", ref.location);
+  ref.organisation != nullptr && ss << fmt::format("/O={}",ref.organisation);
+  ref.cn != nullptr && ss << fmt::format("/CN={}",ref.cn);
+  ref.email != nullptr && ss << fmt::format("/emailAddress={}",ref.email);
+  
+  return ss.str();
 }

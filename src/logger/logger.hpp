@@ -1,68 +1,30 @@
 #pragma once
 #include <fstream> // std::ifstream, std::ofstream
-#include <filesystem>
+#include "log_enums.hpp"
 
-namespace gpkih
+class Logger
 {
-	enum class Level
-	{
-		none = 0,
-		info = 2,
-		warning = 4,
-		error = 8,
-		all = 15
-	};
+	private:
+		static inline std::filesystem::path basedir;
+		
+		std::filesystem::path logpath;
+		
+		std::ofstream logstream;
+		std::ofstream ppstream;
 
-	constexpr static Level L_NONE = Level::none;
-	constexpr static Level L_INFO = Level::info;
-	constexpr static Level L_WARN = Level::warning;
-	constexpr static Level L_ERROR = Level::error;
-	
-	enum class LogMsgField : uint16_t
-	{
-		none = 0,
-		type = 2,
-		content = 4,
-		time = 8,
-		all = 15
-	};
-	
-	class Logger
-	{
-		private:
-			static inline std::filesystem::path basedir;
-			
-			std::filesystem::path logpath;
-			std::filesystem::path ppfile;
-			std::ofstream logstream;
-			std::ofstream ppstream;
-	
-			size_t msize = 0;         // max log size
-			size_t csize = 0;         // file size in bytes
-	
-			LogMsgField includedFields;
-			Level includedLevels;
-		public:
-			static void setBaseDir(std::string &&basedir);
-			static std::string getBaseDir();
-	
-			Logger(std::string &&filename);
-			int addLog(Level level, std::string_view msg);
-			const LogMsgField& ffields();
-	
-			~Logger();
-	}; // class Logger
+		size_t maxSize     = 0;         // max log size
+		size_t currentSize = 0;         // file size in bytes
+		std::filesystem::path ppfile;
+		logMetadata metadata;
+		logMsgField includedFields = logMsgField::none;
+		logLevel includedLevels = logLevel::none;
+	public:
+		static void setBaseDir(std::string &&basedir);
+		static std::string getBaseDir();
 
-	static inline LogMsgField operator|(LogMsgField lo, LogMsgField ro) {
-		return static_cast<LogMsgField>(static_cast<uint16_t>(lo) | static_cast<uint16_t>(ro));
-	} // LogMsgField operator |
-	static inline bool operator&(LogMsgField lo, LogMsgField ro) {
-		return static_cast<bool>(static_cast<uint16_t>(lo) & static_cast<uint16_t>(ro));
-	} // LogMsgField operator &
-	static inline Level operator|(Level lo, Level ro) {
-		return static_cast<Level>(static_cast<uint16_t>(lo) | static_cast<uint16_t>(ro));
-	} // Level operator |
-	static inline bool operator&(Level lo, Level ro) {
-		return static_cast<bool>(static_cast<uint16_t>(lo) & static_cast<uint16_t>(ro));
-	} // Level operator &
-} // namespace gpkih
+		Logger(std::string &&filename);
+		int addLog(logLevel level, std::string_view msg);
+		const logMsgField& ffields();
+
+		~Logger();
+}; // class Logger

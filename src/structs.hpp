@@ -85,7 +85,7 @@ static bool operator&(uint16_t lo, PROFILE_FIELDS ro) {
 }
 
 static inline std::string to_str(PROFILE_FIELDS field) {
-    return (field & P_NAME ? "name" : "source");
+  return (field & P_NAME ? "name" : "source");
 }
 
 enum class ENTITY_TYPE {
@@ -150,7 +150,6 @@ static bool operator&(uint16_t lo, ENTITY_FIELDS ro){
 }
 
 /* ENTITY STRING -> ENTITY_FIELD MAP*/
-
 
 enum class ENTITY_STATUS : uint8_t {
   active = 2,
@@ -232,7 +231,7 @@ struct Subject {
 * */ 
 struct keyInfo{
   char *algo = nullptr; // ed25519, rsa...
-  uint8_t algoLen = 0;
+  uint8_t algoLen;
   size_t size;
 };
 
@@ -264,7 +263,7 @@ struct Entity {
   ENTITY_TYPE type = ET_NONE;
   ENTITY_STATUS status = ES_ACTIVE;
   
-  size_t serial = 0;
+  size_t serial;
 
   std::chrono::time_point<std::chrono::system_clock> creationDate = std::chrono::system_clock::now();
   std::chrono::time_point<std::chrono::system_clock> expirationDate; // set by build action based on days configuration
@@ -290,7 +289,7 @@ struct Entity {
 namespace gpkih::profile
 {
   static inline std::string ca_crt(Profile& ref) {
-      return fmt::format("{}{}pki{}ca{}crt.pem",ref.source, SLASH, SLASH, SLASH);
+    return fmt::format("{}{}pki{}ca{}crt.pem",ref.source, SLASH, SLASH, SLASH);
   }
   
   static inline std::string gopenssl(Profile &ref){

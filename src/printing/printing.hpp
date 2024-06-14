@@ -46,13 +46,6 @@ constexpr STYLE S_ERROR = fg(T_RED) | EMPHASIS::bold | EMPHASIS::italic;
 constexpr STYLE S_SUCCESS = fg(T_GREEN) | EMPHASIS::bold;
 constexpr STYLE S_HINT = fg(T_YELLOW) | EMPHASIS::italic;
 
- 
-#ifdef GPKIH_ENABLE_DEBUGGING
-inline static constexpr bool DEBUG_COMPILED = true;
-#else
-inline static constexpr bool DEBUG_COMPILED = false;
-#endif
-
 /* Normal printing */
 extern void PRINT(std::string_view msg, COLOR color);
 extern void PRINT(std::string_view msg, STYLE style = S_NONE);
@@ -116,4 +109,4 @@ extern std::string PROMPT(std::string_view msg, bool lower_input = false, COLOR 
 // Message to print when an unknown option is found when parsing
 extern void UNKNOWN_OPTION_MESSAGE(std::string_view opt);
 
-extern std::unordered_map<std::string, COLOR> map_str_color();
+extern const std::unordered_map<std::string, COLOR>& map_str_color();

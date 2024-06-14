@@ -1,13 +1,10 @@
 #include "printing.hpp"
 #include <iostream>
+#include <unordered_map>
 
 bool ENABLE_DEBUG_MESSAGES = false;
 int DEBUG_LEVEL = 1;
 bool ENABLE_PRINTING = true;
-
-#ifndef GPKIH_ENABLE_DEBUGGING
-bool warned = false;
-#endif
 
 /* Normal printing */
 void PRINT(std::string_view msg, COLOR color) {
@@ -70,8 +67,8 @@ void UNKNOWN_OPTION_MESSAGE(std::string_view opt) {
 	fmt::print(fg(COLOR::antique_white), " [parsing] unknown option '{}'\n", opt);
 };
 
-std::unordered_map<std::string, COLOR> map_str_color(){
-	return {
+const std::unordered_map<std::string, COLOR>& map_str_color(){
+	static std::unordered_map<std::string, COLOR>_map{
 		{"BLUE", BLUE},
 		{"RED", RED},
 		{"GREEN", GREEN},
@@ -86,4 +83,5 @@ std::unordered_map<std::string, COLOR> map_str_color(){
 		{"LPINK", LPINK},
 		{"PINK", PINK}
 	};
+	return _map;
 }

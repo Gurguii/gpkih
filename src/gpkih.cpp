@@ -1,7 +1,7 @@
 #include "gpkih.hpp"
 
 #include <future>
-#include "memory/memmgmt.hpp"
+//#include "memory/memmgmt.hpp"
 #include "parse/parser.hpp"
 #include "logger/signals.hpp"
 #include "utils/utils.hpp"
@@ -144,10 +144,11 @@ static int __setBuffer(){
 
 static int __setLogger(){
     if(gpkihLogger != nullptr){
+        PERROR("Gpkih logger already set - {}\n", gpkihLogger->getBaseDir());
         return GPKIH_FAIL;
     }
     Logger::setBaseDir(std::move(fs::path(GPKIH_BASEDIR)/"logs").string());
-    static Logger __mainGpkihLogger(fs::path(GPKIH_BASEDIR)/"gpkih");
+    static Logger __mainGpkihLogger("gpkih");
     gpkihLogger = &__mainGpkihLogger;
     return GPKIH_OK;
 }
@@ -166,6 +167,7 @@ static int __parseGlobals(std::vector<std::string> &opts){
             opts.erase(opts.begin()+i);
         }
         else if(opt == "-debug" || opt == "--debug"){
+
             #ifndef GPKIH_ENABLE_DEBUGGING
             PWARN("This version of gpkih wasn't compiled with debugging capabilities\n");
             PHINT("For such thing, you can compile gpkih using the setup script: ./setup -d GPKIH_ENABLE_DEBUGGING=ON\n");

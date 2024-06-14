@@ -31,17 +31,3 @@ public:
   const std::string &getLastError();
   const char *const head();
 };
-
-// Buffer instance to manage dynamically allocated memory
-// used by any part of the program that would require allocating dynamic memory (malloc())
-// started by main() to 'MAYBE, NOT YET' allow modification of the buffer size from configuration file
-// 'gpkih.conf'
-extern Buffer *gpkihBuffer;
-
-#define BUFFER_PTR gpkihBuffer;
-#define BUFFER *gpkihBuffer
-#define ALLOCATE gpkihBuffer->allocate
-#define AVAILABLE_MEMORY gpkihBuffer->available()
-#define CALLOCATE gpkihBuffer->allocate_and_copy
-#define FREE_MEMORY_BLOCK gpkihBuffer->freeblock
-#define BUFFER_DUMP gpkihBuffer->dump
