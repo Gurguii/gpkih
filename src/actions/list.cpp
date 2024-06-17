@@ -2,6 +2,8 @@
 #include "fmt/color.h"
 #include <sstream>
 #include <string>
+
+#include "../profiles/enums.hpp"
 #include "../db/profiles.hpp"
 
 using namespace gpkih;
@@ -10,14 +12,15 @@ using namespace gpkih;
 static inline std::vector<PROFILE_FIELDS> pfield_arr{P_ID,P_NAME,P_SRC,P_CREATION_DATE,P_LAST_MODIFICATION,P_CA_CREATED,P_SV_COUNT,P_CL_COUNT};
 static inline std::vector<ENTITY_FIELDS> efield_arr{E_SERIAL,E_COMMON,E_CREATION_DATE,E_EXPIRATION,E_TYPE,E_STATUS,E_COUNTRY,E_STATE,E_LOCATION,E_ORG,E_MAIL,E_KEYPATH,E_REQPATH,E_CRTPATH};
 
-static inline std::string_view date_format;
-static inline int date_width;
+static inline std::string_view dateFormat;
+static inline int dateWidth;
 
 // @brief print profile headers
 template <typename T> void __header_print(uint16_t fields, std::vector<const char*> &values,std::vector<int> &widths, STYLE style = S_NONE){
   PDEBUG(2, "__header_print(template)");
 
   if(SHOW_HEADER == false){
+    PDEBUG(1,"SHOW HEADER IS FALSE");
     return;
   }
 
@@ -61,8 +64,8 @@ static inline void __table_print(PROFILE_FIELDS pfields, std::map<std::string_vi
     pfields & P_ID                && entry << fmt::format("{:^4}",p.id);
     pfields & P_NAME              && entry << fmt::format("{:^" + std::to_string(widths[1])  + "}",p.name);
     pfields & P_SRC               && entry << fmt::format("{:^" + std::to_string(widths[2])  + "}",p.source);
-    pfields & P_CREATION_DATE     && entry << fmt::format("{:^" + std::to_string(date_width) + "}",fmt::format(date_format,p.creationDate));
-    pfields & P_LAST_MODIFICATION && entry << fmt::format("{:^" + std::to_string(date_width) + "}",fmt::format(date_format,p.last_modification));
+    pfields & P_CREATION_DATE     && entry << fmt::format("{:^" + std::to_string(dateWidth) + "}",fmt::format(dateFormat,p.creationDate));
+    pfields & P_LAST_MODIFICATION && entry << fmt::format("{:^" + std::to_string(dateWidth) + "}",fmt::format(dateFormat,p.last_modification));
     pfields & P_CA_CREATED        && entry << fmt::format("{:^12}", (p.ca_created ? "yes" : "no"));
     pfields & P_SV_COUNT          && entry << fmt::format("{:^14}", p.sv_count);
     pfields & P_CL_COUNT          && entry << fmt::format("{:^14}", p.cl_count);
@@ -76,11 +79,10 @@ static inline void __table_print(PROFILE_FIELDS pfields, std::map<std::string_vi
 template <typename T> static inline void __table_print(ENTITY_FIELDS fields, const std::map<std::string_view,T>* data, std::vector<int> &widths, STYLE style = S_NONE){
   PDEBUG(2,"__table_print(Entity)");
   for(const auto &[cn,e] : *data){
-    const Subject &s = e.subject;
     std::ostringstream entry{};
 
     std::string status;    
-    switch(e.status){
+    switch(static_cast<ENTITY_STATUS>(e.status)){
     case ES_ACTIVE:
       status = fmt::format(fg(TB_GREEN) | EMPHASIS::bold, "active");
       break;
@@ -98,17 +100,17 @@ template <typename T> static inline void __table_print(ENTITY_FIELDS fields, con
     // TODO - think about this approach
     // fields & E_SERIAL        && entry << "{:^" << widths[0] << "}"; // e.serial
     fields & E_SERIAL        && entry << fmt::format("{:^" + std::to_string(widths[0])   + "}", e.serial);
-    fields & E_COMMON        && entry << fmt::format("{:^" + std::to_string(widths[1])   + "}", s.cn);
-    fields & E_CREATION_DATE && entry << fmt::format("{:^" + std::to_string(widths[2])   + "}", fmt::format(date_format,e.creationDate));
-    fields & E_EXPIRATION    && entry << fmt::format("{:^" + std::to_string(widths[3])   + "}", fmt::format(date_format,e.expirationDate));
-    fields & E_TYPE          && entry << fmt::format("{:^" + std::to_string(widths[4])   + "}", to_str(e.type));
+    fields & E_COMMON        && entry << fmt::format("{:^" + std::to_string(widths[1])   + "}", e.subject.cn);
+    fields & E_CREATION_DATE && entry << fmt::format("{:^" + std::to_string(widths[2])   + "}", fmt::format(dateFormat,e.creationDate));
+    fields & E_EXPIRATION    && entry << fmt::format("{:^" + std::to_string(widths[3])   + "}", fmt::format(dateFormat,e.expirationDate));
+    fields & E_TYPE          && entry << fmt::format("{:^" + std::to_string(widths[4])   + "}", entity::toString(static_cast<ENTITY_TYPE>(e.type)));
     fields & E_STATUS        && entry << fmt::format("{:^" + std::to_string(widths[5])   + "}", status);
    
-    fields & E_COUNTRY       && entry << fmt::format("{:^" + std::to_string(widths[6])   + "}", s.country);
-    fields & E_STATE         && entry << fmt::format("{:^" + std::to_string(widths[7])   + "}", s.state);
-    fields & E_LOCATION      && entry << fmt::format("{:^" + std::to_string(widths[8])   + "}", s.location);
-    fields & E_ORG           && entry << fmt::format("{:^" + std::to_string(widths[9])   + "}", s.organisation);
-    fields & E_MAIL          && entry << fmt::format("{:^" + std::to_string(widths[10])  + "}", s.email);
+    fields & E_COUNTRY       && entry << fmt::format("{:^" + std::to_string(widths[6])   + "}", e.subject.country);
+    fields & E_STATE         && entry << fmt::format("{:^" + std::to_string(widths[7])   + "}", e.subject.state);
+    fields & E_LOCATION      && entry << fmt::format("{:^" + std::to_string(widths[8])   + "}", e.subject.location);
+    fields & E_ORG           && entry << fmt::format("{:^" + std::to_string(widths[9])   + "}", e.subject.organisation);
+    fields & E_MAIL          && entry << fmt::format("{:^" + std::to_string(widths[10])  + "}", e.subject.email);
    
     fields & E_KEYPATH       && entry << fmt::format("{:^" + std::to_string(widths[11])  + "}", e.keyPath);
     fields & E_REQPATH       && entry << fmt::format("{:^" + std::to_string(widths[12])  + "}", e.csrPath);
@@ -121,11 +123,11 @@ template <typename T> static inline void __table_print(ENTITY_FIELDS fields, con
 
 int __set_date(){
   PDEBUG(2, "__set_date()");
-  date_format = Config::get("formatting","date_format");
-  if(date_format.empty()){
+  dateFormat = Config::get("formatting","dateFormat");
+  if(dateFormat.empty()){
     return GPKIH_FAIL;
   }
-  date_width = std::max(static_cast<size_t>(21),fmt::format(date_format,std::chrono::system_clock::now()).size()+2);
+  dateWidth = std::max(static_cast<size_t>(21),fmt::format(dateFormat,std::chrono::system_clock::now()).size()+2);
   return GPKIH_OK;
 }
 
@@ -138,7 +140,7 @@ int actions::list_profiles(uint16_t fields){
 
   auto profiles = db::profiles::get();
   std::vector<const char*> headers{"id","name","source","creationDate","last_modification","ca_created","server_count","client_count"};
-  std::vector<int> widths{4,6,8,date_width,date_width,12,14,14};
+  std::vector<int> widths{4,6,8,dateWidth,dateWidth,12,14,14};
 
   for(const auto &kv : *profiles){
     const Profile &p = kv.second;
@@ -174,17 +176,16 @@ int actions::list_entities(std::string_view profileName,uint16_t fields){
 
   auto entityList = eman.retrieve();
   std::vector<const char *> headers{"serial","common_name","creationDate","expirationDate","type","status","country","state","location","organisation","email","keyPath","csrPath","crtPath"};
-  std::vector<int> widths{8,13,date_width,date_width,8,6,9,7,10,14,7,10,10,10};
+  std::vector<int> widths{8,13,dateWidth,dateWidth,8,6,9,7,10,14,7,10,10,10};
   
   // Set appropiate widths
   for(const auto &kv : *entityList){
     const Entity &e = kv.second;
-    const Subject &s = e.subject;
-    widths[1]  = std::max(widths[1],  static_cast<int>(s.cnlen)) + 2;
-    widths[6]  = std::max(widths[6],  static_cast<int>(s.statelen)) + 2;
-    widths[7]  = std::max(widths[7],  static_cast<int>(s.locationlen)) + 2;
-    widths[8]  = std::max(widths[8],  static_cast<int>(s.organisationlen)) + 2;
-    widths[9]  = std::max(widths[9],  static_cast<int>(s.emaillen)) + 2;
+    widths[1]  = std::max(widths[1],  static_cast<int>(e.subject.cnlen)) + 2;
+    widths[6]  = std::max(widths[6],  static_cast<int>(e.subject.statelen)) + 2;
+    widths[7]  = std::max(widths[7],  static_cast<int>(e.subject.locationlen)) + 2;
+    widths[8]  = std::max(widths[8],  static_cast<int>(e.subject.organisationlen)) + 2;
+    widths[9]  = std::max(widths[9],  static_cast<int>(e.subject.emaillen)) + 2;
     widths[10] = std::max(widths[10], static_cast<int>(e.keyPathLen)) + 2;
     widths[11] = std::max(widths[11], static_cast<int>(e.csrPathLen)) + 2;
     widths[12] = std::max(widths[12], static_cast<int>(e.crtPathLen)) + 2;

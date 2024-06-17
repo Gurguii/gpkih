@@ -73,3 +73,4 @@ constexpr int GPKIH_FAIL = static_cast<int>(GPKIH_RETURN_CODES::__we_bad);
 #define CALLOCATE gpkihBuffer->allocate_and_copy
 #define FREE_MEMORY_BLOCK gpkihBuffer->freeblock
 #define BUFFER_DUMP gpkihBuffer->dump
+#define ENOUGH_AVAILABLE(x) static_cast<bool>(gpkihBuffer->available()-x > 0)

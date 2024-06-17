@@ -275,9 +275,9 @@ int actions::init(std::string_view &profileName, std::string_view &profileSource
       
       // QUESTION 2 - create ca?
       // also had to manually set the type
-      utils::entities::promptForSubject(profile.name, ca.subject, pconf, eman);
-      utils::entities::setCAPaths(profile,ca);
-      utils::entities::loadSerial(profile,ca);
+      //entity::promptForSubject(profile.name, ca.subject, pconf, eman);
+      entity::setCAPaths(profile,ca);
+      entity::loadSerial(profile,ca);
       ca.expirationDate = ca.creationDate + std::chrono::seconds(3600*24*std::stoull(days.data(),nullptr,10));
       if(build_ca(profile, pconf, ca, eman, days, keyAlgo, keySize) == GPKIH_OK){
         caBuilt = true;
@@ -296,9 +296,9 @@ int actions::init(std::string_view &profileName, std::string_view &profileSource
       ans = PROMPT("Create CA?","[y/n]",true);
 
       if(ans == "y" || ans == "yes"){
-        utils::entities::promptForSubject(profile.name, ca.subject, pconf, eman);
-        utils::entities::setCAPaths(profile,ca);
-        utils::entities::loadSerial(profile,ca);
+        //entity::promptForSubject(profile.name, ca.subject, pconf, eman);
+        entity::setCAPaths(profile,ca);
+        entity::loadSerial(profile,ca);
         ca.expirationDate = ca.creationDate + std::chrono::seconds(3600*24*std::stoull(days.data(),nullptr,10));
         if(build_ca(profile, pconf, ca, eman, days, keyAlgo, keySize) == GPKIH_OK){
           caBuilt = true;
@@ -314,7 +314,7 @@ int actions::init(std::string_view &profileName, std::string_view &profileSource
     }
   }
 
-  ADD_LOG(L_INFO,fmt::format("profile:{} action:init source:{}",profile.name,profile.source));
+  ADD_LOG(LL_INFO,fmt::format("profile:{} action:init source:{}",profile.name,profile.source));
   PSUCCESS("Profile '{}' created\n", profile.name);
   return GPKIH_OK;
 }

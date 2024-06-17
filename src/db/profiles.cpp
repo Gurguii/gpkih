@@ -2,8 +2,8 @@
 #include <fstream> // std::ifstream | std::ofstream
 #include <iostream> // std::cin
 #include "../printing/printing.hpp"
-#include "../memory/memmgmt.hpp"
 #include "mnck.hpp"
+#include "../gpkih.hpp"
 
 using namespace gpkih;
 

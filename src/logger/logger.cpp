@@ -1,166 +1,156 @@
 #include "logger.hpp"
-#include "../config/config_management.hpp" // Config::get()
-#include "../printing/printing.hpp"
+#include "../utils/utils.hpp"
+#include <fmt/format.h>
+#include <filesystem>
+#include <unordered_map>
+#include <fmt/chrono.h>
 
-using namespace gpkih;
+#ifdef _WIN32
+constexpr char SLASH = '\\';
+#else
+constexpr char SLASH = '/';
+#endif
 
-static const auto toBytes = [](size_t number, char unit){
-	switch(unit){
-		case 'g':
-			return static_cast<size_t>(number * 1024 * 1024 * 1024);
-		case 'm':
-			return static_cast<size_t>(number * 1024 * 1024);
-		case 'k':
-			return static_cast<size_t>(number * 1024);
-		case 'b':
-			return static_cast<size_t>(number);
-		default:
-			// assume bytes
-			return static_cast<size_t>(-1);
-	} 
+constexpr char EOL = '\n';
+
+LogException::LogException(const char *msg)
+:msg(msg){};
+const char *LogException::what() const noexcept{
+	return msg;
+}
+
+int Logger::setBaseDir(std::string &&bdir){
+	if(IS_ABSOLUTE_PATH(bdir) == false){
+		return L_PATH_NOT_ABSOLUTE;
+	}
+	if(std::filesystem::exists(bdir) == false){
+		if(std::filesystem::create_directories(bdir) == false){
+			return L_CANT_CREATE_FILE;
+		};
+	}
+	Logger::basedir = std::move(bdir);
+	return L_OK;
 };
 
-/* std::string -> logLevel map */
-static std::unordered_map<str,logLevel> __str_level_map
-{
-	{"info", L_INFO},
-	{"warning", L_WARN},
-	{"error", L_ERROR},
-};
-
-static std::unordered_map<str, logMsgField> __str_ffield_map
-{
-	{"type", logMsgField::type},
-	{"time", logMsgField::time},
-	{"content", logMsgField::content}
-};
-
-/* std::string -> FormatField map */
-
-
-void Logger::setBaseDir(std::string &&bdir){
-	Logger::basedir = fs::path(bdir);
-};
-
-std::string Logger::getBaseDir(){
+const std::string &Logger::getBaseDir(){
 	return Logger::basedir;
 }
 
+const logMsgField& Logger::getFields(){
+	return includedFields;
+}
+
+const logLevel& Logger::getLevel(){
+	return includedLevels;
+}
+
+const logMetadata& Logger::getMetadata(){
+	return metadata;
+}
+
 Logger::~Logger() {
+	std::ofstream mdata(mdataPath,std::ios::binary);
+
+	if(mdata.is_open() == true){
+		mdata.write(reinterpret_cast<const char *>(&metadata), sizeof(metadata));
+		mdata.close();
+	}else{
+		fwrite("WHAT THE FUCK DO I DO IN THIS CASE?\n",36,0,stdout);
+	}
+
 	logstream.flush();
 	logstream.close();
 } // Logger::~Logger
 
-static std::string format_msg(logLevel& level, const logMsgField& fields, std::string&& msg) {
+
+Logger::Logger(std::string &&filename, size_t maxSizeBytes, logMsgField iFields, logLevel iLevels)
+:maxSize(maxSizeBytes),includedFields(iFields),includedLevels(iLevels),logpath(std::string{Logger::basedir}+SLASH+filename+=".log"),mdataPath(std::string{Logger::basedir}+SLASH+filename+".data"){
+	// create/open log file
+	if(basedir.empty()){
+		throw LogException("Logger basedir hasn't been set");
+	}
+
+	if(IS_ABSOLUTE_PATH(logpath) == false){
+		throw LogException(logpath.c_str());
+		return;
+	}
+	logstream = std::ofstream(logpath, std::ios::app);
+
+	if (logstream.is_open() == false) {
+		throw LogException("Couldn't open log file");
+		return;
+	}else if(std::filesystem::exists(logpath) == false){
+		if (std::ofstream(logpath).is_open() == false) {
+			throw LogException("Couldn't create log file");
+			return;
+		}
+	}
+	
+	if(std::filesystem::exists(mdataPath) == true){
+		std::ifstream file(mdataPath,std::ios::binary);
+		if(file.is_open() == false){
+			throw LogException("Couldn't open logger metadata file");
+		}
+		file.read(reinterpret_cast<char*>(&metadata), sizeof(metadata));
+		file.close();
+	}else{
+		if(std::ofstream(mdataPath).is_open() == false){
+			throw LogException("Couldn't create metadata file");
+		}
+	}
+} // Logger::Logger()
+
+static inline std::string formatMsg(logMsgField iFields, logLevel level, std::string_view& msg){
 	static std::unordered_map<logLevel, std::string> level2string{
-		{L_INFO, "info"},
-		{L_WARN, "warning"},
-		{L_ERROR,"error"},
+		{LL_INFO, "info"},
+		{LL_WARN, "warning"},
+		{LL_ERROR,"error"},
 	};
-	std::ostringstream log;
+
+	std::ostringstream log{};
 	// log syntax - [date] [level] [msg]
-	fields & logMsgField::time    && log << fmt::format("[{:%d %h %Y @ %H:%M}] ", std::chrono::system_clock::now());
-	fields & logMsgField::type    && log << fmt::format("[{}] ", level2string[level]);
-	fields & logMsgField::content && log << msg << '\n';
+	iFields & LF_TIME    && log << fmt::format("{:%d-%m-%Y @ %H:%M}", std::chrono::system_clock::now());
+	iFields & LF_TYPE    && log << fmt::format("[{}] ", level2string[level]);
+	iFields & LF_CONTENT && log << msg;
+
 	return std::move(log.str());
 } // Logger::format_msg();
 
 int Logger::addLog(logLevel level, std::string_view msg){
-	size_t size = msg.size();
+	if(!(includedLevels & level)){
+		return L_LEVEL_NOT_INCLUDED;
+	};
 
-	while(this->maxSize < this->currentSize + size){
+	auto fmtLog = formatMsg(includedFields, level, msg);
+	size_t size = fmtLog.size();
+
+	while(maxSize < size + metadata.currentSize){
 		--size;
 	}
 
-	if(this->maxSize == this->currentSize + size){
+	if(maxSize == size + metadata.currentSize){
 		// Adding this log will reach max size 
 		// note: the whole log message might not fit
-		logstream.write(&msg[0], size);
-		PERROR("Maximum log size {} reached not adding any more logs\n", this->maxSize);
-		return GPKIH_FAIL;
+		logstream.write(&fmtLog[0], size);
+		lastError="Maximum log size reached";
+		return L_MAX_LOG_REACHED;
 	}
 
 	if(logstream.is_open() == false) {
-		PERROR("Can't open log file {}\n", this->logpath.c_str());
-		return GPKIH_FAIL;
+		lastError="Couldn't open log file";
+		return L_FAIL;
 	}
 	
-	logstream.write(&msg[0], size);
-	logstream.write(&EOL,1);
+	logstream.write(&fmtLog[0], size);
+	logstream << EOL;
 
-	this->currentSize+=size;
+	// Update metadata info
+	   level & LL_INFO  && ++metadata.infoCount 
+	|| level & LL_ERROR && ++metadata.errCount 
+	|| level & LL_WARN  && ++metadata.warnCount;
+	
+	metadata.currentSize+=size;
+	++metadata.entries;
 
-	return GPKIH_OK;
+	return L_OK;
 };
-
-Logger::Logger(std::string &&filename)
-:logpath(Logger::basedir/filename+=".log"),ppfile(Logger::basedir/filename+=".data"){
-	PDEBUG(1, "Logger::Logger()");
-
-	/* BEG - file checking */
-	if (fs::exists(Logger::basedir) == false) {
-		// create log directory
-		if (fs::create_directories(Logger::basedir) == false) {
-			PWARN("couldn't create log directory\n");
-			return;
-		}
-		// create log file 
-		if (std::ofstream(logpath).is_open() == false) {
-			PWARN("couldn't create log file '{}'\n", logpath.string());
-			return;
-		}
-	}else if(!fs::exists(logpath)){
-		if (!std::ofstream(logpath).is_open()) {
-			PWARN("couldn't create log file '{}'\n", logpath.string());
-			return;
-		}
-	}
-	
-	// Create streams
-	this->logstream = std::ofstream(this->logpath, std::ios::app);
-
-	/* END - File checking */
-	
-	this->currentSize = fs::file_size(logpath);
-	
-	// set max_size
-	std::string_view msizestr = Config::get("logs", "max_size");
-	if(msizestr.empty()){
-		this->maxSize = 0;
-		return; 		
-	}
-
-	size_t number = std::stoull(&msizestr[0],nullptr,10);
-	char unit = tolower(msizestr[msizestr.size()-1]);
-
-	if((this->maxSize = toBytes(number, unit)) == -1){
-		PWARN("invalid unit in logs.max_size '{}'\n", unit);
-		return;
-	}
-
-	// set includedFormatFields
-	str token;
-	sstream ss(Config::get("logs", "includedFormatFields").data());
-	while (getline(ss, token, ':')) {
-		if (__str_ffield_map.find(token) != __str_ffield_map.end()) {
-			// it exists, add field
-			includedFields = includedFields | __str_ffield_map[token];
-		}
-	}
-
-	token.assign("");
-	ss.clear();
-
-	// set include_levels
-	this->includedLevels = L_NONE;
-
-	ss = std::move(sstream(Config::get("logs", "includedLevels").data()));
-	while (getline(ss, token, ':')) {
-		if (__str_level_map.find(token) != __str_level_map.end()) {
-			// it exists, add field
-			includedLevels = includedLevels | __str_level_map[token];
-		}
-	}
-	
-	return;
-} // Logger::Logger()

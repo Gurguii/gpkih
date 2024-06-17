@@ -44,13 +44,8 @@ echo -e "System: $osname\nDate: $cdate" > "$tmpfile"
 
 ./setup -q
 
-if (( $? == 0 )); then
-	# Success compiling
-	echo -e "Status: success" >> "$tmpfile"
-else
-	# Fail compiling
-	echo -e "Status: fail" >> "$tmpfile"
-fi
+printf "Compilation status: " >> "$tmpfile"
+(( $? == 0 )) && printf "success\n" >> "$tmpfile" || printf "failure\n" >> "$tmpfile"
 
 # Do extra checks
 echo -e "  [+] Running checks" >> "$tmpfile"

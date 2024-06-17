@@ -3,23 +3,16 @@
 #include <fmt/core.h>
 #include <unordered_map>
 #include "../printing/printing.hpp"
-//#include "../config/config_management.hpp"
-
-using str = std::string;
-using strview = std::string_view;
 
 /* Interface for action helpers */
-class helper{
-	virtual void usage();
-	virtual void usage_brief();
-};
 
 namespace gpkih::help {
 extern void usage();
 extern void usage_brief();
-extern void call_helper(strview action);
-	extern std::unordered_map<str, void(*)()> help_funcs;
+extern void call_helper(std::string_view action);
+extern std::unordered_map<std::string, void(*)()> help_funcs;
 }
+
 namespace gpkih::help::build {
 	extern void usage();
 }

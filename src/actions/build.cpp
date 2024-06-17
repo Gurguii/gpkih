@@ -1,10 +1,8 @@
 #include "actions.hpp"
 
 #include <filesystem>
-#include <iostream>
 #include <fstream>
-
-#include "../utils/utils.hpp"
+#include "../entities/entities.hpp"
 using namespace gpkih;
 
 // Attempts to create the target path (directory or file)
@@ -40,13 +38,13 @@ static std::pair<std::string,std::string> __server_client_build_commands(Profile
   // was created, leading to errors
 
   // Set entity certificate request PATH
-  std::string tmp = std::move(fmt::format("{}{}-csr.pem",profile::dir_req(profile), subject.cn));
-  CALLOCATE(entity.csrPath,reinterpret_cast<size_t*>(&entity.csrPathLen),tmp);
+  std::string tmp = std::move(fmt::format("{}{}-csr.pem",profile::reqDir(profile), subject.cn));
+  //CALLOCATE(entity.csrPath,reinterpret_cast<size_t*>(&entity.csrPathLen),tmp);
 
   // Set entity key PATH
   tmp.assign("");
-  tmp = std::move(fmt::format("{}{}-key.pem",profile::dir_key(profile), subject.cn));
-  CALLOCATE(entity.keyPath,reinterpret_cast<size_t*>(&entity.keyPathLen),tmp);
+  tmp = std::move(fmt::format("{}{}-key.pem",profile::keyDir(profile), subject.cn));
+  //CALLOCATE(entity.keyPath,reinterpret_cast<size_t*>(&entity.keyPathLen),tmp);
 
   tmp.assign("");
 
@@ -55,21 +53,21 @@ static std::pair<std::string,std::string> __server_client_build_commands(Profile
     keySize,
     entity.csrPath,
     entity.keyPath,
-    utils::entities::opensslOneliner(subject)
+    entity::opensslOneliner(subject)
   ));
   
   // openssl ca -config {} -in {} -out {} -subj '{}' -extfile {}x509{}{} -notext -days +{}
 
   // Set entity certificate PATH
-  tmp = std::move(fmt::format("{}{}-crt.pem",profile::dir_crt(profile), subject.cn));
-  CALLOCATE(entity.crtPath,reinterpret_cast<size_t*>(&entity.crtPathLen),tmp);
+  tmp = std::move(fmt::format("{}{}-crt.pem",profile::crtDir(profile), subject.cn));
+  //CALLOCATE(entity.crtPath,reinterpret_cast<size_t*>(&entity.crtPathLen),tmp);
 
   tmp.assign("");
   
-  std::string x509_extensions_file_path = CONF_DIRPATH + "x509" + SLASH + to_str(entity.type);
+  std::string x509_extensions_file_path = CONF_DIRPATH + "x509" + SLASH + entity::toString(static_cast<ENTITY_TYPE>(entity.type));
   
   std::string crt_command = std::move(fmt::format("openssl ca -config \"{}\" -in \"{}\" -out \"{}\" -extfile \"{}\" -days {}",
-    profile::gopenssl(profile),
+    profile::gopensslPath(profile),
     entity.csrPath,
     entity.crtPath,
     x509_extensions_file_path,
@@ -92,10 +90,10 @@ static std::string __ca_build_command(Profile &profile, ConfigMap &pkiconf, Enti
   PDEBUG(2, "__ca_build_command()");
 
   std::string command = std::move(fmt::format("openssl req -config {} -new -x509 -out {} -keyout {} -subj {} -set_serial {} -newkey {}:{} -noenc -days {}",
-    profile::gopenssl(profile),
+    profile::gopensslPath(profile),
     entity.crtPath,
     entity.keyPath,
-    utils::entities::opensslOneliner(entity.subject),
+    entity::opensslOneliner(entity.subject),
     entity.serial,
     keyAlgo,
     keySize,
@@ -114,7 +112,7 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
                                  std::vector<Entity> &entities,bool autoanswer, bool prompt) {
   PDEBUG(2, "__create_inline_config()");
   
-  std::string caCertPath = std::move(profile::ca_crt(profile));
+  std::string caCertPath = std::move(profile::caCertificatePath(profile));
 
   if (!fs::exists(caCertPath)) {
     PERROR("ca cert path '{}' doesn't exist\n", caCertPath);
@@ -123,8 +121,8 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
 
   // Load CA certificate
   size_t caCertSize = fs::file_size(caCertPath);
-  //std::string caCertBuffer("\0", caCertSize);
   char *caCertBuffer = ALLOCATE(caCertSize);
+
   if(caCertBuffer == nullptr){
     PERROR("couldn't load CA certificate '{}'\n", caCertPath);
     return GPKIH_FAIL;  
@@ -141,7 +139,7 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
 
     auto entityInlinePath = entityDir / fmt::format("inline_{}.{}",entity.subject.cn,vpnConfigExtension);
 
-    if(config.dump_vpn_conf(entityInlinePath, entity.type) == false){
+    if(config.dump_vpn_conf(entityInlinePath, static_cast<ENTITY_TYPE>(entity.type)) == false){
       return GPKIH_FAIL;
     }
 
@@ -235,7 +233,7 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity, E
     return GPKIH_FAIL;
   }
 
-  utils::entities::incrementSerial(profile, entity);
+  entity::incrementSerial(profile, entity);
   
   // Update profile modification date + ca_created status
   profile.last_modification = std::chrono::system_clock::now();

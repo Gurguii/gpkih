@@ -1,19 +1,18 @@
 #include "gpkih.hpp"
-
-#include <future>
-//#include "memory/memmgmt.hpp"
 #include "parse/parser.hpp"
-#include "logger/signals.hpp"
 #include "utils/utils.hpp"
+#include "logger/signals.hpp"
+#include <chrono>
+#include <future>
 
 using namespace gpkih;
 
-constexpr static size_t __dynamic_memory_size = 4096 * 1024; // 4MB
+constexpr size_t gpkihReservedMemory = utils::units::toBytes(4,'m');
 
-/* Directory names */
 static constexpr const char* DB_DIRNAME  = "db";
 static constexpr const char* CFG_DIRNAME = "config";
 static constexpr const char* LOG_DIRNAME = "logs";
+static constexpr const char *gpkihConfigFilename = "gpkih.conf";
 
 /* Current path */
 static std::string CURRENT_PATH;
@@ -24,12 +23,11 @@ std::string DB_DIRPATH = "";      // proper value set by __setVariables()
 
 static std::string CONF_GPKIH;    // initialized by __setVariables()s
 
-static std::string gpkihConfigFilename = "gpkih.conf";
+
 static std::string LOG_DIRPATH;
 
 Logger *gpkihLogger = nullptr;
-char *serialPath = nullptr;
-size_t serialPathLen = 0;
+Buffer *gpkihBuffer = nullptr;
 
 bool DRY_RUN = false;
 bool SHOW_HEADER = true;
@@ -127,13 +125,13 @@ static int __setVariables() {
     // simple id tracking file (increased by 1)
     db::profiles::idfile = fmt::format("{}id.data", DB_DIRPATH);
 
-    EntityManager::dbdir = DB_DIRPATH;
+    EntityManager::setDir(DB_DIRPATH);
     
     return GPKIH_OK;
 }
 
 static int __setBuffer(){
-    static Buffer __mainGpkihBuffer(__dynamic_memory_size);
+    static Buffer __mainGpkihBuffer(gpkihReservedMemory);
     if(__mainGpkihBuffer.head() == nullptr){
         PERROR("{}\n",__mainGpkihBuffer.getLastError());
         return GPKIH_FAIL;
@@ -147,36 +145,91 @@ static int __setLogger(){
         PERROR("Gpkih logger already set - {}\n", gpkihLogger->getBaseDir());
         return GPKIH_FAIL;
     }
+
     Logger::setBaseDir(std::move(fs::path(GPKIH_BASEDIR)/"logs").string());
-    static Logger __mainGpkihLogger("gpkih");
+    
+    auto mSizeView = Config::get("logs", "maxSize");
+    
+    for(int i = 0; i < mSizeView.size() -1; ++i){
+        if(mSizeView[i] < 48 || mSizeView[i] > 58){
+            PERROR("Wrong logs.maxSize syntax, found invalid character '{}'\n", mSizeView[i]);
+            return GPKIH_FAIL;
+        }
+    }
+    
+    const char unit = std::tolower(mSizeView[mSizeView.size()-1]);
+    size_t logSize;
+
+    if(unit == 'g' || unit == 'm' || unit == 'k' || unit == 'b'){
+        int num = std::stoi(mSizeView.data(),nullptr,10);
+        logSize = utils::units::toBytes(num,unit);
+    }else if(unit < 48 && unit > 57){
+        PERROR("Wrong unit in configuration logs.maxSize '{}'\n", unit);
+        return GPKIH_FAIL;    
+    }else{
+        int num = std::stoi(mSizeView.data(),nullptr,10);
+        logSize = utils::units::toBytes(num,'b');
+    }
+
+    auto iFieldSt = Config::get("logs", "includedFormatFields");
+    auto iFields = LF_NONE;
+    std::istringstream ss(iFieldSt.data());
+    std::string token{};
+    
+    static std::unordered_map<std::string, logMsgField> __str_ffield_map
+    {
+        {"type", LF_TYPE},
+        {"time", LF_TIME},
+        {"content", LF_CONTENT}
+    };
+
+    while(getline(ss,token,':')){
+        if(__str_ffield_map.find(token) == __str_ffield_map.end()){
+            PWARN("Skipping unknown log format field '{}' from logs.includedFormatFields\n", token);
+            continue;
+        }
+        iFields = iFields | __str_ffield_map[token];
+    }
+
+    ss.clear();
+    token.clear();
+
+    auto iLevelSt = Config::get("logs", "includedLevels");
+    auto iLevels = LL_NONE;
+    std::istringstream iss(iLevelSt.data());
+
+    static std::unordered_map<std::string,logLevel> __str_level_map
+    {
+        {"info", LL_INFO},
+        {"warning", LL_WARN},
+        {"error", LL_ERROR},
+    };
+
+    while(getline(iss, token, ':')){
+        if(__str_level_map.find(token) == __str_level_map.end()){
+            PWARN("Skipping unknown log level '{}' from logs.includedLevels\n", token);
+            continue;
+        }
+        iLevels = iLevels | __str_level_map[token];
+    }
+    
+    static Logger __mainGpkihLogger("gpkih",logSize,iFields,iLevels);
     gpkihLogger = &__mainGpkihLogger;
     return GPKIH_OK;
 }
 
 static int __parseGlobals(std::vector<std::string> &opts){
-    for(int i = 0; i < opts.size();){
-        std::string_view opt = opts[i];
-        if(opt == "-q" || opt == "--quiet"){
-            ENABLE_PRINTING = false;
-            opts.erase(opts.begin()+i);
-        }else if(opt == "-dr" || opt == "--dryrun"){
-            DRY_RUN = true;
-            opts.erase(opts.begin()+i);
-        }else if(opt == "-nh" || opt == "--noheader"){
-            SHOW_HEADER = false;
-            opts.erase(opts.begin()+i);
-        }
-        else if(opt == "-debug" || opt == "--debug"){
-
+    for(int i = 0; i < opts.size(); ++i){
+        if(opts[i] == "-debug" || opts[i] == "--debug"){
             #ifndef GPKIH_ENABLE_DEBUGGING
             PWARN("This version of gpkih wasn't compiled with debugging capabilities\n");
-            PHINT("For such thing, you can compile gpkih using the setup script: ./setup -d GPKIH_ENABLE_DEBUGGING=ON\n");
+            PHINT("For such thing, you can compile gpkih using the setup script: ./setup -ed OR ./setup -d GPKIH_ENABLE_DEBUGGING=ON\n");
             #endif
     
             if(i+1 == opts.size()){
                 #ifndef GPKIH_ENABLE_DEBUGGING
                 opts.erase(opts.begin()+i);
-                continue;
+                break;
                 #endif
                 PERROR("Debug level must be given\n");
                 return GPKIH_FAIL;
@@ -189,14 +242,26 @@ static int __parseGlobals(std::vector<std::string> &opts){
                 DEBUG_LEVEL = debugLevel;
                 opts.erase(opts.begin()+i,opts.begin()+i+2);
                 ++i;
-                continue;
+                break;
             }
 
             #ifdef GPKIH_ENABLE_DEBUGGING
             PERROR("Debug level must be 0-3 (both included)\n");
             return GPKIH_FAIL;
             #endif
-            
+        }
+    }
+    for(int i = 0; i < opts.size();){
+        std::string_view opt = opts[i];
+        if(opt == "-q" || opt == "--quiet"){
+            ENABLE_PRINTING = false;
+            opts.erase(opts.begin()+i);
+        }else if(opt == "-dr" || opt == "--dryrun"){
+            DRY_RUN = true;
+            opts.erase(opts.begin()+i);
+        }else if(opt == "-nh" || opt == "--noheader"){
+            SHOW_HEADER = false;
+            opts.erase(opts.begin()+i);
         }else{
             ++i;    
         }

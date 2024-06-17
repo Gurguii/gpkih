@@ -1,5 +1,6 @@
 #include "parser.hpp"
 #include "../db/profiles.hpp"
+#include "../entities/subj_utils.hpp"
 #include "../utils/utils.hpp"
 #include <cstdlib>
 
@@ -31,16 +32,16 @@ int parsers::build(std::vector<std::string> &opts) {
     return GPKIH_OK;
   }
 
-  std::string_view etype = opts[1];
+  std::string_view eTypeStr = opts[1];
 
-  if(etype == "cl" || etype == "client"){
+  if(eTypeStr == "cl" || eTypeStr == "client"){
     entity.type = ET_CL;
-  }else if(etype == "sv" || etype == "server"){
+  }else if(eTypeStr == "sv" || eTypeStr == "server"){
     entity.type = ET_SV;
-  }else if(etype == "ca"){
+  }else if(eTypeStr == "ca"){
     entity.type = ET_CA;
   }else{
-    PERROR("Invalid entity type '{}'",etype);
+    PERROR("Invalid entity type '{}', valid entities: cl|client|sv|server|ca\n",eTypeStr);
     return GPKIH_FAIL;
   }
 
@@ -64,7 +65,7 @@ int parsers::build(std::vector<std::string> &opts) {
   }
 
   // Load next serial
-  utils::entities::loadSerial(*profile, entity);
+  entity::loadSerial(*profile, entity);
   
   // override default build params with user arguments
   for (int i = 0; i < opts.size(); ++i) {
@@ -92,7 +93,7 @@ int parsers::build(std::vector<std::string> &opts) {
     } else if(opt == "-loc" || opt == "--location"){
       CALLOCATE(entity.subject.location, reinterpret_cast<size_t*>(&entity.subject.locationlen), opts[++i]);
     } else if(opt == "-co" || opt == "--country"){
-      if(len(opts[++i].c_str()) == 2){
+      if(utils::str::glength(opts[++i].c_str()) == 2){
         memcpy(entity.subject.country,opts[i].c_str(),2); 
       }else{
         PWARN("Country must be a 2 letter code, e.g ES,EN,DE,FR ... omitting user value '{}'\n",opts[i]);
@@ -123,7 +124,7 @@ int parsers::build(std::vector<std::string> &opts) {
 
   if(entity.subject.cn == nullptr){
     // User didn't give common_name (mandatory to build a certificate) with cli opts  
-    utils::entities::promptForSubject(profile->name, entity.subject, config, eman);
+    subject::promptForSubject(profile->name, entity.subject, config, eman);
   }
 
   int rcode = GPKIH_FAIL;
@@ -139,7 +140,7 @@ int parsers::build(std::vector<std::string> &opts) {
 
   if(entity.type & ET_CA){
     
-    if(utils::entities::setCAPaths(*profile, entity) != GPKIH_OK){
+    if(entity::setCAPaths(*profile, entity) != GPKIH_OK){
       PERROR("smth failed on setCAPaths()\n");
       return GPKIH_FAIL;
     };
@@ -157,14 +158,14 @@ int parsers::build(std::vector<std::string> &opts) {
       }
 
       Entity newCA;
-      utils::entities::promptForSubject(profile->name, newCA.subject, config, eman);
+      //entity::promptForSubject(profile->name, newCA.subject, config, eman);
       
       if(actions::build_ca(*profile, config, newCA, eman, days, keyAlgo, keySize) == GPKIH_FAIL){
         return GPKIH_FAIL;
       }
     }
 
-    if(utils::entities::setPaths(*profile,entity) != GPKIH_OK){
+    if(entity::setPaths(*profile,entity) != GPKIH_OK){
       PERROR("smth failed on setPaths()\n");
       return GPKIH_FAIL;
     }
@@ -183,7 +184,7 @@ int parsers::build(std::vector<std::string> &opts) {
   eman.sync();
 
   PSUCCESS("Entity '{}' created\n", entity.subject.cn);
-  ADD_LOG(L_INFO,fmt::format("profile:{} action:build serial:{} cn:{} type:{}",profile->name, entity.serial, entity.subject.cn, to_str(entity.type)));
+  ADD_LOG(LL_INFO,fmt::format("profile:{} action:build serial:{} cn:{} type:{}",profile->name, entity.serial, entity.subject.cn, entity::toString(static_cast<ENTITY_TYPE>(entity.type))));
   
   return GPKIH_OK;
 }

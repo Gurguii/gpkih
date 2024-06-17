@@ -1,6 +1,7 @@
 #pragma once
-#include "../structs.hpp"
+#include <filesystem>
 #include <unordered_map>
+#include "../entities/entities.hpp"
 
 namespace gpkih {
 using ConfigMap = std::unordered_map<std::string, std::unordered_map<std::string, std::string>>;
@@ -45,7 +46,7 @@ namespace Config
 
   /// @brief checks if key exists in any section
   /// @return true if key exists else false
-  extern const std::unordered_map<str,str>* const key_exists(const char * key);
+  extern const std::unordered_map<std::string,std::string>* const key_exists(const char * key);
 
   /// @brief checks if key exists in a specific section
   /// @return true if key exists else false
@@ -67,8 +68,8 @@ class ProfileConfig
 {
 private:
   CONFIG_FILE succesfullyLoadedFiles = CFILE_NONE;
-  fs::path vpnConfigPath;
-  fs::path pkiConfigPath;
+  std::filesystem::path vpnConfigPath;
+  std::filesystem::path pkiConfigPath;
   Profile &profile;
   // When loaded, config mappings will look like
   // e.g   vpnConfig[client][key] = val
@@ -142,7 +143,7 @@ public:
   /// @brief Dumps common vpn config + client|server specific configuration (depending on ENTITY_TYPE) to outpath.
   /// @return true|false indicating dumping success|failure
   /// @note: this function DOES NOT add any inlined certificate/key to the outpath
-  bool dump_vpn_conf(fs::path &outpath, ENTITY_TYPE type);
+  bool dump_vpn_conf(std::filesystem::path &outpath, ENTITY_TYPE type);
   
   bool dump(std::string_view outpath, CONFIG_FILE files);
 

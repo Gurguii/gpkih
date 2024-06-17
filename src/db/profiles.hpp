@@ -4,7 +4,7 @@
 #include <map>
 #include <string>
 #include <string_view>
-#include "../structs.hpp"
+#include "../profiles/profiles.hpp"
 
 namespace gpkih::db::profiles 
 {

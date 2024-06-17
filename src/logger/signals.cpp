@@ -10,7 +10,7 @@ using namespace gpkih;
     }
 #else
     static void ctrl_c_handler(int sig){
-        exit(0);
+        _exit(0);
         //Logger::cleanup_with_exit();
     };
 #endif

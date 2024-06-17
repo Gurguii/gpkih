@@ -1,12 +1,10 @@
 #pragma once
 #include <vector>
-
-#include "../structs.hpp"
+#include "../profiles/profiles.hpp"
 #include "../config/config_management.hpp"
 #include "../db/entities.hpp"
+#include "../gpkih.hpp"
 #include "../printing/printing.hpp"
-#include "../memory/memmgmt.hpp"
-#include "../logger/logger.hpp"
 
 namespace gpkih::actions {
 extern int init(std::string_view &profile_name, std::string_view &profile_source);

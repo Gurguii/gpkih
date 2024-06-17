@@ -2,19 +2,24 @@
 #include <cstring>
 #include <fstream>
 
-Buffer *gpkihBuffer = nullptr; // this will be initialized by main()
+
+BufferException::BufferException(const char *msg):msg(msg){}
+const char *BufferException::what() const noexcept{
+	return msg;
+}
 
 /* BEG - class Buffer */
 Buffer::Buffer(size_t size):memBlockSize(size),availableBytes(size){
 
 	if(memBlockSize <= 0){
-		lastError = "Memory block's size has to be a positive integer";
+		throw BufferException("Memory block's size has to be a positive integer");
 		return;
 	}
 
 	memBlock = (char*)calloc(size, sizeof(uint8_t));
 	
 	if(memBlock == nullptr){
+		throw BufferException("Couldn't allocate memory, calloc() returned nullptr");
 	  	return;
 	}
 

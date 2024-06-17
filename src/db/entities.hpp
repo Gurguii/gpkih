@@ -3,17 +3,19 @@
 #include <string>
 #include <string_view>
 #include <map>
-#include "../structs.hpp"
+#include "../entities/entities.hpp"
 
 class EntityManager{
 private:
-  std::map<std::string_view, gpkih::Entity> entities{};
+  static inline std::string dbDir{}; 
+  std::map<std::string_view, Entity> entities{};
   std::string dbpath;
   size_t current_size = 0;
 public:
   /// @brief absolute path aiming to logs root dir [LINUX]$HOME [WIN]$env:home 
-  static inline std::string dbdir{};
-
+  static const std::string &setDir(std::string_view path);
+  static const std::string &getDir();
+  
   /// @param profile_name name of the profile to load Entities from
   /// @brief construct a new EntityManager instance
   EntityManager(std::string_view profile_name);
@@ -25,7 +27,7 @@ public:
   /// @brief get constant pointer to Entity within entities' umap
   /// @param cn common_name of Entity to get
   /// @return valid Entity* or nullptr if not found
-  gpkih::Entity* const get(std::string_view cn);
+  Entity* const get(std::string_view cn);
 
   /// @brief deletes entity from umap 
   /// @param cn common name of target entity
@@ -35,7 +37,7 @@ public:
   /// @brief adds entity to the umap
   /// @paran entity struct Entity to add 
   /// @return GPKIH_OK on succesfull insertion, else GPKIH_FAIL
-  int add(gpkih::Entity &entity);
+  int add(Entity &entity);
 
   /// @brief checks entity existance based on common_name
   /// @param cn common_name of target entity
@@ -51,7 +53,7 @@ public:
   /// @param cn common_name of target entity
   /// @param buff struct Entity that will point to the Entity if found
   /// @return true if Entity exists, else false
-  bool exists(std::string_view cn, gpkih::Entity* &buff);
+  bool exists(std::string_view cn, Entity* &buff);
 
   /// @return entities umap's size
   size_t size();
@@ -61,6 +63,5 @@ public:
 
   /// @brief get the private umap
   /// @return constant pointer to umap<strview,Entity>
-  const std::map<std::string_view, gpkih::Entity>* const retrieve();
-  
+  const std::map<std::string_view, Entity>* const retrieve();
 };

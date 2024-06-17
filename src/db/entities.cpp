@@ -1,16 +1,21 @@
 #include "entities.hpp"
 #include "mnck.hpp"
-#include "../memory/memmgmt.hpp"
-#include <stdexcept>
-
+#include "../printing/printing.hpp"
+#include "../gpkih.hpp"
+#include "../entities/entities.hpp"
 using namespace gpkih;
 
-static inline std::string _dbpath(std::string_view profile) {
-  return fmt::format("{}{}_entities.data",EntityManager::dbdir,profile);
+const std::string& EntityManager::setDir(std::string_view path){
+	dbDir = path;
+	return dbDir;
+};
+
+const std::string& EntityManager::getDir(){
+	return dbDir;
 }
 
-EntityManager::EntityManager(std::string_view profile_name){
-	dbpath = _dbpath(profile_name);
+EntityManager::EntityManager(std::string_view profile_name)
+:dbpath(fmt::format("{}{}_entities.data",dbDir,profile_name)){
 	PDEBUG(1, "EntityManager::EntityManager({})", dbpath);
 
 	if(fs::exists(dbpath) == false){
@@ -189,7 +194,7 @@ int EntityManager::sync(){
 	return GPKIH_OK;
 }
 
-int EntityManager::add(gpkih::Entity &entity){
+int EntityManager::add(Entity &entity){
 	PDEBUG(1, "EntityManager::add()");
 
 	if(entities.find(entity.subject.cn) == entities.end()){
@@ -241,7 +246,7 @@ int EntityManager::del(std::string_view cn){
 	return GPKIH_FAIL;
 }
 
-gpkih::Entity *const EntityManager::get(std::string_view cn){
+Entity *const EntityManager::get(std::string_view cn){
 	PDEBUG(1, "EntityManager::get()");
 	auto iter = entities.find(cn);
 	if(iter != entities.end()){
@@ -260,7 +265,7 @@ bool EntityManager::empty(){
 	return current_size == 0;
 }
 
-const std::map<std::string_view, gpkih::Entity>* const EntityManager::retrieve(){
+const std::map<std::string_view, Entity>* const EntityManager::retrieve(){
 	PDEBUG(1, "EntityManager::retrieve()");
 	return &entities;
 }

@@ -1,11 +1,7 @@
 
 #include "config_management.hpp"
-#include <cstdio>
-#include <cstring>
-#include <sstream>
-#include <fstream>
+#include "../gpkih.hpp"
 #include "../printing/printing.hpp"
-#include "../memory/memmgmt.hpp"
 
 static inline constexpr char sectionOpenDelim = '[';
 static inline constexpr char sectionCloseDelim = ']';
@@ -204,14 +200,14 @@ ConfigMap Config::gpkihConfig = {
   }},
   {"logs",{
     {"includedFormatFields",""},
-    {"includedLogLevels",""},
-    {"max_size",""}
+    {"includedLevels",""},
+    {"maxSize",""}
   }},
   {"cli",{
     {"customPS",""}
   }},
   {"formatting",{
-    {"date_format",""}
+    {"dateFormat",""}
   }}
 };
 
@@ -298,7 +294,7 @@ ProfileConfig::ProfileConfig(Profile &prof, CONFIG_FILE filesToLoad):profile(pro
   }
 
   /* Load openvpn.conf */
-  if (filesToLoad & CFILE_VPN && __load_file(vpnConfigPath, this->vpnConfig)) {
+  if (filesToLoad & CFILE_VPN && __load_file(vpnConfigPath, this->vpnConfig) == GPKIH_OK) {
     succesfullyLoadedFiles =  succesfullyLoadedFiles | CFILE_VPN;
   }
 } // ProfileConfig::ProfileConfig()
@@ -398,7 +394,7 @@ int ProfileConfig::set2(CONFIG_FILE file, std::string_view section, std::string_
 
   std::string msg = fmt::format("changed {}.{}.{} to '{}'", file == CFILE_PKI ? "pki" : "vpn", section, key, val);
   PSUCCESS("{}\n", msg);
-  ADD_LOG(L_INFO, fmt::format("profile:{} action:set {}", this->profile.name, msg));
+  ADD_LOG(LL_INFO, fmt::format("profile:{} action:set {}", this->profile.name, msg));
   return GPKIH_OK;
 }
 
@@ -466,7 +462,7 @@ bool ProfileConfig::dump_vpn_conf(fs::path &outpath, ENTITY_TYPE type) {
   }
 
   // entity specific options
-  switch (type) {
+  switch (static_cast<uint8_t>(type)) {
   case ET_SV:
     if (this->vpnConfig.find("server") != this->vpnConfig.end()) {
       for (auto &kv : this->vpnConfig["server"]) {
@@ -489,7 +485,7 @@ bool ProfileConfig::dump_vpn_conf(fs::path &outpath, ENTITY_TYPE type) {
     break;
   default:
     PERROR("entity type '{}' not suitable for call to dump_vpn_conf()",
-             to_str(type));
+             entity::toString(type));
     break;
   }
   

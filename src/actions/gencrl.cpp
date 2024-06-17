@@ -9,11 +9,11 @@ int actions::gencrl(Profile &profile) {
     return GPKIH_OK;
   }
 
-  std::string crlPath = (profile::dir_crl_fs(profile)/"current.pem").string();
+  std::string crlPath = std::string{profile::crlDir(profile)}+SLASH+"current.pem";
 
   std::string command =
       fmt::format("openssl ca -config {} -gencrl -out {}",
-                  profile::gopenssl(profile), crlPath);
+                  profile::gopensslPath(profile), crlPath);
 
   if (system(command.c_str())) {
     PERROR("openssl gencrl command failed - '{}'\n", command);
@@ -21,7 +21,7 @@ int actions::gencrl(Profile &profile) {
   }
 
   PSUCCESS("Generated CRL - {}\n", crlPath);
-  ADD_LOG(L_INFO,fmt::format("profile:{} action:gencrl",profile.name));
+  ADD_LOG(LL_INFO,fmt::format("profile:{} action:gencrl",profile.name));
   
   return GPKIH_OK;
 }

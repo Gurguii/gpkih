@@ -1,5 +1,5 @@
 #include "utils.hpp"
-
+#include <fmt/format.h>
 using namespace gpkih;
 
 void utils::openssl::genkey(){
@@ -7,7 +7,6 @@ void utils::openssl::genkey(){
 }
 
 int utils::openssl::create_dhparam(std::string_view outpath, size_t size) {
-  PINFO("Generating dhparam of {} bits\n", size);
   std::string command = fmt::format("openssl dhparam -quiet -out {} {}", outpath, size);
   if (system(command.c_str())) {
     return -1;

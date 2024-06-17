@@ -25,13 +25,17 @@ pmList["zypper"]="install"
 pmList["guix"]="install"
 
 pm="" # package manager to use if a package is required to be installed
-pmInstallOpt="" # package manager subopt to install e.g 'install' on aptÇ
+pmInstallOpt="" # package manager subopt to install e.g 'install' on apt
 
 GPKIH_ENABLE_DEBUGGING=false
 
 #-DCMAKE_EXPORT_COMPILE_COMMANDS=1 -> create a build/compile_commands.json that comes in handy for certain scenarios
 commands=("cmake .." "make -j" "cp $buildDir/gpkih $binaryOutpath") # [!] note : this will be executed inside build/ 
 #############################################################################
+
+function gecho(){
+        $quiet || echo -en "$@"
+}
 
 function __setPackageManager(){
         for i in "${!pmList[@]}"; do
@@ -44,11 +48,11 @@ function __setPackageManager(){
         
         if [ -z "$pm" ]; then
                 $quiet && exit 1
-                printf "Couldn't set package manager, not in the following list?:"
+                gecho "Couldn't set package manager, not in the following list?:"
                 for i in "${!pmList[@]}"; do
-                        printf " %s" "$i"
+                        gecho "$i" 
                 done
-                printf "\nnote: you can add it manually to the pmList variable inside the script\n" && exit 0
+                gecho "\nnote: you can add it manually to the pmList variable inside the script\n" && exit 0
         fi
 }
 
@@ -56,10 +60,10 @@ function __generateDocumentation(){
         local doxyfile="$baseDir/src/Doxyfile"
 
         if (( $EUID == 0 )); then
-                printf "Won't generate documentation as root\n" && exit 1
+                gecho "Won't generate documentation as root\n" && exit 1
         fi
 
-        [ ! -e "$doxyfile" ] && { $quiet || printf "Doxyfile not found: '%s'\n" "$doxyfile"; exit 1; }
+        [ ! -e "$doxyfile" ] && { gecho "Doxyfile not found: '%s'\n" "$doxyfile"; exit 1; }
         
         # Check for doxygen
         if ! command -v doxygen &>/dev/null; then
@@ -69,15 +73,15 @@ function __generateDocumentation(){
                         exit 1
                 fi
                 __setPackageManager
-                sudo $pm $pmInstallOpt doxygen || { $quiet || printf "Couldn't install doxygen\n"; exit 1; }
+                sudo $pm $pmInstallOpt doxygen || { gecho "Couldn't install doxygen\n"; exit 1; }
                 (( $? != 0 )) && exit 1
         fi
 
         cd "$srcDir" && doxygen "$doxyfile" 1>/dev/null 2>"$logStderr"
 
-        (( $? != 0 )) && { $quiet || printf "Failed running doxygen command: 'doxygen %s'\nError logs can be found at '%s'\n" "$doxyfile" "$logStderr"; exit 0; }
+        (( $? != 0 )) && { gecho "Failed running doxygen command: 'doxygen $doxyFile'\nError logs can be found at '$logStderr'\n"; exit 0; }
 
-        $quiet || printf "Doxygen documentation succesfully created, can be found at '%s'\n" "$baseDir/documentation"
+        gecho "Doxygen documentation succesfully created, can be found at '$baseDir/documentation'\n"
         exit 0
 }
 
@@ -93,47 +97,45 @@ function __runDockerTests(){
                         exit 0
                 fi
                 __setPackageManager
-                sudo $pm $pmInstallOpt docker || { $quiet || printf "[!] Couldn't install docker aborting...\n"; exit 1; }
+                sudo $pm $pmInstallOpt docker || { gecho "[!] Couldn't install docker aborting...\n"; exit 1; }
         fi
 
         # Check that service is running
         if ! systemctl is-active docker --quiet; then
                 # Try to manually start it
                 if systemctl start docker --quiet; then
-                        $quiet || printf "[+] Docker service started\n"
+                        gecho "[+] Docker service started\n"
                 else
-                        $quiet || printf "[!] Couldn't start service docker, exiting...\n"
+                        gecho "[!] Couldn't start service docker, exiting...\n"
                         exit $?
                 fi
         fi
 
         if ! docker ps &>/dev/null; then
-                $quiet || printf "[+] Don't have permissions to list dockers, maybe run with sudo? exiting...\n"
+                gecho "[+] Don't have permissions to list dockers, maybe run with sudo? exiting...\n"
                 exit 1
         fi
-        
+
         # Empty any previous `results` contents and create if not existing
-        > "$dockerResultsFile"
+        > "$dockerResultsFile" &>/dev/null  ||  { gecho "[!] Can't write to results file '$dockerResultsFile', aborting...\n"; exit 0; }
 
         # Set permissions to allow others (docker _gpkih user) writing to it
         chmod 766 "$dockerResultsFile"
-
-        if [ ! -e "$dockerResultsFile" ]; then
-                $quiet || printf "[!] Can't write to results file '%s', aborting...\n" "$dockerResultsFile" && exit 0
-        fi
-
-        cd "$dockerDir" || { $quiet || printf "[!] Couldn't cd to docker directory '%s'\n" "$dockerDir"; }
-        
+        cd "$dockerDir" || { gecho "[!] Couldn't cd to docker directory '$dockerDir'\n"; exit 1; }
         for os in "${dockerOsList[@]}"; do
                 # -T : no TTY, required to avoid 'no input TTY available' problems
                 # --rm : deletes the container when stopped, which will be after the command returns
                 compileCmd="docker-compose run --quiet-pull -T --rm $os bash ./compile.sh /home/gpkih/docker/results"
-                $quiet || printf "[+] Operating System: %s" "$os"
-                $compileCmd &
-                waitpid $!
-                $quiet || printf "\r[+] Operating System: %s - %s\n" "$os" "$(grep -E "^Status" "$dockerResultsFile" | tail -1 | awk '{print $2}')"
+                gecho "[+] Operating System: $os\n"
+                $quiet && $compileCmd &>/dev/null || $compileCmd
+                # waitpid $!
+                $quiet || cat << EOF 
+[+] Compilation results: $(grep -E "^Compilation" "$dockerResultsFile" | tail -1 | awk '{print $3}')
+
+EOF
         done 
 
+        gecho "[+] Specific checks' results can be found @ '$dockerResultsFile'\n"
         exit 0
 }
 
@@ -141,6 +143,7 @@ function usage(){
         cat << EOF
 Name: gpkih setup script
 Description: helps compiling the tool, generating documentation and testing in other OSes
+
 Usage: ./setup <options>
 
 * Options *
@@ -149,7 +152,7 @@ Usage: ./setup <options>
   -docker | --docker            = used for developing, will create ${#dockerOsList[@]} containers to test compiling and running gpkih: ${dockerOsList[@]}
   -docs   | --documentation     = create doxygen documentation - *not super fancy*
   -d      | --define <KEY=VAL>  = add preprocessing directives
-  -ed     | --enable-debugging  = enable debugging capabilities
+  -ed     | --enable-debugging  = enable debugging capabilities - default false
 EOF
         exit 0
 }
@@ -175,34 +178,34 @@ function parse(){
                         __generateDocumentation
                 elif [[ "$arg" == "-d" || "$arg" == "--define" ]]; then
                         if ! grep -q '=' <<< "${args[++i]}"; then 
-                                $quiet || printf "[!] Wrong syntax '%s', right syntax KEY=VAL\nnote the missing '='\n" "${args[++i]}"
+                                gecho "[!] Wrong syntax '${args[++i]}', right syntax KEY=VAL\nnote the missing '='\n"
                                 exit 1
                         fi
                         commands[0]="${commands[0]} -D${args[++i]}"
-                elif [[ "$arg" == "--enable-debugging" ]]; then
+                elif [[ "$arg" == "-ed" || "$arg" == "--enable-debugging" ]]; then
                         GPKIH_ENABLE_DEBUGGING=true
                 fi
         done
 
         if $GPKIH_ENABLE_DEBUGGING; then
-                $quiet || printf "[+] Debugging capabilities ENABLED\n" && commands[0]="${commands[0]} -DGPKIH_ENABLE_DEBUGGING=1"
+                gecho "[+] Debugging capabilities ENABLED\n" && commands[0]="${commands[0]} -DGPKIH_ENABLE_DEBUGGING=1"
         else
-                $quiet || printf "[+] Debugging capabilities DISABLED\n" && commands[0]="${commands[0]} -DGPKIH_ENABLE_DEBUGGING=0"
+                gecho "[+] Debugging capabilities DISABLED\n" && commands[0]="${commands[0]} -DGPKIH_ENABLE_DEBUGGING=0"
         fi
 
 }
 
 function main(){
         
-        &>/dev/null > "$logStderr"  || printf "[!] Don't have permissions to write stdout log file '%s'\n" "$logStderr"
-        &>/dev/null > "$logStdout"  || printf "[!] Don't have permissions to write stderr log file '%s'\n" "$logStdout"
+        > "$logStderr" &>/dev/null  || { gecho "[!] Don't have permissions to write stdout log file '$logStderr'\n"; exit 1; }
+        > "$logStdout" &>/dev/null  || { gecho "[!] Don't have permissions to write stderr log file '$logStdout'\n"; exit 1; }
 
         parse
 
         if ! [ -e "$buildDir" ]; then
                 mkdir "$buildDir"
                 if (( $? != 0 )); then
-                        $quiet || printf "[!] Couldn't create build dir '%s'\n" "$buildDir"
+                        gecho "[!] Couldn't create build dir '$buildDir'\n"¡
                         exit 1
                 fi
         fi
@@ -211,20 +214,17 @@ function main(){
 
         for command in "${commands[@]}"; do
                 
-                if $quiet; then
-                        $command &>/dev/null
-                else
-                        printf "[running] %s\n" "$command"
-                        $command 1>> "$logStdout" 2>> "$logStderr" 
-                fi
+                gecho "[running] $command\n"
+                $command 1>> "$logStdout" 2>> "$logStderr" 
                 
                 if (( $? != 0 )); then
-                        $quiet || printf "Something failed running '%s'\ncheck '%s' for more information\n" "$command" "$logStderr"
+                        gecho "Something failed running '$command'\ncheck '$logStderr' for more information\n"
                         exit $?
                 fi 
         done
         
-        $quiet || printf "[info] gpkih succesfully compiled: %s\n[info] out logs can be found at '%s'\n" "$binaryOutpath" "$logStdout"
+        gecho "[info] gpkih succesfully compiled: $binaryOutpath\n[info] building process' logs can be found at '$logStdout'\n"
+        
         exit 0        
 }
 

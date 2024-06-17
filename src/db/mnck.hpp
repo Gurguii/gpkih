@@ -1,7 +1,5 @@
 #pragma once
 #include <fstream>
-#include <cstdint>
-#include "../printing/printing.hpp"
 
 namespace gpkih::mnck
 {

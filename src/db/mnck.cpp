@@ -1,6 +1,6 @@
 #include "mnck.hpp"
 
-constexpr static inline size_t gmn = 0x5f67706b69685f;
+constexpr size_t gmn = 0x5f67706b69685f;
 
 bool gpkih::mnck::dump(std::ofstream &file, size_t count){
 	file.write(reinterpret_cast<const char*>(&gmn), sizeof(decltype(gmn)));
@@ -16,6 +16,6 @@ bool gpkih::mnck::check(std::ifstream &file, size_t &count){
 		return false;
 	}
 	file.read(reinterpret_cast<char*>(&count), sizeof(decltype(count)));
-	uint8_t r = file.get();
+	auto r = file.get();
 	return r == ':';
 }

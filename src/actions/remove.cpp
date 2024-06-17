@@ -56,7 +56,7 @@ int actions::remove(std::vector<str> &profiles_to_remove, int remove_all) {
   }
 
   std::string logMessageStr{logMessage.str()};
-  ADD_LOG(L_INFO,fmt::format("action:remove profiles:{}",logMessageStr.erase(logMessageStr.size()-1)));
+  ADD_LOG(LL_INFO,fmt::format("action:remove profiles:{}",logMessageStr.erase(logMessageStr.size()-1)));
  
   return removed.size();
 }

@@ -82,6 +82,28 @@ set(gpkih_logging_implementation
 add_library(gpkih_logging_lib STATIC "${gpkih_logging_implementation}")
 target_include_directories(gpkih_logging_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
 
+# Lib memmgmt
+set(gpkih_memmgmt_src "${GPKIH_SRC_DIR}/memory")
+set(gpkih_memmgmt_definition "${gpkih_memmgmt_src}/memmgmt.hpp")
+set(gpkih_memmgmt_implementation "${gpkih_memmgmt_src}/memmgmt.cpp")
+add_library(gpkih_memmgmt_lib STATIC "${gpkih_memmgmt_implementation}")
+target_include_directories(gpkih_memmgmt_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
+
+# Lib - profiles
+set(gpkih_profiles_definition
+    "${GPKIH_SRC_DIR}/profiles/profiles.hpp")
+set(gpkih_profiles_implementation
+    "${GPKIH_SRC_DIR}/profiles/profiles.cpp")
+add_library(gpkih_profiles_lib STATIC "${gpkih_profiles_implementation}")
+target_include_directories(gpkih_profiles_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
+
+# Lib - entities
+set(gpkih_entities_definition
+    "${GPKIH_SRC_DIR}/entities/entities.hpp")
+set(gpkih_entities_implementation
+    "${GPKIH_SRC_DIR}/entities/entities.cpp")
+add_library(gpkih_entities_lib STATIC "${gpkih_entities_implementation}")
+target_include_directories(gpkih_entities_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
 # Lib - config_management
 set (gpkih_config_definition
     "${GPKIH_SRC_DIR}/config/config_management.hpp")
@@ -105,6 +127,7 @@ set (gpkih_actions_implementation
 )
 add_library(gpkih_actions_lib STATIC "${gpkih_actions_implementation}")
 target_include_directories(gpkih_actions_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
+target_link_libraries(gpkih_actions_lib PUBLIC gpkih_entities_lib)
 
 # Lib - database
 set(gpkih_db_src "${GPKIH_SRC_DIR}/db")
@@ -161,6 +184,7 @@ set(gpkih_parse_implementation
 )
 add_library(gpkih_parse_lib STATIC "${gpkih_parse_implementation}")
 target_include_directories(gpkih_parse_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
+target_link_libraries(gpkih_parse_lib PUBLIC gpkih_utils_lib gpkih_subj_lib gpkih_profiles_lib)
 
 # Lib - formatter
 set(gpkih_formatter_src "${GPKIH_SRC_DIR}/experimental")
@@ -183,17 +207,17 @@ set(gpkih_utils_implementation
     "${gpkih_utils_src}/env.cpp"
     "${gpkih_utils_src}/str.cpp"
     "${gpkih_utils_src}/openssl.cpp"
-    "${gpkih_utils_src}/entities.cpp"
+    "${gpkih_utils_src}/fs.cpp"
 )
 add_library(gpkih_utils_lib STATIC "${gpkih_utils_implementation}")
 target_include_directories(gpkih_utils_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
 
-# Lib memmgmt
-set(gpkih_memmgmt_src "${GPKIH_SRC_DIR}/memory")
-set(gpkih_memmgmt_definition "${gpkih_memmgmt_src}/memmgmt.hpp")
-set(gpkih_memmgmt_implementation "${gpkih_memmgmt_src}/memmgmt.cpp")
-add_library(gpkih_memmgmt_lib STATIC "${gpkih_memmgmt_implementation}")
-target_include_directories(gpkih_memmgmt_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
+# Lib subj-utils
+set(gpkih_subj_src "${GPKIH_SRC_DIR}/entities")
+set(gpkih_subj_definition "${gpkih_subj_src}/subj_utils.hpp")
+set(gpkih_subj_implementation "${gpkih_subj_src}/subj_utils.cpp")
+add_library(gpkih_subj_lib STATIC "${gpkih_subj_implementation}")
+target_include_directories(gpkih_subj_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
 
 # Self-contained binary - gpkih
 add_executable(gpkih

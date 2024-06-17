@@ -1,5 +1,5 @@
 #include "actions.hpp"
-
+#include "../entities/enums.hpp"
 static inline std::vector<std::pair<std::string, std::string>> crl_reasons() {
   return {{"entity key got compromised", "keyCompromised"},
           {"ca private key got compromised", "CACompromise"},
@@ -12,11 +12,11 @@ static inline std::vector<std::pair<std::string, std::string>> crl_reasons() {
 using namespace gpkih;
 int actions::revoke(Profile &profile, std::vector<std::string> &common_names, std::vector<std::string> &serials) {
   auto reasons = crl_reasons();
-  std::string base_dir = profile::dir_crt(profile);
+  std::string base_dir = profile::crtDir(profile);
   EntityManager eman(profile.name);
 
   std::vector<std::string_view> revoked_cns{};
-  std::string gopenssl_path = profile::gopenssl(profile);
+  std::string gopenssl_path = profile::gopensslPath(profile);
 
   for (std::string &cn : common_names) {
     Entity *entity = nullptr;
@@ -49,7 +49,7 @@ int actions::revoke(Profile &profile, std::vector<std::string> &common_names, st
       return GPKIH_FAIL;
     }
     
-    entity->status = ES_REVOKED;
+    entity->status = static_cast<uint8_t>(ES_REVOKED);
     revoked_cns.emplace_back(cn);
   }
 
@@ -69,7 +69,7 @@ int actions::revoke(Profile &profile, std::vector<std::string> &common_names, st
   s.erase(s.end()-1, s.end());
 
   PSUCCESS("Revoked entities: {}\n", s);
-  ADD_LOG(L_INFO,fmt::format("profile:{} action:revoke entities:{}",profile.name,s));
+  ADD_LOG(LL_INFO,fmt::format("profile:{} action:revoke entities:{}",profile.name,s));
 
   /* Extra questions */
   bool prompt = Config::get("behaviour","prompt") == "yes" ? true : false;

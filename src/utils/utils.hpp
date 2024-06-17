@@ -1,30 +1,41 @@
 #pragma once
-
 #include <cstring>
 #include <string>
 #include <string_view>
-#include <fmt/format.h>
-#include "../printing/printing.hpp"
-#include "../config/config_management.hpp"
-#include "../db/entities.hpp"
-#include "../memory/memmgmt.hpp"
 
 namespace gpkih::utils::env
 {
 	extern std::string get_environment_variable(std::string_view varname);
 }
 
+namespace gpkih::utils::units
+{
+	constexpr const size_t toBytes(size_t number, char unit){
+		switch(unit){
+			case 'g':
+				return static_cast<size_t>(number * 1024 * 1024 * 1024);
+			case 'm':
+				return static_cast<size_t>(number * 1024 * 1024);
+			case 'k':
+				return static_cast<size_t>(number * 1024);
+			case 'b':
+				return static_cast<size_t>(number);
+			default:
+				// assume bytes
+				return static_cast<size_t>(0);
+		}
+	};
+}
+
 namespace gpkih::utils::str
 {
 	/// @brief retrieve (does not check st == nullptr) size of null terminated string
 	/// @return number of characters
-	extern size_t length(const char *st);
-	#define len gpkih::utils::str::length
+	extern size_t glength(const char *st);
 	
 	/// @brief retrieve (checks if st == nullptr) size of null terminated string
 	/// @return number of characters or -1 if st == nullptr
-	extern size_t slength(const char *st);
-	#define slen gpkih::utils::str::slength
+	extern size_t gslength(const char *st);
 
 	extern bool compareViews(std::string_view &s0, std::string_view &s1, size_t nchars);
 	extern bool compareViews(std::string_view s0, std::string_view s1, size_t nchars);
@@ -44,13 +55,7 @@ namespace gpkih::utils::str
 
 namespace gpkih::utils::fs
 {
-	template <typename T> bool is_absolute_path(T path){
-		#ifdef _WIN32
-		  return std::isalpha(path[0]);
-		#else
-		  return (path[0] == '/');
-		#endif
-	};
+	extern bool is_absolute_path(std::string_view path);
 	#define IS_ABSOLUTE_PATH gpkih::utils::fs::is_absolute_path
 }
 
@@ -62,14 +67,4 @@ namespace gpkih::utils::openssl
 	/// @param path output path
 	/// @param size n bits in order to create dhparam: default=1024
 	extern int create_dhparam(std::string_view outpath, size_t size = 1024);
-}
-
-namespace gpkih::utils::entities
-{
-	extern int promptForSubject(std::string_view profileName, Subject &buffer, ProfileConfig &config, EntityManager &eman);
-	extern int setCAPaths(Profile &profile, Entity &entity);
-	extern int setPaths(Profile &profile, Entity &entity);
-	extern int loadSerial(Profile &profile, Entity &entity);
-	extern int incrementSerial(Profile &profile, Entity &entity);
-	[[ nodiscard("Why the fuck do you ask for the oneliner if you're not using it?")]] extern  std::string opensslOneliner(Subject &ref);
 }

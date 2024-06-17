@@ -4,6 +4,15 @@
 #include <vector>
 #include <fmt/format.h>
 
+class BufferException : public std::exception {
+private:
+  const char *msg;
+public:
+  BufferException() = default;
+  BufferException(const char *msg);
+  const char *what() const noexcept override; 
+};
+
 class Buffer{
 private:
   std::vector<std::pair<size_t,char*>>freedBlocks{};
