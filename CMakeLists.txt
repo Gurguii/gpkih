@@ -10,7 +10,7 @@ set(GPKIH_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(GPKIH_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(GPKIH_INCLUDE_DIR "${GPKIH_SRC_DIR}")  # Include directory for all components
 set(GURGUI_LIBRARIES gprintinglib glogginglib gutilslib gmemorylib)
-set(GPKIH_LIBRARIES gpkih_config_lib gpkih_actions_lib gpkih_db_lib gpkih_help_lib gpkih_parser_lib gpkih_formatter_lib gpkih_cli_lib)
+set(GPKIH_LIBRARIES gpkih_profiles_lib gpkih_entities_lib gpkih_config_lib gpkih_actions_lib gpkih_db_lib gpkih_help_lib gpkih_parser_lib gpkih_formatter_lib gpkih_cli_lib)
 
 # Platform-specific settings
 function(configure_platform)
@@ -83,9 +83,6 @@ add_subdirectory("${GPKIH_SRC_DIR}/experimental")
 foreach(target IN LISTS GURGUI_LIBRARIES GPKIH_LIBRARIES)
   target_include_directories(${target} PUBLIC "${FMT_LIBRARY_INCLUDE}")
 endforeach()
-
-target_link_libraries(gpkih_parser_lib PUBLIC gpkih_entities_lib gpkih_formatter_lib)
-target_link_libraries(gpkih_actions_lib PUBLIC gpkih_profiles_lib)
 
 add_executable(gpkih
     "${GPKIH_SRC_DIR}/gpkih.cpp"
