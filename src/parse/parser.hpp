@@ -7,6 +7,10 @@
 
 namespace gpkih::parsers 
 {
+
+// TESTING
+extern int parseGlobals(std::vector<std::string> &opts);
+
 /// @brief does generic parsing and calls specialized parser
 extern int parse(std::vector<std::string> &opts);
 

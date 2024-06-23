@@ -121,6 +121,7 @@ function __runDockerTests(){
 
         # Set permissions to allow others (docker _gpkih user) writing to it
         chmod 766 "$dockerResultsFile"
+        
         cd "$dockerDir" || { gecho "[!] Couldn't cd to docker directory '$dockerDir'\n"; exit 1; }
         for os in "${dockerOsList[@]}"; do
                 # -T : no TTY, required to avoid 'no input TTY available' problems
@@ -217,10 +218,7 @@ function main(){
                 gecho "[running] $command\n"
                 $command 1>> "$logStdout" 2>> "$logStderr" 
                 
-                if (( $? != 0 )); then
-                        gecho "Something failed running '$command'\ncheck '$logStderr' for more information\n"
-                        exit $?
-                fi 
+                (( $? != 0 )) && gecho "Something failed running '$command'\ncheck '$logStderr' for more information\n" && exit $?
         done
         
         gecho "[info] gpkih succesfully compiled: $binaryOutpath\n[info] building process' logs can be found at '$logStdout'\n"

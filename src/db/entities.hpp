@@ -1,9 +1,9 @@
 #pragma once
 
+#include "../entities/structs.hpp"
 #include <string>
-#include <string_view>
 #include <map>
-#include "../entities/entities.hpp"
+
 
 class EntityManager{
 private:

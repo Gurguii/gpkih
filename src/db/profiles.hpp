@@ -1,10 +1,6 @@
 #pragma once
-
-#include <cstdint>
+#include "../profiles/structs.hpp"
 #include <map>
-#include <string>
-#include <string_view>
-#include "../profiles/profiles.hpp"
 
 namespace gpkih::db::profiles 
 {

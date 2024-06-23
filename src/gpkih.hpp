@@ -1,10 +1,7 @@
 #pragma once
-#include <cstdint>
-#include <string>
-#include <string_view>
+#include "libs/logger/logger.hpp" // Logger gpkihLogger
+#include "libs/memory/buffer.hpp" // Buffer gpkihBuffer
 #include <filesystem>
-#include "logger/logger.hpp"
-#include "memory/memmgmt.hpp"
 
 // Custom typenames
 using str     = std::string;
@@ -35,14 +32,13 @@ constexpr const char *vpnConfigExtension = "conf";
 
 #endif
 
-/* Globals */
+constexpr const char *GPKIH_VERSION = "1.0";
+constexpr const char *GPKIH_DESCRIPTION_BRIEF = "CLI tool to manage self-signed PKI";
 
-/** filenames **/
 constexpr const char *vpnConfFilename = "openvpn.conf";
 constexpr const char *pkiConfFilename = "pki.conf";
 constexpr const char *opensslConfFilename = "gopenssl.conf";
 
-/** behaviour **/
 extern bool DRY_RUN;
 extern bool SHOW_HEADER;
 
@@ -53,8 +49,10 @@ extern std::string DB_DIRPATH;
 // Buffer instance to manage dynamically allocated memory, used by any part of the program
 // that would require allocating dynamic memory (malloc()) started by main() to 'MAYBE, NOT YET'
 // allow modification of the buffer size from configuration file 'gpkih.conf'
-extern Buffer *gpkihBuffer;
-extern Logger *gpkihLogger;
+extern gurgui::memory::Buffer *gpkihBuffer;
+
+// TODO - Give each profile their own logger instance and don't only log info (warnings and errors)
+extern gurgui::logging::Logger *gpkihLogger;
 
 /* Custom return codes */
 enum class GPKIH_RETURN_CODES : int{
@@ -65,7 +63,6 @@ constexpr int GPKIH_OK = static_cast<int>(GPKIH_RETURN_CODES::__we_good);
 constexpr int GPKIH_FAIL = static_cast<int>(GPKIH_RETURN_CODES::__we_bad);
 
 #define ADD_LOG gpkihLogger->addLog
-
 #define BUFFER_PTR gpkihBuffer;
 #define BUFFER *gpkihBuffer
 #define ALLOCATE gpkihBuffer->allocate

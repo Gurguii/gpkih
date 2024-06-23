@@ -1,10 +1,14 @@
 #include "gpkih.hpp"
-#include "parse/parser.hpp"
-#include "utils/utils.hpp"
-#include "logger/signals.hpp"
-#include <chrono>
-#include <future>
+#include "libs/utils/utils.hpp"
 
+#include "config/Config.hpp"
+
+#include "parse/parser.hpp"
+
+#include "entities/entities.hpp"
+
+#include "signals/signals.cpp"
+#include <future>
 using namespace gpkih;
 
 constexpr size_t gpkihReservedMemory = utils::units::toBytes(4,'m');
@@ -22,12 +26,10 @@ std::string CONF_DIRPATH = "";    // proper value set by __setVariables()
 std::string DB_DIRPATH = "";      // proper value set by __setVariables()
 
 static std::string CONF_GPKIH;    // initialized by __setVariables()s
-
-
 static std::string LOG_DIRPATH;
 
-Logger *gpkihLogger = nullptr;
-Buffer *gpkihBuffer = nullptr;
+gurgui::logging::Logger *gpkihLogger = nullptr;
+gurgui::memory::Buffer *gpkihBuffer = nullptr;
 
 bool DRY_RUN = false;
 bool SHOW_HEADER = true;
@@ -131,7 +133,7 @@ static int __setVariables() {
 }
 
 static int __setBuffer(){
-    static Buffer __mainGpkihBuffer(gpkihReservedMemory);
+    static gurgui::memory::Buffer __mainGpkihBuffer(gpkihReservedMemory);
     if(__mainGpkihBuffer.head() == nullptr){
         PERROR("{}\n",__mainGpkihBuffer.getLastError());
         return GPKIH_FAIL;
@@ -146,7 +148,7 @@ static int __setLogger(){
         return GPKIH_FAIL;
     }
 
-    Logger::setBaseDir(std::move(fs::path(GPKIH_BASEDIR)/"logs").string());
+    gurgui::logging::Logger::setBaseDir(std::move(fs::path(GPKIH_BASEDIR)/"logs").string());
     
     auto mSizeView = Config::get("logs", "maxSize");
     
@@ -213,67 +215,16 @@ static int __setLogger(){
         iLevels = iLevels | __str_level_map[token];
     }
     
-    static Logger __mainGpkihLogger("gpkih",logSize,iFields,iLevels);
+    static gurgui::logging::Logger __mainGpkihLogger("gpkih",logSize,iFields,iLevels);
     gpkihLogger = &__mainGpkihLogger;
     return GPKIH_OK;
-}
-
-static int __parseGlobals(std::vector<std::string> &opts){
-    for(int i = 0; i < opts.size(); ++i){
-        if(opts[i] == "-debug" || opts[i] == "--debug"){
-            #ifndef GPKIH_ENABLE_DEBUGGING
-            PWARN("This version of gpkih wasn't compiled with debugging capabilities\n");
-            PHINT("For such thing, you can compile gpkih using the setup script: ./setup -ed OR ./setup -d GPKIH_ENABLE_DEBUGGING=ON\n");
-            #endif
-    
-            if(i+1 == opts.size()){
-                #ifndef GPKIH_ENABLE_DEBUGGING
-                opts.erase(opts.begin()+i);
-                break;
-                #endif
-                PERROR("Debug level must be given\n");
-                return GPKIH_FAIL;
-            }
-    
-            int debugLevel = std::stoi(opts[i+1]);
-    
-            if(debugLevel > 0 && debugLevel <= 3){
-                ENABLE_DEBUG_MESSAGES = true;
-                DEBUG_LEVEL = debugLevel;
-                opts.erase(opts.begin()+i,opts.begin()+i+2);
-                ++i;
-                break;
-            }
-
-            #ifdef GPKIH_ENABLE_DEBUGGING
-            PERROR("Debug level must be 0-3 (both included)\n");
-            return GPKIH_FAIL;
-            #endif
-        }
-    }
-    for(int i = 0; i < opts.size();){
-        std::string_view opt = opts[i];
-        if(opt == "-q" || opt == "--quiet"){
-            ENABLE_PRINTING = false;
-            opts.erase(opts.begin()+i);
-        }else if(opt == "-dr" || opt == "--dryrun"){
-            DRY_RUN = true;
-            opts.erase(opts.begin()+i);
-        }else if(opt == "-nh" || opt == "--noheader"){
-            SHOW_HEADER = false;
-            opts.erase(opts.begin()+i);
-        }else{
-            ++i;    
-        }
-    }
-  return GPKIH_OK;
 }
 
 // PROGRAM ENTRY POINT
 int main(int argc, const char **args) {
   std::vector <std::string> opts(args+1,args+argc);
 
-  if(__parseGlobals(opts) == GPKIH_FAIL){
+  if(parsers::parseGlobals(opts) == GPKIH_FAIL){
     return GPKIH_FAIL;
   }
 
@@ -292,7 +243,7 @@ int main(int argc, const char **args) {
   // Register signal handlers   
   Signals::register_signals();
 
-  // TODO - Add PROPER checks for openssl - openvpn existence (static lib with utils to check and execute commands on both win|lin)
+  // XDDD this has been here forever broski troski TODO - Add PROPER checks for openssl - openvpn existence (static lib with utils to check and execute commands on both win|lin)
 
   // Launch task to load `gpkih.conf` configuration
   auto loadGpkihConfigTask = std::async(std::launch::async, Config::load, CONF_GPKIH);

@@ -1,5 +1,5 @@
-
 cmake_minimum_required(VERSION 3.10)
+cmake_policy(SET CMP0079 NEW) # Allows linking libraries not built in this directory (line 87-88)
 
 project(gpkih VERSION 1.0)
 
@@ -9,6 +9,8 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(GPKIH_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(GPKIH_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(GPKIH_INCLUDE_DIR "${GPKIH_SRC_DIR}")  # Include directory for all components
+set(GURGUI_LIBRARIES gprintinglib glogginglib gutilslib gmemorylib)
+set(GPKIH_LIBRARIES gpkih_config_lib gpkih_actions_lib gpkih_db_lib gpkih_help_lib gpkih_parser_lib gpkih_formatter_lib gpkih_cli_lib)
 
 # Platform-specific settings
 function(configure_platform)
@@ -60,178 +62,42 @@ endif()
 
 message(STATUS "FMT include dir: ${FMT_LIBRARY_INCLUDE}")
 
-# Compile different gpkih components as static libraries
+# Compile STATIC standalone libs
+add_subdirectory("${GPKIH_SRC_DIR}/libs/utils")
+add_subdirectory("${GPKIH_SRC_DIR}/libs/printing")
+add_subdirectory("${GPKIH_SRC_DIR}/libs/logger")
+add_subdirectory("${GPKIH_SRC_DIR}/libs/memory")
 
-# Lib - printing
-set(gpkih_printing_src "${GPKIH_SRC_DIR}/printing")
-set(gpkih_printing_definition "${gpkih_printing_src}/printing.hpp")
-set(gpkih_printing_implementation "${gpkih_printing_src}/printing.cpp")
-add_library(gpkih_printing_lib STATIC "${gpkih_printing_implementation}")
-target_include_directories(gpkih_printing_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
+# Compile STATIC gpkih libs
+add_subdirectory("${GPKIH_SRC_DIR}/profiles")
+add_subdirectory("${GPKIH_SRC_DIR}/entities")
+add_subdirectory("${GPKIH_SRC_DIR}/help")
+add_subdirectory("${GPKIH_SRC_DIR}/cli")
+add_subdirectory("${GPKIH_SRC_DIR}/db")
+add_subdirectory("${GPKIH_SRC_DIR}/config")
+add_subdirectory("${GPKIH_SRC_DIR}/actions")
+add_subdirectory("${GPKIH_SRC_DIR}/parse")
+add_subdirectory("${GPKIH_SRC_DIR}/experimental")
 
-# Lib - logger
-set(gpkih_logger_src "${GPKIH_SRC_DIR}/logger")
-set(gpkih_logging_definition 
-    "${gpkih_logger_src}/logger.hpp"
-    "${gpkih_logger_src}/signals.hpp"
-)
-set(gpkih_logging_implementation
-    "${gpkih_logger_src}/logger.cpp"
-    "${gpkih_logger_src}/signals.cpp"
-)
-add_library(gpkih_logging_lib STATIC "${gpkih_logging_implementation}")
-target_include_directories(gpkih_logging_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
+# Add fmt include dirs to all libs (not all of them use it, but I've been a lot of hours trying to make it compile again, ill review it later.) 
+foreach(target IN LISTS GURGUI_LIBRARIES GPKIH_LIBRARIES)
+  target_include_directories(${target} PUBLIC "${FMT_LIBRARY_INCLUDE}")
+endforeach()
 
-# Lib memmgmt
-set(gpkih_memmgmt_src "${GPKIH_SRC_DIR}/memory")
-set(gpkih_memmgmt_definition "${gpkih_memmgmt_src}/memmgmt.hpp")
-set(gpkih_memmgmt_implementation "${gpkih_memmgmt_src}/memmgmt.cpp")
-add_library(gpkih_memmgmt_lib STATIC "${gpkih_memmgmt_implementation}")
-target_include_directories(gpkih_memmgmt_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
+target_link_libraries(gpkih_parser_lib PUBLIC gpkih_entities_lib gpkih_formatter_lib)
+target_link_libraries(gpkih_actions_lib PUBLIC gpkih_profiles_lib)
 
-# Lib - profiles
-set(gpkih_profiles_definition
-    "${GPKIH_SRC_DIR}/profiles/profiles.hpp")
-set(gpkih_profiles_implementation
-    "${GPKIH_SRC_DIR}/profiles/profiles.cpp")
-add_library(gpkih_profiles_lib STATIC "${gpkih_profiles_implementation}")
-target_include_directories(gpkih_profiles_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
-
-# Lib - entities
-set(gpkih_entities_definition
-    "${GPKIH_SRC_DIR}/entities/entities.hpp")
-set(gpkih_entities_implementation
-    "${GPKIH_SRC_DIR}/entities/entities.cpp")
-add_library(gpkih_entities_lib STATIC "${gpkih_entities_implementation}")
-target_include_directories(gpkih_entities_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
-# Lib - config_management
-set (gpkih_config_definition
-    "${GPKIH_SRC_DIR}/config/config_management.hpp")
-set (gpkih_config_implementation
-    "${GPKIH_SRC_DIR}/config/config_management.cpp"
-)
-add_library(gpkih_config_management_lib STATIC "${gpkih_config_implementation}")
-target_include_directories(gpkih_config_management_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
-
-# Lib - actions
-set(gpkih_actions_src "${GPKIH_SRC_DIR}/actions")
-set (gpkih_actions_definition
-        "${GPKIH_SRC_DIR}/actions/actions.hpp")
-set (gpkih_actions_implementation
-    "${gpkih_actions_src}/build.cpp"
-    "${gpkih_actions_src}/gencrl.cpp"
-    "${gpkih_actions_src}/revoke.cpp"
-    "${gpkih_actions_src}/init.cpp"
-    "${gpkih_actions_src}/list.cpp"
-    "${gpkih_actions_src}/remove.cpp"
-)
-add_library(gpkih_actions_lib STATIC "${gpkih_actions_implementation}")
-target_include_directories(gpkih_actions_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
-target_link_libraries(gpkih_actions_lib PUBLIC gpkih_entities_lib)
-
-# Lib - database
-set(gpkih_db_src "${GPKIH_SRC_DIR}/db")
-set(gpkih_db_definition 
-    "${gpkih_db_src}/profiles.hpp" 
-    "${gpkih_db_src}/entities.hpp"
-    "${gpkih_db_src}/mnck.hpp"
-)
-set(gpkih_db_implementation 
-    "${gpkih_db_src}/profiles.cpp"
-    "${gpkih_db_src}/entities.cpp"
-    "${gpkih_db_src}/mnck.cpp"
-)
-
-add_library(gpkih_db_lib STATIC "${gpkih_db_implementation}")
-target_include_directories(gpkih_db_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
-
-# Lib - help
-set(gpkih_help_src "${GPKIH_SRC_DIR}/help")
-set(gpkih_help_definition "${gpkih_help_src}/help.hpp")
-set(gpkih_help_implementation
-    "${gpkih_help_src}/help.cpp"
-    "${gpkih_help_src}/help_set.cpp"
-    "${gpkih_help_src}/help_get.cpp"
-    "${gpkih_help_src}/help_build.cpp"
-    "${gpkih_help_src}/help_gencrl.cpp"
-    "${gpkih_help_src}/help_init.cpp"
-    "${gpkih_help_src}/help_remove.cpp"
-    "${gpkih_help_src}/help_revoke.cpp"
-    "${gpkih_help_src}/help_list.cpp"
-    "${gpkih_help_src}/help_rename.cpp"
-    "${gpkih_help_src}/help_reset.cpp"
-)
-
-add_library(gpkih_help_lib STATIC "${gpkih_help_implementation}")
-target_include_directories(gpkih_help_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
-
-# Lib - parse
-set(gpkih_parse_src "${GPKIH_SRC_DIR}/parse")
-set(gpkih_parse_definition "${gpkih_parse_src}/parser.hpp")
-set(gpkih_parse_implementation
-    "${gpkih_parse_src}/build.cpp"
-    "${gpkih_parse_src}/set.cpp"
-    "${gpkih_parse_src}/get.cpp"
-    "${gpkih_parse_src}/gencrl.cpp"
-    "${gpkih_parse_src}/revoke.cpp"
-    "${gpkih_parse_src}/init.cpp"
-    "${gpkih_parse_src}/list.cpp"
-    "${gpkih_parse_src}/genkey.cpp"
-    "${gpkih_parse_src}/remove.cpp"
-    "${gpkih_parse_src}/parser.cpp"
-    "${gpkih_parse_src}/rename.cpp"
-    "${gpkih_parse_src}/reset.cpp"
-)
-add_library(gpkih_parse_lib STATIC "${gpkih_parse_implementation}")
-target_include_directories(gpkih_parse_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
-target_link_libraries(gpkih_parse_lib PUBLIC gpkih_utils_lib gpkih_subj_lib gpkih_profiles_lib)
-
-# Lib - formatter
-set(gpkih_formatter_src "${GPKIH_SRC_DIR}/experimental")
-set(gpkih_formatter_definition "${gpkih_formatter_src}/formatter.hpp")
-set(gpkih_formatter_implementation "${gpkih_formatter_src}/formatter.cpp")
-add_library(gpkih_formatter_lib STATIC "${gpkih_formatter_implementation}")
-target_include_directories(gpkih_formatter_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
-
-# Lib - cli 
-set(gpkih_cli_src "${GPKIH_SRC_DIR}/cli")
-set(gpkih_cli_definition "${gpkih_cli_src}/cli.hpp")
-set(gpkih_cli_implementation "${gpkih_cli_src}/cli.cpp")
-add_library(gpkih_cli_lib STATIC "${gpkih_cli_implementation}")
-target_include_directories(gpkih_cli_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
-
-# Lib utils
-set(gpkih_utils_src "${GPKIH_SRC_DIR}/utils")
-set(gpkih_utils_definition "${gpkih_utils_src}/utils.hpp")
-set(gpkih_utils_implementation 
-    "${gpkih_utils_src}/env.cpp"
-    "${gpkih_utils_src}/str.cpp"
-    "${gpkih_utils_src}/openssl.cpp"
-    "${gpkih_utils_src}/fs.cpp"
-)
-add_library(gpkih_utils_lib STATIC "${gpkih_utils_implementation}")
-target_include_directories(gpkih_utils_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
-
-# Lib subj-utils
-set(gpkih_subj_src "${GPKIH_SRC_DIR}/entities")
-set(gpkih_subj_definition "${gpkih_subj_src}/subj_utils.hpp")
-set(gpkih_subj_implementation "${gpkih_subj_src}/subj_utils.cpp")
-add_library(gpkih_subj_lib STATIC "${gpkih_subj_implementation}")
-target_include_directories(gpkih_subj_lib PUBLIC "${FMT_LIBRARY_INCLUDE}")
-
-# Self-contained binary - gpkih
 add_executable(gpkih
-    ${GPKIH_SRC_DIR}/gpkih.cpp
+    "${GPKIH_SRC_DIR}/gpkih.cpp"
 )
 
-set(GPKIH_LIBS gpkih_parse_lib gpkih_db_lib gpkih_actions_lib 
-    gpkih_config_management_lib gpkih_help_lib
-    gpkih_logging_lib gpkih_formatter_lib gpkih_printing_lib gpkih_cli_lib gpkih_utils_lib gpkih_memmgmt_lib)
+target_include_directories(gpkih PUBLIC "${FMT_LIBRARY_INCLUDE}")
+target_link_libraries(gpkih PUBLIC gpkih_entities_lib gpkih_profiles_lib gpkih_parser_lib gpkih_db_lib gpkih_actions_lib 
+    gpkih_config_lib gpkih_help_lib gpkih_cli_lib gpkih_formatter_lib gprintinglib gmemorylib gutilslib glogginglib)
 
-# Optional gpkih capabilities
 if(GPKIH_ENABLE_DEBUGGING)
     message(STATUS "GPKIH Debugging capabilities ENABLED")
-    set_property(TARGET gpkih ${GPKIH_LIBS} PROPERTY COMPILE_DEFINITIONS GPKIH_ENABLE_DEBUGGING)
+    set_property(TARGET gpkih ${GPKIH_LIBRARIES} PROPERTY COMPILE_DEFINITIONS GPKIH_ENABLE_DEBUGGING)
 else()
     message(STATUS "GPKIH Debugging capabilities DISABLED")
 endif()
@@ -240,14 +106,16 @@ if(FMT_LIBRARY)
     # Compile with FMT found in the system
     message(STATUS "Project will be compiled with found fmtlib")
     target_link_libraries(gpkih PRIVATE 
-        ${GPKIH_LIBS}
+        ${GPKIH_LIBRARIES}
         FMT_LIBRARY
     )
 else()
     # Use compiled FMT from github clone
     message(STATUS "Project will be compiled with cloned fmtlib")
     target_link_libraries(gpkih PRIVATE 
-        ${GPKIH_LIBS}
+        ${GPKIH_LIBRARIES}
         fmt::fmt
     )
 endif()
+
+return()
