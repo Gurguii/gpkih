@@ -17,7 +17,7 @@ Buffer::Buffer(size_t size):memBlockSize(size),availableBytes(size){
 		return;
 	}
 
-	memBlock = (char*)calloc(size, sizeof(uint8_t));
+	memBlock = (std::byte*)calloc(size, sizeof(std::byte));
 	
 	if(memBlock == nullptr){
 		throw BufferException("Couldn't allocate memory, calloc() returned nullptr");
@@ -32,13 +32,14 @@ Buffer::~Buffer(){
 	memBlock = nullptr;
 }
 
-char *Buffer::allocate(size_t bytes){
+std::byte *Buffer::allocate(size_t bytes){
 	//if(bytes == 0){
 	//	return nullptr;
 	//}
     if(availableBytes <= bytes){
     	// PROTOTYPE - HAVE NEVER TESTED THIS
     	// Look for available freed blocks where data can fit
+    	std::byte *validPTR = nullptr;
     	for(int i = 0; i < freedBlocks.size(); ++i){
     		const auto &[size,address] = freedBlocks[i]; 
     		if(size >= bytes+1){
@@ -46,9 +47,8 @@ char *Buffer::allocate(size_t bytes){
     			size_t diff = size - bytes+1;
     			if(diff == 0){
     				// takes the whole chunk
-    				char *ptr = address;
+    				validPTR = address;
     				freedBlocks.erase(freedBlocks.begin() + i);
-    				return ptr;
     			}else if (diff > 1){
     				// There will be some free space
     				// note that im ignoring that single byte difference on purpose cause 
@@ -56,60 +56,31 @@ char *Buffer::allocate(size_t bytes){
     				// data so that subsequent allocated data doesn't get printed 
     				// unintentionally on a call to printf() or any trouble with functions
     				// that rely on the closing null byte
-    				char *ptr = address;
+    				validPTR = address;
     				// add a new entry with the 'leftovers'
     				freedBlocks.erase(freedBlocks.begin() + i);
-    				freedBlocks.emplace_back(diff, ptr + bytes + 2);
-    				return ptr;
+    				freedBlocks.emplace_back(diff, validPTR + bytes + 2);
     			}
+    			return validPTR;
     		}	
     	}
-
-    	// TODO - FIX THIS
-    	freedBlocks.emplace_back(availableBytes, next);
-
-    	auto newMemBlock = (char*)calloc(memBlockSize,sizeof(uint8_t));
-	    
-	    if(newMemBlock == nullptr){
-	    	lastError = "Couldn't allocate a new memory block";
-	    }
-
-	    memBlock = newMemBlock;
-	    availableBytes = memBlockSize;
-	    next = memBlock;
+    	
+    	lastError = "Not enough space";
+    	return nullptr;
 	}
 	
-	char *ptr = next;
-	next+=bytes;
-	*next='\0';
-	++next;
+	std::byte *ptr = next;
+	next += bytes;
 	availableBytes -= bytes;
 
 	return ptr;
 };
 
-char *Buffer::allocate_and_copy(char *&st, size_t *length, std::string_view src){
-
-	if(length == nullptr){
-		// Don't set/use length 
-		size_t _len = src.size();
-		st = allocate(_len);
-		memcpy(st, src.data(), _len);
-	}else{
-		// Set/use length
-		*length = src.size();
-		st = allocate(*length);
-		memcpy(st, src.data(), *length);	
-	}
-
-	return st;
-}
-
 size_t Buffer::available(){
 	return availableBytes;
 }
 
-int Buffer::freeblock(char *ptr, size_t *size){
+int Buffer::freeblock(void *ptr, size_t *size){
 	if(ptr < memBlock || ptr > (memBlock + memBlockSize)){
 		lastError = "Cannot free a pointer outside the managed memory block";
 		return -1;
@@ -119,13 +90,13 @@ int Buffer::freeblock(char *ptr, size_t *size){
 	// The performance difference might be huge between calls depending
 	// on if size is given, cause if not the length of the ptr will get
 	// calculated, and if its a big ass array it might be a pain
-	size_t length = size == nullptr ? strlen(ptr): *size;
+	size_t length = size == nullptr ? strlen((char*)ptr): *size;
 	
 	memset(ptr, 0, length);
 	availableBytes+=length+1; // length + null byte
 
 	// Keep track of freed blocks
-	freedBlocks.emplace_back(length,ptr);
+	freedBlocks.emplace_back(length,reinterpret_cast<std::byte*>(ptr));
 
 	return 0;
 }
@@ -137,14 +108,14 @@ size_t Buffer::dump(const char *path, uint32_t blockSize){
 		return -1;
 	}
 
-	char *current = memBlock;
+	auto *current = memBlock;
 	size_t iters = memBlockSize / blockSize;
 	size_t rest = memBlockSize % blockSize;
 
 	size_t written = 0;
 
 	for(int i = 0; i < iters; ++i){
-		file.write(current, blockSize);
+		file.write(reinterpret_cast<const char *>(current), blockSize);
 		written += blockSize;
 		if(file.fail()){
 			lastError = "Something failed while dumping";
@@ -153,7 +124,7 @@ size_t Buffer::dump(const char *path, uint32_t blockSize){
 		current+=blockSize;
 	}
 
-	file.write(current,rest);
+	file.write(reinterpret_cast<const char *>(current),rest);
 
 	if(file.fail()){
 		lastError = "Failed dumping last few bytes";
@@ -172,6 +143,22 @@ const std::string& Buffer::getLastError(){
 	return lastError;
 }
 
-const char *const Buffer::head(){
+const std::byte *const Buffer::head(){
 	return memBlock;
+}
+
+SmartMemBlock::SmartMemBlock(size_t bytes)
+:__buffer((std::byte*)calloc(bytes, sizeof(std::byte))){
+	if(__buffer == nullptr){
+		throw BufferException("couldn't allocate requested memory, calloc() returned nullptr");
+	}
+}
+
+SmartMemBlock::~SmartMemBlock(){
+	free(__buffer);
+	__buffer = nullptr;
+}
+
+std::byte* const SmartMemBlock::get(){
+	return __buffer;
 }

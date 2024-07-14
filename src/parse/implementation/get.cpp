@@ -4,7 +4,7 @@
 
 using namespace gpkih;
 
-static void printScopeChange(strview scope, const FormatInfo &ffinfo)
+static void printScopeChange(std::string_view scope, const FormatInfo &ffinfo)
 {
 	fmt::print(fg(fmt::terminal_color::yellow) | bg(fmt::terminal_color::bright_black) | EMPHASIS::bold, fmt::format("{}{}{}", "{:^",ffinfo.header_width,"}"), scope);
 	fmt::print("\n");
@@ -32,7 +32,7 @@ using FormatInfo = gpkih::experimental::FormatInfo;
  *
  * @return     a tuple of 3 std::string_views, they might return true on .empty() depending if file/section/key were given or just file | file/section
 */
-static std::tuple<strview, strview, strview> __unpack_input(strview user_input)
+static std::tuple<std::string_view, std::string_view, std::string_view> __unpack_input(std::string_view user_input)
 {
 	if(user_input[0] == '@'){
 		user_input = &user_input.data()[1];
@@ -46,23 +46,23 @@ static std::tuple<strview, strview, strview> __unpack_input(strview user_input)
 		return std::make_tuple(user_input, "", "");
 	}
 	
-	strview file(&user_input[0], pos_fdot);
+	std::string_view file(&user_input[0], pos_fdot);
 	size_t pos_sdot = user_input.find('.', pos_fdot+1); 
 	
 	if(pos_sdot == -1){
 		// depth 2 - file and section
-		return std::make_tuple(file, strview(&user_input[pos_fdot + 1], user_input.size() - pos_fdot - 1), "");
+		return std::make_tuple(file, std::string_view(&user_input[pos_fdot + 1], user_input.size() - pos_fdot - 1), "");
 	}
 
-	strview section(&user_input[pos_fdot+1], pos_sdot - (pos_fdot + 1));
-	strview key(&user_input[pos_sdot+1]);
+	std::string_view section(&user_input[pos_fdot+1], pos_sdot - (pos_fdot + 1));
+	std::string_view key(&user_input[pos_sdot+1]);
 
 	return std::make_tuple(file,section,key);
 }
 
 // @brief prints requested sections | properties from config file, called when using @<pki|vpn> stops when @ is encountered, indicating next section
 // @returns index of next unprocessed opt in vector, last pos when done or -1 on error
-static size_t __handleScopePrinting (strview &scope_opt, std::vector<str> &opts, size_t next_pos, ProfileConfig& pconfig, gpkih::experimental::Formatter formatter)
+static size_t __handleScopePrinting (std::string_view &scope_opt, std::vector<std::string> &opts, size_t next_pos, ProfileConfig& pconfig, gpkih::experimental::Formatter formatter)
 {
 	const char *scope = &scope_opt[1]; // scope opt without '@'
 		
@@ -88,7 +88,7 @@ static size_t __handleScopePrinting (strview &scope_opt, std::vector<str> &opts,
 	}
 
 	printScopeChange(file, formatter.get_format());
-	strview opt;
+	std::string_view opt;
 
 	if(section.empty()){
 		// iterate assuming given file scope until '@' is found
@@ -99,12 +99,12 @@ static size_t __handleScopePrinting (strview &scope_opt, std::vector<str> &opts,
 				// do -1 since the other loop will ++ upon iteration
 				return i-1;
 			}
-			if(config->find(str(opt)) == config->end()){
+			if(config->find(std::string(opt)) == config->end()){
 				PWARN("section '{}' not found\n", opt);
 				continue;
 			}
 			formatter.print_headers(opt);
-			for(auto &kv : (*config)[str(opt)]){
+			for(auto &kv : (*config)[std::string(opt)]){
 				formatter.print_keyval(kv.first, kv.second);
 			}
 		} 
@@ -117,7 +117,7 @@ static size_t __handleScopePrinting (strview &scope_opt, std::vector<str> &opts,
 		return next_pos;
 	}
 
-	std::unordered_map<str,str> *mappedSection = nullptr;
+	std::unordered_map<std::string,std::string> *mappedSection = nullptr;
 
 	for(auto &kv : *config){
 		if(kv.first == section){
@@ -133,7 +133,7 @@ static size_t __handleScopePrinting (strview &scope_opt, std::vector<str> &opts,
 	formatter.print_headers(section);
 	// iterate assuming given file + section scope, e.g @pki.key
 	for(size_t i = next_pos; i < opts.size(); ++i){
-		strview opt = opts[i];
+		std::string_view opt = opts[i];
 		if(opt[0] == '@'){
 			return i;
 		}
@@ -142,11 +142,11 @@ static size_t __handleScopePrinting (strview &scope_opt, std::vector<str> &opts,
 
 		/* This is not good at all since the .data() returns a c string pointer to the 
 		* original string, so lets suppose_
-		* original: "gurgui" strview(original,3) == "gur"
-		* strview.data() -> gurgui which might lead to false negatives when doing
+		* original: "gurgui" std::string_view(original,3) == "gur"
+		* std::string_view.data() -> gurgui which might lead to false negatives when doing
 		* lookups on the unordered_map
 		*/
-		if(mappedSection->find(str(opt)) == mappedSection->end()){
+		if(mappedSection->find(std::string(opt)) == mappedSection->end()){
 			PWARN("key '{}' not found\n", opt);
 			continue;
 		}
@@ -163,7 +163,7 @@ static size_t __handleScopePrinting (strview &scope_opt, std::vector<str> &opts,
  * @param[in]  Iterator to the first element containing user input, e.g ./gpkih get behaviour logs -> iterator to 'behaviour'
  * @param[in]  Iterator to the end of the user input
  */
-static void __handle_gpkih_scope_printing(std::vector<str>::iterator next, std::vector<str>::iterator end)
+static void __handle_gpkih_scope_printing(std::vector<std::string>::iterator next, std::vector<std::string>::iterator end)
 {
 	// assume scope @gpkih
 	auto &map = Config::gpkihConfig;
@@ -178,7 +178,7 @@ static void __handle_gpkih_scope_printing(std::vector<str>::iterator next, std::
 			continue;
 		}
 
-		const std::unordered_map<str,str> *mappedSection = nullptr;
+		const std::unordered_map<std::string,std::string> *mappedSection = nullptr;
 
 		for(const auto &kv : map){
 			if(kv.first == section){
@@ -233,8 +233,10 @@ static void __handle_gpkih_full_printing()
 	}
 }
 
-int parsers::get(std::vector<str> &opts)
+int parsers::get(std::vector<std::string> &opts)
 {
+	DEBUG(1, "parsers::get()");
+
 	if (opts.empty()) {
 		// print gpkih general configuration
 		__handle_gpkih_full_printing();
@@ -242,7 +244,7 @@ int parsers::get(std::vector<str> &opts)
 	}
 
 	// Check profile
-	strview profile_name = opts[0];
+	std::string_view profile_name = opts[0];
 
 	Profile profile;
 	if (db::profiles::load(profile_name, profile) == GPKIH_FAIL) {
@@ -262,7 +264,7 @@ int parsers::get(std::vector<str> &opts)
 		return GPKIH_FAIL;
 	}
 
-	std::unordered_map<strview, ConfigMap*>scopeConfigMap = 
+	std::unordered_map<std::string_view, ConfigMap*>scopeConfigMap = 
 	{
 		{"pki", pconfig.getptr(CFILE_PKI)},
 		{"vpn", pconfig.getptr(CFILE_VPN)}
@@ -288,7 +290,7 @@ int parsers::get(std::vector<str> &opts)
 	}
 
 	for (size_t i = 0; i < opts.size(); ++i) {
-		strview opt = opts[i];
+		std::string_view opt = opts[i];
 		//fmt::print(fg(fmt::terminal_color::bright_magenta) | EMPHASIS::bold, "{:^60}\n", fmt::format("parsing '{}'", opt));
 		if (opt[0] == '@') {
 			// Scoped printing
@@ -319,12 +321,12 @@ int parsers::get(std::vector<str> &opts)
 			continue;
 		}
 
-		if(map.find(str(section)) == map.end()){
+		if(map.find(std::string(section)) == map.end()){
 			PWARN("unknown section '{}' in file '{}'\n", section, file);
 			continue;
 		}
 
-		auto &section_map = map[str(section)];
+		auto &section_map = map[std::string(section)];
 		// scope and section exist
 		if(key.empty()){
 			// print whole section
@@ -335,7 +337,7 @@ int parsers::get(std::vector<str> &opts)
 			continue;	
 		}
 
-		if(section_map.find(str(key)) == section_map.end()){
+		if(section_map.find(std::string(key)) == section_map.end()){
 			PWARN("unknown key '{}' in section '{}' from file '{}'\n", key, section, file);
 			continue;
 		}

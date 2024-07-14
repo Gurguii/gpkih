@@ -10,7 +10,7 @@
 using namespace gpkih;
 
 int parsers::build(std::vector<std::string> &opts) {
-  PDEBUG(1, "parsers::build()");
+  DEBUG(1, "parsers::build()");
 
   // ./gpki build <profile> <ca|sv|cl> [subopts]
   if (opts.empty()) {
@@ -22,8 +22,8 @@ int parsers::build(std::vector<std::string> &opts) {
   std::string_view profilename = opts[0];
   
   Profile *profile; // profile to build entity for
-  Entity entity;  // entity info
-  entity.status = ES_NONE;
+  Entity entity{};  // entity info
+  entity.meta.status = ES_NONE;
 
   profile = db::profiles::get(profilename);
   if(profile == nullptr){
@@ -39,11 +39,11 @@ int parsers::build(std::vector<std::string> &opts) {
   std::string_view eTypeStr = opts[1];
 
   if(eTypeStr == "cl" || eTypeStr == "client"){
-    entity.type = ET_CL;
+    entity.meta.type = ET_CL;
   }else if(eTypeStr == "sv" || eTypeStr == "server"){
-    entity.type = ET_SV;
+    entity.meta.type = ET_SV;
   }else if(eTypeStr == "ca"){
-    entity.type = ET_CA;
+    entity.meta.type = ET_CA;
   }else{
     PERROR("Invalid entity type '{}', valid entities: cl|client|sv|server|ca\n",eTypeStr);
     return GPKIH_FAIL;
@@ -61,7 +61,7 @@ int parsers::build(std::vector<std::string> &opts) {
     return GPKIH_FAIL;
   }
 
-  if((entity.type & ET_CL || entity.type & ET_SV) && profile->ca_created == false)
+  if((entity.meta.type & ET_CL || entity.meta.type & ET_SV) && profile->meta.caCreated == false)
   {
     PWARN("CA must be created before creating server/client entities\n");
     PHINT("./gpkih build {} ca -cn MyCA\n",profile->name);
@@ -81,7 +81,7 @@ int parsers::build(std::vector<std::string> &opts) {
     } else if(opt == "-keysize" || opt == "--keysize") {
       config.set(CFILE_PKI,"key","size",std::move(opts[++i]));
     } else if(opt == "-cn" || opt == "--common-name"){
-      CALLOCATE(entity.subject.cn, reinterpret_cast<size_t*>(&entity.subject.cnlen), opts[++i]);
+      CALLOCATE(entity.subject.cn, reinterpret_cast<size_t*>(&entity.subject.meta.cnlen), opts[++i]);
       if(eman.exists(entity.subject.cn)){
         PWARN("Entity '{}' already exists in profile '{}'\n", entity.subject.cn, profile->name);
         return GPKIH_FAIL;
@@ -92,20 +92,20 @@ int parsers::build(std::vector<std::string> &opts) {
       if(eman.exists(serial)){
         PWARN("Entity with serial '{}' already exists\n");
       }else{
-        entity.serial = serial;  
+        entity.meta.serial = serial;  
       }
     } else if(opt == "-loc" || opt == "--location"){
-      CALLOCATE(entity.subject.location, reinterpret_cast<size_t*>(&entity.subject.locationlen), opts[++i]);
+      CALLOCATE(entity.subject.location, reinterpret_cast<size_t*>(&entity.subject.meta.locationlen), opts[++i]);
     } else if(opt == "-co" || opt == "--country"){
-      if(utils::str::glength(opts[++i].c_str()) == 2){
-        memcpy(entity.subject.country,opts[i].c_str(),2); 
+      if(gurgui::utils::str::glength(opts[++i].c_str()) == 2){
+        memcpy(const_cast<char*>(entity.subject.country),opts[i].c_str(),2); 
       }else{
         PWARN("Country must be a 2 letter code, e.g ES,EN,DE,FR ... omitting user value '{}'\n",opts[i]);
       }
     }else if(opt == "-org" || opt == "--organisation"){
-      CALLOCATE(entity.subject.organisation,reinterpret_cast<size_t*>(&entity.subject.organisationlen),opts[++i]);
+      CALLOCATE(entity.subject.organisation,reinterpret_cast<size_t*>(&entity.subject.meta.organisationlen),opts[++i]);
     }else if(opt == "-st" || opt == "--state"){
-      CALLOCATE(entity.subject.state, reinterpret_cast<size_t*>(&entity.subject.statelen), opts[++i]);
+      CALLOCATE(entity.subject.state, reinterpret_cast<size_t*>(&entity.subject.meta.statelen), opts[++i]);
     }else if(opt == "-email" || opt == "--email"){
       CALLOCATE(entity.subject.email, reinterpret_cast<size_t*>(&entity.subject.email), opts[++i]);
     }else if(opt == "-pfx" || opt == "--pfx"){
@@ -143,7 +143,7 @@ int parsers::build(std::vector<std::string> &opts) {
   std::string_view keyAlgo = pkiconf["key"]["algorithm"];
   std::string_view days = pkiconf["crt"]["days"];
 
-  if(entity.type & ET_CA){
+  if(entity.meta.type & ET_CA){
     
     if(entity::setCAPaths(*profile, entity) != GPKIH_OK){
       PERROR("smth failed on setCAPaths()\n");
@@ -152,9 +152,9 @@ int parsers::build(std::vector<std::string> &opts) {
 
     rcode = actions::build_ca(*profile,config,entity,eman,days,keyAlgo,keySize);
   
-  }else if(entity.type & ET_CL || entity.type & ET_SV){
+  }else if(entity.meta.type & ET_CL || entity.meta.type & ET_SV){
     
-    if(profile->ca_created == false){
+    if(profile->meta.caCreated == false){
       auto ans = PROMPT("Certificate authority (CA) hasn't been created yet, create?","[y/n]",true);
       
       if(ans != "y" && ans != "yes"){
@@ -163,7 +163,7 @@ int parsers::build(std::vector<std::string> &opts) {
       }
 
       auto sub = config.default_subject();
-      Entity newCA;
+      Entity newCA{};
       subject::promptForSubject(profile->name, newCA.subject, sub, eman);
       
       if(actions::build_ca(*profile, config, newCA, eman, days, keyAlgo, keySize) == GPKIH_FAIL){
@@ -183,15 +183,15 @@ int parsers::build(std::vector<std::string> &opts) {
     return rcode;
   }
 
-  entity.expirationDate = entity.creationDate + std::chrono::seconds(3600*24*std::stoull(days.data(),nullptr,10));
-  entity.status = ES_ACTIVE;
+  entity.meta.expirationDate = entity.meta.creationDate + std::chrono::seconds(3600*24*std::stoull(days.data(),nullptr,10));
+  entity.meta.status = ES_ACTIVE;
 
   eman.add(entity);
   db::profiles::sync();
   eman.sync();
 
   PSUCCESS("Entity '{}' created\n", entity.subject.cn);
-  ADD_LOG(LL_INFO,fmt::format("profile:{} action:build serial:{} cn:{} type:{}",profile->name, entity.serial, entity.subject.cn, entity::conversion::toString(entity.type)));
+  ADD_LOG(LL_INFO,fmt::format("profile:{} action:build serial:{} cn:{} type:{}",profile->name, entity.meta.serial, entity.subject.cn, entity::conversion::toString(entity.meta.type)));
   
   return GPKIH_OK;
 }

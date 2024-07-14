@@ -6,8 +6,9 @@ using namespace gpkih;
 // -dh
 // -tls
 
-int parsers::genkey(std::vector<str> &opts) {
- 
+int parsers::genkey(std::vector<std::string> &opts) {
+  DEBUG(1, "parsers::genkey()");
+
   if (opts.empty()) {
     PERROR("profile name must be given\n");
     PHINT("try ./gpki help genkey\n");

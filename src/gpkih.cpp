@@ -1,17 +1,13 @@
 #include "gpkih.hpp"
 #include "libs/utils/utils.hpp"
-
 #include "config/Config.hpp"
-
 #include "parse/parser.hpp"
-
 #include "entities/entities.hpp"
-
 #include "signals/signals.cpp"
 #include <future>
 using namespace gpkih;
 
-constexpr size_t gpkihReservedMemory = utils::units::toBytes(4,'m');
+constexpr size_t gpkihReservedMemory = gurgui::utils::units::toBytes(4,'m');
 
 static constexpr const char* DB_DIRNAME  = "db";
 static constexpr const char* CFG_DIRNAME = "config";
@@ -29,13 +25,13 @@ static std::string CONF_GPKIH;    // initialized by __setVariables()s
 static std::string LOG_DIRPATH;
 
 gurgui::logging::Logger *gpkihLogger = nullptr;
-gurgui::memory::Buffer *gpkihBuffer = nullptr;
+GpkihBuffer *gpkihBuffer = nullptr;
 
 bool DRY_RUN = false;
 bool SHOW_HEADER = true;
 
 static int __check_gpkih_install_dir(std::string &path) {
-    PDEBUG(2, "__check_gpkih_install_dir()");
+    DEBUG(1, "__check_gpkih_install_dir()");
 
     if (!fs::exists(path))
     {
@@ -85,12 +81,12 @@ static int __check_gpkih_install_dir(std::string &path) {
 
 static int __setPlatformDependantVariables()
 {
-    PDEBUG(2,"__setPlatformDependantVariables()");
+    DEBUG(1, "__setPlatformDependantVariables()");
 
     #ifdef _WIN32
-    GPKIH_BASEDIR = utils::env::get_environment_variable("LOCALAPPDATA");
+    GPKIH_BASEDIR = gurgui::utils::env::get_environment_variable("LOCALAPPDATA");
     #else
-    GPKIH_BASEDIR = utils::env::get_environment_variable("HOME");
+    GPKIH_BASEDIR = gurgui::utils::env::get_environment_variable("HOME");
     #endif
 
     if(GPKIH_BASEDIR.empty()){
@@ -109,16 +105,16 @@ static int __setPlatformDependantVariables()
 }
 
 static int __setVariables() {
-    PDEBUG(2,"__setVariables()");
+    DEBUGF(1, "__setVariables({})","hola");
 
     if (__setPlatformDependantVariables() != GPKIH_OK) {
         return GPKIH_FAIL;
     }
 
     CURRENT_PATH    = fs::current_path().string();
-    DB_DIRPATH      = fmt::format("{}{}{}", GPKIH_BASEDIR, DB_DIRNAME, SLASH);
-    CONF_DIRPATH    = fmt::format("{}{}{}", GPKIH_BASEDIR, CFG_DIRNAME, SLASH);
-    LOG_DIRPATH     = fmt::format("{}{}{}", GPKIH_BASEDIR, LOG_DIRNAME, SLASH);
+    DB_DIRPATH      = fmt::format("{}{}", GPKIH_BASEDIR, DB_DIRNAME)  + SLASH;
+    CONF_DIRPATH    = fmt::format("{}{}", GPKIH_BASEDIR, CFG_DIRNAME) + SLASH;
+    LOG_DIRPATH     = fmt::format("{}{}", GPKIH_BASEDIR, LOG_DIRNAME) + SLASH;
     CONF_GPKIH      = fmt::format("{}{}", CONF_DIRPATH, gpkihConfigFilename);
 
     // file used by db::profiles namespace to store/load profiles
@@ -133,7 +129,7 @@ static int __setVariables() {
 }
 
 static int __setBuffer(){
-    static gurgui::memory::Buffer __mainGpkihBuffer(gpkihReservedMemory);
+    static GpkihBuffer __mainGpkihBuffer{gpkihReservedMemory};
     if(__mainGpkihBuffer.head() == nullptr){
         PERROR("{}\n",__mainGpkihBuffer.getLastError());
         return GPKIH_FAIL;
@@ -164,13 +160,13 @@ static int __setLogger(){
 
     if(unit == 'g' || unit == 'm' || unit == 'k' || unit == 'b'){
         int num = std::stoi(mSizeView.data(),nullptr,10);
-        logSize = utils::units::toBytes(num,unit);
+        logSize = gurgui::utils::units::toBytes(num,unit);
     }else if(unit < 48 && unit > 57){
         PERROR("Wrong unit in configuration logs.maxSize '{}'\n", unit);
         return GPKIH_FAIL;    
     }else{
         int num = std::stoi(mSizeView.data(),nullptr,10);
-        logSize = utils::units::toBytes(num,'b');
+        logSize = gurgui::utils::units::toBytes(num,'b');
     }
 
     auto iFieldSt = Config::get("logs", "includedFormatFields");

@@ -8,7 +8,7 @@ namespace gpkih::db::profiles
 	  - Profiles will be stored in binary form
 	  - Each line will contain a profile
 
-    syntax: <id><namelen><name><sourcelen><source><creationDate><last_modification><ca><total_servers><total_clients>
+    syntax: <id><namelen><name><sourcelen><source><creationDate><lastModification><ca><total_servers><total_clients>
     	
     namelen: uint8_t indicating length of name
     name: char array

@@ -12,7 +12,7 @@ tmpdir=$(mktemp -d)
 tmpfile="$tmpdir/.msg"
 
 declare -A checks
-checkDescriptions=("Create new profile" "Build certificate authority" "Build server certifficate" "Build client certificate")
+checkDescriptions=("Create new profile" "Build certificate authority" "Build server certificate" "Build client certificate")
 checkCmds=("init -n foo -s $tmpdir/foo" "build foo ca -cn fooCA -y" "build foo sv -cn fooSV -y" "build foo cl -cn fooCL -y")
 ##########################################
 

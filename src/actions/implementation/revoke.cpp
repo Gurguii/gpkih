@@ -51,7 +51,7 @@ int actions::revoke(Profile &profile, std::vector<std::string> &common_names, st
       return GPKIH_FAIL;
     }
     
-    entity->status = ES_REVOKED;
+    entity->meta.status = ES_REVOKED;
     revoked_cns.emplace_back(cn);
   }
 

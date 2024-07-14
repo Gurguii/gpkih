@@ -1,7 +1,7 @@
 #include "../parser.hpp"
 
 int gpkih::parsers::rename(std::vector<std::string> &opts){
-	PDEBUG(1,"gpkih::parsers::rename()");
+	DEBUG(1,"gpkih::parsers::rename()");
 
 	if(opts.size() < 2){
 		PHINT("./gpkih rename <profile_name> <new_name> [subopts]\n");
@@ -21,8 +21,16 @@ int gpkih::parsers::rename(std::vector<std::string> &opts){
 	}
 	
 	std::string oldpath = fmt::format("{}{}_entities.data",DB_DIRPATH,profile->name);
-	CALLOCATE(profile->name, reinterpret_cast<size_t*>(&profile->namelen), opts[1]);
+	
+	FREE_MEMORY_BLOCK(const_cast<char*>(profile->name), reinterpret_cast<size_t*>(&profile->meta.nameLen));
+	CALLOCATE(profile->name, reinterpret_cast<size_t*>(&profile->meta.nameLen), opts[1]);
+	
 	std::string newpath = fmt::format("{}{}_entities.data",DB_DIRPATH,profile->name);
+
+	if(DRY_RUN == true){
+		PINFO("Renaming '{}' to '{}'\n", oldpath, newpath);
+		return GPKIH_OK;
+	}
 
 	fs::rename(oldpath,newpath);
 
@@ -31,7 +39,7 @@ int gpkih::parsers::rename(std::vector<std::string> &opts){
 		return GPKIH_FAIL;
 	}
 	
-	profile->last_modification = std::chrono::system_clock::now();
+	profile->meta.lastModification = std::chrono::system_clock::now();
 
 	if(db::profiles::sync() == GPKIH_FAIL){
 		return GPKIH_FAIL;

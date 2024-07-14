@@ -63,3 +63,18 @@ const std::unordered_map<std::string, COLOR>& map_str_color(){
 	return _map;
 }
 
+void printDebugMsg(int debugLevel, const char *fp, int ln, std::string_view msg){
+	static int offset = 0;
+	if(offset == 0){
+		// set offset
+		size_t len = strlen(fp);
+		for(int i = 0; i < len; ++i){
+			if(fp[i] == '/' && fp[i+1] == 's' && fp[i+2] == 'r' && fp[i+3] == 'c'){
+				offset = i+5;
+			}
+		}
+	}
+	if(ENABLE_PRINTING && ENABLE_DEBUG_MESSAGES){
+		printf("%-40s (%-3i) - %-s\n",fp+offset, ln, msg.data());
+	}
+}

@@ -3,6 +3,8 @@
 // SYNTAX ./gpki revoke <profile> <cn1,cn2 ... cnX> [subopts]
 using namespace gpkih;
 int parsers::revoke(std::vector<std::string> &opts) {
+  DEBUG(1, "parsers::revoke()");
+
   if (opts.size() == 0) {
     PERROR("profile name must be given\n");
     PHINT("try gpki help revoke\n");
@@ -12,8 +14,8 @@ int parsers::revoke(std::vector<std::string> &opts) {
   std::string_view profilename = opts[0];
   Profile profile;
 
-  std::vector<str> cnToRevoke;
-  std::vector<str> serialsToRevoke;
+  std::vector<std::string> cnToRevoke;
+  std::vector<std::string> serialsToRevoke;
 
   if (db::profiles::load(profilename, profile)) {
     PERROR("Profile '{}' doesn't exist\n", profilename);
@@ -33,14 +35,14 @@ int parsers::revoke(std::vector<std::string> &opts) {
   for(int i = 0; i < opts.size(); ++i){
     std::string_view opt = opts[i];
     if(opt == "-cn" || opt == "--common-name"){
-      str cn;
-      sstream ss(opts[++i]);
+      std::string cn;
+      std::stringstream ss(opts[++i]);
       while(getline(ss,cn,',')){
         cnToRevoke.emplace_back(cn);
       }  
     }else if(opt == "-s" || opt == "--serial"){
-      str serial;
-      sstream ss(opts[++i]);
+      std::string serial;
+      std::stringstream ss(opts[++i]);
       while(getline(ss,serial,',')){
         serialsToRevoke.emplace_back(serial);
       }

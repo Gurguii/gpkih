@@ -10,7 +10,8 @@ set(GPKIH_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(GPKIH_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(GPKIH_INCLUDE_DIR "${GPKIH_SRC_DIR}")  # Include directory for all components
 set(GURGUI_LIBRARIES gprintinglib glogginglib gutilslib gmemorylib)
-set(GPKIH_LIBRARIES gpkih_profiles_lib gpkih_entities_lib gpkih_config_lib gpkih_actions_lib gpkih_db_lib gpkih_help_lib gpkih_parser_lib gpkih_formatter_lib gpkih_cli_lib)
+#gmemorylib
+set(GPKIH_LIBRARIES gpkih_mem_lib gpkih_profiles_lib gpkih_entities_lib gpkih_config_lib gpkih_actions_lib gpkih_db_lib gpkih_help_lib gpkih_parser_lib gpkih_formatter_lib gpkih_cli_lib)
 
 # Platform-specific settings
 function(configure_platform)
@@ -79,6 +80,9 @@ add_subdirectory("${GPKIH_SRC_DIR}/actions")
 add_subdirectory("${GPKIH_SRC_DIR}/parse")
 add_subdirectory("${GPKIH_SRC_DIR}/experimental")
 
+# Compile custom Buffer
+add_library(gpkih_mem_lib STATIC "src/buffer.cpp")
+
 # Add fmt include dirs to all libs (not all of them use it, but I've been a lot of hours trying to make it compile again, ill review it later.) 
 foreach(target IN LISTS GURGUI_LIBRARIES GPKIH_LIBRARIES)
   target_include_directories(${target} PUBLIC "${FMT_LIBRARY_INCLUDE}")
@@ -89,26 +93,27 @@ add_executable(gpkih
 )
 
 target_include_directories(gpkih PUBLIC "${FMT_LIBRARY_INCLUDE}")
-target_link_libraries(gpkih PUBLIC gpkih_entities_lib gpkih_profiles_lib gpkih_parser_lib gpkih_db_lib gpkih_actions_lib 
-    gpkih_config_lib gpkih_help_lib gpkih_cli_lib gpkih_formatter_lib gprintinglib gmemorylib gutilslib glogginglib)
 
-if(GPKIH_ENABLE_DEBUGGING)
+target_link_libraries(gpkih PUBLIC gpkih_entities_lib gpkih_profiles_lib gpkih_parser_lib gpkih_db_lib gpkih_actions_lib 
+    gpkih_config_lib gpkih_help_lib gpkih_cli_lib gpkih_formatter_lib gpkih_mem_lib gprintinglib gutilslib glogginglib gmemorylib)
+
+if(GPRINTING_ENABLE_DEBUGGING)
     message(STATUS "GPKIH Debugging capabilities ENABLED")
-    set_property(TARGET gpkih ${GPKIH_LIBRARIES} PROPERTY COMPILE_DEFINITIONS GPKIH_ENABLE_DEBUGGING)
+    set_property(TARGET gpkih ${GPKIH_LIBRARIES} PROPERTY COMPILE_DEFINITIONS GPRINTING_ENABLE_DEBUGGING)
 else()
     message(STATUS "GPKIH Debugging capabilities DISABLED")
 endif()
 
 if(FMT_LIBRARY)
     # Compile with FMT found in the system
-    message(STATUS "Project will be compiled with found fmtlib")
+    message(STATUS "GPKIH will be compiled with found fmtlib")
     target_link_libraries(gpkih PRIVATE 
         ${GPKIH_LIBRARIES}
         FMT_LIBRARY
     )
 else()
     # Use compiled FMT from github clone
-    message(STATUS "Project will be compiled with cloned fmtlib")
+    message(STATUS "GPKIH will be compiled with cloned fmtlib")
     target_link_libraries(gpkih PRIVATE 
         ${GPKIH_LIBRARIES}
         fmt::fmt

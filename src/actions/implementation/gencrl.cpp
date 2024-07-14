@@ -3,7 +3,7 @@
 using namespace gpkih;
 int actions::gencrl(Profile &profile) {
   
-  if(profile.ca_created == false){
+  if(profile.meta.caCreated == false){
     PWARN("Cannot generate a crl if no CA has been created\n");
     PHINT("Try './gpkih build <profile> ca -cn myCA' to create a certificate authority\n");
     return GPKIH_OK;

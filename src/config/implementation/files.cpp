@@ -158,7 +158,7 @@ int config::loadFile(std::string_view path, ConfigMap &buff) {
           continue;
         }
 
-        sstream ss(line);
+        std::stringstream ss(line);
         std::string key, val;
         ss >> key;
         getline(ss, val);

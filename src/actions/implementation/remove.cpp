@@ -3,7 +3,7 @@
 
 using namespace gpkih;
 
-int actions::remove(std::vector<str> &profiles_to_remove, int remove_all) {
+int actions::remove(std::vector<std::string> &profiles_to_remove, int remove_all) {
   if (remove_all) {
     size_t deletedFiles = 0;
     size_t profileCount = db::profiles::size();

@@ -4,6 +4,8 @@
 #include "../../libs/utils/utils.hpp"
 #include "../../config/Config.hpp"
 
+constexpr const char *opensslConfFilename = "gopenssl.conf";
+
 static int createDH(std::string_view outpath, size_t size = 1024) {
   std::string command = fmt::format("openssl dhparam -quiet -out {} {}", outpath, size);
   if (system(command.c_str())) {
@@ -38,7 +40,7 @@ static inline std::unordered_map<std::string,std::string> RELATIVE_FILE_PATHS(){
 }  
 
 static bool __has_write_perms(std::string dirpath) {
-  PDEBUG(2, "__has_write_perms()");
+  DEBUG(2, "__has_write_perms()");
 
   /* this approach is kind of sad to see */
   try {
@@ -55,7 +57,7 @@ static bool __has_write_perms(std::string dirpath) {
 */
 static int __sed(std::string_view src, std::string_view dst,
   std::unordered_map<std::string_view, std::string_view> &&vals) {
-  PDEBUG(2, "__sed()");
+  DEBUG(2, "__sed()");
 
   std::ifstream srcfile(src.data());
   if (!srcfile.is_open()) {
@@ -86,11 +88,12 @@ static int __sed(std::string_view src, std::string_view dst,
 }                                                  
 
 template <typename T> static int __is_valid_path(T path) {
-  PDEBUG(2, "__is_valid_path()", path);
+  DEBUGF(2, "__is_valid_path({})", path);
 
-  if (IS_ABSOLUTE_PATH(path) == false) {
+  if (gurgui::utils::fs::is_absolute_path(path) == false) {
     return GPKIH_FAIL;
   };
+  
   try {
     if (fs::exists(path)) {
       auto ans = PROMPT("File or directory already exists, remove?", "[y/n]", true);
@@ -113,7 +116,7 @@ template <typename T> static int __is_valid_path(T path) {
 
 using namespace gpkih;
 int __create_pki_filestruct(Profile &profile){
-  PDEBUG(2, "__create_pki_filestruct()");
+  DEBUG(2, "__create_pki_filestruct()");
 
   // Create directories
   for (const std::string &relative : RELATIVE_DIRECTORY_PATHS()) {
@@ -134,7 +137,7 @@ int __create_pki_filestruct(Profile &profile){
 
     std::ofstream(path, std::ios::app).write(p.second.c_str(), p.second.size());
     if (!fs::exists(path)) {
-      PERROR("Couldn't create file " + p.first);
+      PERROR("Couldn't create file {}",p.first);
       return GPKIH_FAIL;
     }
   }
@@ -180,61 +183,66 @@ if (__sed(gopenssl_sed_src, gopenssl_sed_dst, {{"GPKIH_BASEDIR", fmt::format("{}
 };
 
 static int __check_profile_info(std::string_view &profileName, std::string_view &profileSource, Profile &profile){
-  // TODO - check path length < 254 (uint8_t = 255 | 254 + '\0' = 255);
-  // remember macro `len`
-
   /* 
     profileName can't be empty
     profile with name `profileName` can't already exist
     profileName size is max 254 characters
   */
-  if (profileName.empty() || db::profiles::exists(profileName) || profileName.size() > 254) {
+  if (profileName.empty() || db::profiles::exists(profileName) || profileName.size() > GPKIH_MAX_VARCHAR) {
     std::string pname;
     for(;;){
       pname = PROMPT("Desired profile name");
-
       if (db::profiles::exists(pname)) {
         PWARN("profile '{}' already exists\n", pname);
         continue;
       } else if (pname.empty()) {
         PWARN("profile name can't be empty\n");
         continue;
-      }else if(pname.size() > 254){
-        PWARN("max allowed length: 254 characters\n");
+      }else if(pname.size() > GPKIH_MAX_VARCHAR){
+        PWARN("max allowed length: {} characters\n", GPKIH_MAX_VARCHAR);
         continue;
       }
-      CALLOCATE(profile.name,reinterpret_cast<size_t*>(&profile.namelen),pname);
+      CALLOCATE(profile.name,reinterpret_cast<size_t*>(&profile.meta.nameLen),pname);
       break;
     }
   } else {
-    CALLOCATE(profile.name,reinterpret_cast<size_t*>(&profile.namelen),profileName);
+    CALLOCATE(profile.name,reinterpret_cast<size_t*>(&profile.meta.nameLen),profileName);
   }
 
-  if (profileSource.empty() || __is_valid_path(profileSource) == GPKIH_FAIL || profileSource.size() > 254) {
-    std::string psource;
-    do {
-      psource = PROMPT("Profile source dir (absolute path)");
-    } while (!__is_valid_path(psource) && profileSource.size() > 254);
-    CALLOCATE(profile.source,reinterpret_cast<size_t*>(&profile.sourcelen),psource);
-  } else {
-    CALLOCATE(profile.source,reinterpret_cast<size_t*>(&profile.sourcelen),profileSource);
+  if(profileSource.empty() || __is_valid_path(profileSource) || profileSource.size() > GPKIH_MAX_PATH)
+  {
+    std::string_view pSource{profileSource};
+    for(;;){
+      pSource = PROMPT("Profile source dir (absolute path)", true);
+      if(pSource.empty()){
+        PWARN("Empty profile source\n");
+      }else if(__is_valid_path(pSource)){
+        PWARN("Couldn't set profile source\n");
+      }else if(pSource.size() > GPKIH_MAX_PATH){
+        PWARN("Profile source length can't exceed {}\n", GPKIH_MAX_PATH);
+      }else{
+        CALLOCATE(profile.source, reinterpret_cast<size_t*>(&profile.meta.sourceLen), pSource);
+        break;
+      }
+      continue;
+    }  
+  }else{
+    CALLOCATE(profile.source, reinterpret_cast<size_t*>(&profile.meta.sourceLen), profileSource);
   }
-
+  
   // Check that we have write permissions in such path
   if (!__has_write_perms(profile.source)) {
     PERROR("no write permissions in '{}'", profile.source);
     return GPKIH_FAIL;
   };
 
-  PDEBUG(1,"creating profile source dir {}", profile.source);
-
   // Create source dir and any intermediary one in the path
-  return fs::create_directories(profile.source) ? GPKIH_OK : GPKIH_FAIL;
+  return fs::create_directories(profile.source) == true ? GPKIH_OK : GPKIH_FAIL;
 } // check_profile_info()
 
 int actions::init(std::string_view &profileName, std::string_view &profileSource) {
   Profile profile{};
-  profile.last_modification = profile.creationDate = std::chrono::system_clock::now();
+  profile.meta.lastModification = profile.meta.creationDate = std::chrono::system_clock::now();
   
   if(__check_profile_info(profileName, profileSource, profile) == GPKIH_FAIL){
     return GPKIH_FAIL;
@@ -260,8 +268,8 @@ int actions::init(std::string_view &profileName, std::string_view &profileSource
     std::string_view keyAlgo;
     std::string_view days;
 
-    Entity ca;
-    ca.type = ET_CA;
+    Entity ca{};
+    ca.meta.type = ET_CA;
     bool caBuilt = false;
 
     try{
@@ -276,14 +284,13 @@ int actions::init(std::string_view &profileName, std::string_view &profileSource
     if (autoans) {
       // QUESTION 1 - create dhparam?
       createDH(fmt::format("{}{}pki{}tls{}dhparam1024",profile.source, SLASH, SLASH, SLASH));
-      
       // QUESTION 2 - create ca?
       // also had to manually set the type
       auto sub = pconf.default_subject();
       subject::promptForSubject(profile.name, ca.subject, sub, eman);
       entity::setCAPaths(profile,ca);
       entity::loadSerial(profile,ca);
-      ca.expirationDate = ca.creationDate + std::chrono::seconds(3600*24*std::stoull(days.data(),nullptr,10));
+      entity::setExpirationDate(ca,std::strtoull(days.data(), nullptr, 10));
       if(build_ca(profile, pconf, ca, eman, days, keyAlgo, keySize) == GPKIH_OK){
         caBuilt = true;
       };
@@ -300,12 +307,12 @@ int actions::init(std::string_view &profileName, std::string_view &profileSource
 
       ans = PROMPT("Create CA?","[y/n]",true);
 
-      auto sub = pconf.default_subject();
       if(ans == "y" || ans == "yes"){
+        auto sub = pconf.default_subject();
         subject::promptForSubject(profile.name, ca.subject, sub, eman);
         entity::setCAPaths(profile,ca);
         entity::loadSerial(profile,ca);
-        ca.expirationDate = ca.creationDate + std::chrono::seconds(3600*24*std::stoull(days.data(),nullptr,10));
+        entity::setExpirationDate(ca, std::strtoull(days.data(), nullptr, 10));
         if(build_ca(profile, pconf, ca, eman, days, keyAlgo, keySize) == GPKIH_OK){
           caBuilt = true;
         };
@@ -316,7 +323,7 @@ int actions::init(std::string_view &profileName, std::string_view &profileSource
       auto &map = *db::profiles::get();
       // Check again to ensure
       if(map.find(profile.name) != map.end()){
-        map[profile.name].ca_created = true;  
+        map[profile.name].meta.caCreated = true;  
         return GPKIH_FAIL;
       }
       eman.add(ca);

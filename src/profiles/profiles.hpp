@@ -4,7 +4,7 @@
 #include "structs.hpp"
 
 namespace gpkih::profile
-{
+{ 
   extern std::string caCertificatePath(Profile &ref);
   extern std::string gopensslPath(Profile &ref);
   extern std::string keyDir(Profile &ref);

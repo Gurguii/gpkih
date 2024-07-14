@@ -3,8 +3,14 @@
 #include "../../libs/printing/printing.hpp"
 #include "../../gpkih.hpp"
 #include "../../entities/entities.hpp"
+#include "../../entities/conv.hpp"
+#include <cstddef>
+#include <cstdint>
 
 using namespace gpkih;
+
+constexpr size_t kEntitySafeBufferSize = sizeof(EntityMetadata) + sizeof(SubjectMetadata) + (GPKIH_MAX_PATH * 3)
++ (GPKIH_MAX_VARCHAR * 5) + sizeof(Subject::country) + 9;
 
 const std::string& EntityManager::setDir(std::string_view path){
 	dbDir = path;
@@ -17,7 +23,7 @@ const std::string& EntityManager::getDir(){
 
 EntityManager::EntityManager(std::string_view profileName)
 :dbpath(std::string{dbDir} + profileName.data() + "_entities.data"){
-	PDEBUG(1, "EntityManager::EntityManager({})", dbpath);
+	DEBUGF(1, "EntityManager::EntityManager({})", dbpath);
 
 	if(fs::exists(dbpath) == false){
 		std::ofstream file(dbpath, std::ios::binary);
@@ -27,7 +33,7 @@ EntityManager::EntityManager(std::string_view profileName)
 			return;
 		}
 
-		mnck::dump(file, current_size);
+		mnck::dump(file, 0);
 		file.close();
 		return;
 	}
@@ -44,94 +50,85 @@ EntityManager::EntityManager(std::string_view profileName)
 		return;
 	}
 
+	size_t entityCount = 0;
+
 	// Check magic number
-	if(mnck::check(file, current_size) == false){
-		PDEBUG(2,"Failed magic number check");
+	if(mnck::check(file, entityCount) == false){
+		DEBUG(2,"Failed magic number check");
 		return;
 	}
 
-	PDEBUG(2, "Loading {} entities", current_size);
-	for(int i = 0;i < current_size; ++i){
-		Entity tmp{};
-		Subject &sub = tmp.subject;
+	DEBUGF(2, "Loading {} entities", entityCount);
 
-		file.read(reinterpret_cast<char*>(&tmp.serial), sizeof(decltype(Entity::serial)));
+	if(entityCount == 0){
+		return;
+	}
 
-		file.read(reinterpret_cast<char*>(&sub.cnlen), sizeof(decltype(Subject::cnlen)));
-		if((sub.cn = ALLOCATE(sub.cnlen)) == nullptr){
-			break;
-		}
-		file.read(sub.cn, sub.cnlen);
+	size_t bufferSize = fs::file_size(dbpath) - 16;
+	auto buffer = ALLOCATE(bufferSize);
 
-		file.read(reinterpret_cast<char*>(&tmp.type), sizeof(decltype(Entity::type)));
+	if(buffer == nullptr){
+		throw(gpkihBuffer->getLastError());
+	}
 
-		file.read(reinterpret_cast<char*>(&tmp.creationDate), sizeof(decltype(Entity::creationDate)));
-		file.read(reinterpret_cast<char*>(&tmp.expirationDate), sizeof(decltype(Entity::expirationDate)));
-		
-		file.read(reinterpret_cast<char*>(&tmp.status), sizeof(decltype(Entity::status)));
+	file.read(reinterpret_cast<char*>(buffer), bufferSize);
+	file.close();
 
-		file.read(sub.country, sizeof(sub.country));
+	auto current = buffer;
+	for(int i = 0;i < entityCount; ++i){
+		Entity nEnt{};
+		Subject &sub = nEnt.subject;
 
-		file.read(reinterpret_cast<char*>(&sub.locationlen), sizeof(decltype(Subject::locationlen)));
-		if((sub.location = ALLOCATE(sub.locationlen)) == nullptr){
-			break;
-		}
-		file.read(sub.location, sub.locationlen);
+		nEnt.meta = *(reinterpret_cast<EntityMetadata*>(current));
+		current+=sizeof(EntityMetadata);
 
-		file.read(reinterpret_cast<char*>(&sub.organisationlen), sizeof(decltype(Subject::organisationlen)));
-		if((sub.organisation = ALLOCATE(sub.organisationlen)) == nullptr){
-			break;
-		}
-		file.read(sub.organisation, sub.organisationlen);
-	
-		file.read(reinterpret_cast<char*>(&sub.statelen), sizeof(decltype(Subject::statelen)));
-		if((sub.state = ALLOCATE(sub.statelen)) == nullptr){
-			break;
-		}
-		file.read(sub.state, sub.statelen);
+		sub.meta = *(reinterpret_cast<SubjectMetadata*>(current));
+		current+=sizeof(SubjectMetadata);
 
-		file.read(reinterpret_cast<char*>(&sub.emaillen), sizeof(decltype(Subject::emaillen)));
-		if((sub.email = ALLOCATE(sub.emaillen)) == nullptr){
-			break;
-		}
-		file.read(sub.email, sub.emaillen);
-	
-		file.read(reinterpret_cast<char*>(&tmp.keyPathLen), sizeof(decltype(Entity::keyPathLen)));
-		if((tmp.keyPath = ALLOCATE(tmp.keyPathLen)) == nullptr){
-			break;
-		}
-		file.read(tmp.keyPath, tmp.keyPathLen);
+		DEBUGF(3, "Loading entity [serial:{},creationDate:{:%d-%m-%Y @ %H:%M},expirationDate:{:%d-%m-%Y @ %H:%M}]", nEnt.meta.serial, nEnt.meta.creationDate, nEnt.meta.expirationDate);
 
-		file.read(reinterpret_cast<char*>(&tmp.csrPathLen), sizeof(decltype(Entity::csrPathLen)));
-		if((tmp.csrPath = ALLOCATE(tmp.csrPathLen)) == nullptr){
-			break;
-		}
-		file.read(tmp.csrPath, tmp.csrPathLen);
+		memcpy(const_cast<char*>(sub.country), current, sizeof(sub.country));
+		current+=sizeof(sub.country)+1;
 
-		file.read(reinterpret_cast<char*>(&tmp.crtPathLen), sizeof(decltype(Entity::crtPathLen)));
-		if((tmp.crtPath = ALLOCATE(tmp.crtPathLen) )== nullptr){
-			break;
-		}
-		file.read(tmp.crtPath, tmp.crtPathLen);
+		sub.cn = reinterpret_cast<const char*>(current);
+		current+=sub.meta.cnlen+1;
+
+		DEBUGF(3, "Country: {} CN: {}", sub.country, sub.cn);
+		// state location organisation email key csr crt
+		sub.state = reinterpret_cast<const char*>(current); 
+		current+=sub.meta.statelen + 1;
+
+		sub.location = reinterpret_cast<const char*>(current);
+		current+=sub.meta.locationlen + 1;
+
+		sub.organisation = reinterpret_cast<const char*>(current);
+		current+=sub.meta.organisationlen + 1;
+
+		sub.email = reinterpret_cast<const char*>(current);
+		current+=sub.meta.emaillen + 1;
+
+		nEnt.keyPath = reinterpret_cast<const char*>(current);
+		current+=nEnt.meta.keyPathLen + 1;
+
+		nEnt.csrPath = reinterpret_cast<const char*>(current);
+		current+=nEnt.meta.csrPathLen + 1;
+
+		nEnt.crtPath = reinterpret_cast<const char*>(current);
+		current+=nEnt.meta.crtPathLen + 1;
+
+		DEBUGF(3, "Loaded entity [cn:{},key:{},serial:{},type:{}] ", nEnt.subject.cn, nEnt.keyPath, nEnt.meta.serial,entity::conversion::toString(nEnt.meta.type));
 
 		// Add entity to umap
-		const auto [iter, success] = entities.emplace(sub.cn, tmp);
+		const auto &[iter, success] = entities.emplace(sub.cn, nEnt);
 		if(success == false){
-			PERROR("couldn't emplace entity [serial:{},cn:{}]",tmp.serial,sub.cn);
+			PERROR("couldn't emplace entity [serial:{},cn:{}]",nEnt.meta.serial,sub.cn);
 			continue;
 		}
-		PDEBUG(3, "Loaded entity {} - {} - {}", tmp.subject.cn, tmp.keyPath, tmp.serial);
-		uint8_t next = file.get();
-		if(next != '%'){
-			break;
-		}		
 	}
-	
-	file.close();
 }
 
 int EntityManager::sync(){
-	PDEBUG(1, "EntityManager::sync()");
+	DEBUG(1, "EntityManager::sync()");
 
 	std::ofstream file(dbpath, std::ios::binary);
 	if(!file.is_open()){
@@ -139,54 +136,61 @@ int EntityManager::sync(){
 		return GPKIH_FAIL;
 	}
 
-	if(mnck::dump(file, current_size) == false){
-		PDEBUG(2,"File '{}' does not have a proper magic number");
+	size_t entitiesToWrite = entities.size();
+	if(mnck::dump(file, entitiesToWrite) == false){
+		DEBUGF(2,"File '{}' does not have a proper magic number", dbpath);
 		return GPKIH_FAIL;
 	}
 
-	for(const auto &kv : entities){
-		PDEBUG(3,"Writing entity {} {}", kv.second.subject.cn, kv.second.serial);
+	DEBUGF(2, "Writing '{}' entities", entitiesToWrite);
+	gurgui::memory::SmartMemBlock buffer{kEntitySafeBufferSize};
+	auto buff = buffer.get();
 
-		const Entity &entity = kv.second;
-		const Subject &subject = kv.second.subject;
+	if(buff == nullptr){
+		PERROR("Failed to allocate memory for buffer");
+		return GPKIH_FAIL;
+	}
 
-		file.write(reinterpret_cast<const char*>(&entity.serial),sizeof(decltype(entity.serial)));
+	int pos = 0;
+	for(const auto &[cn, entity] : entities){
+		// Load entity to buffer and write to file with 1 write call
+		memcpy(buff + pos, &entity.meta, sizeof(EntityMetadata));
+		pos += sizeof(EntityMetadata);
 		
-		file.write(reinterpret_cast<const char*>(&subject.cnlen), sizeof(decltype(subject.cnlen)));
-		file.write(subject.cn,subject.cnlen);
-	
-		file.write(reinterpret_cast<const char*>(&entity.type), sizeof(decltype(entity.type)));
-	
-		file.write(reinterpret_cast<const char*>(&entity.creationDate), sizeof(decltype(entity.creationDate)));
-		file.write(reinterpret_cast<const char *>(&entity.expirationDate), sizeof(decltype(entity.expirationDate)));
+		memcpy(buff + pos, &entity.subject.meta, sizeof(SubjectMetadata));
+		pos += sizeof(SubjectMetadata);
+		/////////7
+		memcpy(buff + pos, entity.subject.country, sizeof(entity.subject.country));
+		pos += sizeof(entity.subject.country) + 1;
+		
+		memcpy(buff + pos, entity.subject.cn, entity.subject.meta.cnlen);
+		pos += entity.subject.meta.cnlen + 1;
+		
+		memcpy(buff + pos, entity.subject.state, entity.subject.meta.statelen);
+		pos += entity.subject.meta.statelen + 1;
 
-		file.write(reinterpret_cast<const char*>(&entity.status), sizeof(decltype(entity.status)));
+		memcpy(buff + pos, entity.subject.location, entity.subject.meta.locationlen);
+		pos += entity.subject.meta.locationlen + 1;
+		
+		memcpy(buff + pos, entity.subject.organisation, entity.subject.meta.organisationlen);
+		pos += entity.subject.meta.organisationlen + 1;
 
-		file.write(subject.country,sizeof(subject.country));
-	
-		file.write(reinterpret_cast<const char*>(&subject.locationlen),sizeof(decltype(subject.locationlen)));
+		memcpy(buff + pos, entity.subject.email, entity.subject.meta.emaillen);
+		pos += entity.subject.meta.emaillen + 1;
+		
+		memcpy(buff + pos, entity.keyPath, entity.meta.keyPathLen);
+		pos += entity.meta.keyPathLen + 1;
+		
+		memcpy(buff + pos, entity.csrPath, entity.meta.csrPathLen);
+		pos += entity.meta.csrPathLen + 1;
+		
+		memcpy(buff + pos, entity.crtPath, entity.meta.crtPathLen);
+		pos += entity.meta.crtPathLen + 1;
 
-		file.write(subject.location,subject.locationlen);
-	
-		file.write(reinterpret_cast<const char *>(&subject.organisationlen),sizeof(decltype(subject.organisationlen)));
-		file.write(subject.organisation,subject.organisationlen);
-	
-		file.write(reinterpret_cast<const char*>(&subject.statelen), sizeof(decltype(subject.statelen)));
-		file.write(subject.state,subject.statelen);
-	
-		file.write(reinterpret_cast<const char*>(&subject.emaillen), sizeof(decltype(subject.emaillen)));
-		file.write(entity.subject.email,entity.subject.emaillen);
-	
-		file.write(reinterpret_cast<const char*>(&entity.keyPathLen),sizeof(decltype(entity.keyPathLen)));
-		file.write(entity.keyPath,entity.keyPathLen);
-	
-		file.write(reinterpret_cast<const char*>(&entity.csrPathLen), sizeof(decltype(entity.csrPathLen)));
-		file.write(entity.csrPath,entity.csrPathLen);
-	
-		file.write(reinterpret_cast<const char*>(&entity.crtPathLen),sizeof(decltype(entity.crtPathLen)));
-		file.write(entity.crtPath,entity.crtPathLen);
-	
-		file.write("%", 1);
+		file.write(reinterpret_cast<const char*>(buff), pos);
+
+		memset(buff, 0, pos);
+		pos = 0;
 	}
 
 	file.write("\0", 1);
@@ -196,12 +200,12 @@ int EntityManager::sync(){
 }
 
 int EntityManager::add(Entity &entity){
-	PDEBUG(1, "EntityManager::add()");
+	DEBUG(1, "EntityManager::add()");
 
 	if(entities.find(entity.subject.cn) == entities.end()){
 		const auto [iter, success] = entities.emplace(entity.subject.cn, entity);
 		if(success){
-			return ++current_size;
+			return entities.size();
 		}
 	}
 
@@ -209,16 +213,16 @@ int EntityManager::add(Entity &entity){
 }
 
 bool EntityManager::exists(std::string_view cn){
-	PDEBUG(1,"EntityManager::exists({})",cn);
+	DEBUGF(1,"EntityManager::exists({})",cn);
 
 	return entities.find(cn) != entities.end();
 }
 
 bool EntityManager::exists(size_t serial){
-	PDEBUG(1, "EntityManager::exists({})", serial);
+	DEBUGF(1, "EntityManager::exists({})", serial);
 
-	for(const auto &kv : entities){
-		if(kv.second.serial == serial){
+	for(const auto &[cn, entity] : entities){
+		if(entity.meta.serial == serial){
 			return true;
 		}
 	}
@@ -226,7 +230,7 @@ bool EntityManager::exists(size_t serial){
 }
 
 bool EntityManager::exists(std::string_view cn, Entity *&buff){
-	PDEBUG(1, "EntityManager::exists({})",cn);
+	DEBUGF(1, "EntityManager::exists({})",cn);
 	auto iter = entities.find(cn);
 	if(iter != entities.end()){
 		// It exists
@@ -238,7 +242,7 @@ bool EntityManager::exists(std::string_view cn, Entity *&buff){
 }
 
 int EntityManager::del(std::string_view cn){
-	PDEBUG(1, "EntityManager::del()");
+	DEBUG(1, "EntityManager::del()");
 	auto iter = entities.find(cn);
 	if( iter != entities.end()){
 		entities.erase(iter);
@@ -248,7 +252,7 @@ int EntityManager::del(std::string_view cn){
 }
 
 Entity *const EntityManager::get(std::string_view cn){
-	PDEBUG(1, "EntityManager::get()");
+	DEBUG(1, "EntityManager::get()");
 	auto iter = entities.find(cn);
 	if(iter != entities.end()){
 		return &(iter->second);
@@ -257,16 +261,16 @@ Entity *const EntityManager::get(std::string_view cn){
 }
 
 size_t EntityManager::size(){
-	PDEBUG(1, "EntityManager::size()");
-	return current_size;
+	DEBUG(1, "EntityManager::size()");
+	return entities.size();
 }
 
 bool EntityManager::empty(){
-	PDEBUG(1, "EntityManager::empty()");
-	return current_size == 0;
+	DEBUG(1, "EntityManager::empty()");
+	return entities.empty();
 }
 
 const std::map<std::string_view, Entity>* const EntityManager::retrieve(){
-	PDEBUG(1, "EntityManager::retrieve()");
+	DEBUG(1, "EntityManager::retrieve()");
 	return &entities;
 }

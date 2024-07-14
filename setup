@@ -159,7 +159,6 @@ EOF
 }
 
 function parse(){
-
         for (( i=0 ; i < $argc ; ++i )); do
                 arg="${args[$i],,}"
                 if [[ "$arg" == "-q" || "$arg" == "--quiet" ]]; then
@@ -189,11 +188,10 @@ function parse(){
         done
 
         if $GPKIH_ENABLE_DEBUGGING; then
-                gecho "[+] Debugging capabilities ENABLED\n" && commands[0]="${commands[0]} -DGPKIH_ENABLE_DEBUGGING=1"
+                gecho "[+] Debugging capabilities ENABLED\n" && commands[0]="${commands[0]} -DGPRINTING_ENABLE_DEBUGGING=1"
         else
-                gecho "[+] Debugging capabilities DISABLED\n" && commands[0]="${commands[0]} -DGPKIH_ENABLE_DEBUGGING=0"
+                gecho "[+] Debugging capabilities DISABLED\n" && commands[0]="${commands[0]} -DGPRINTING_ENABLE_DEBUGGING=0"
         fi
-
 }
 
 function main(){

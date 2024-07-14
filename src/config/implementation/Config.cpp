@@ -67,12 +67,12 @@ int Config::set(std::string_view section, std::string_view key, std::string_view
   std::string oval{gpkihConfig[section.data()][key.data()]};
   gpkihConfig[section.data()][key.data()] =  val.data();
 
-  PSUCCESS("Changed 'gpkih.{}.{}' from '{}' to '{}\n", section, key, oval, val);  
+  PSUCCESS("Changed 'gpkih.{}.{}' from '{}' to '{}'\n", section, key, oval, val);  
   return GPKIH_OK;    
 } // Config::set()
 
 bool Config::section_exists(const char *section){
-  PDEBUG(1, "Config::section_exists()");
+  DEBUG(1, "Config::section_exists()");
   return gpkihConfig.find(section) != gpkihConfig.end();
 } // Config::section_exists()
 
@@ -87,7 +87,7 @@ const std::unordered_map<std::string,std::string>* const Config::key_exists(cons
 } // Config::key_exists
 
 bool Config::key_exists(const char *section, const char *key){
-  PDEBUG(1, "Config::key_exists()");
+  DEBUG(1, "Config::key_exists()");
   if(gpkihConfig.find(section) != gpkihConfig.end()){
     return gpkihConfig[section].find(key) != gpkihConfig[section].end();
   }
@@ -95,7 +95,7 @@ bool Config::key_exists(const char *section, const char *key){
 } // Config::key_exists
 
 int Config::sync(){
-  PDEBUG(1, "Config::sync({})", gpkihConfigPath);
+  DEBUGF(1, "Config::sync({})", gpkihConfigPath);
   return config::syncFile(gpkihConfigPath, &gpkihConfig);
 } // Config::sync
 

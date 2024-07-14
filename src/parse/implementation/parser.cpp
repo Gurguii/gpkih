@@ -7,13 +7,13 @@ using namespace gpkih;
 int parsers::parseGlobals(std::vector<std::string> &opts){
   for(int i = 0; i < opts.size(); ++i){
       if(opts[i] == "-debug" || opts[i] == "--debug"){
-          #ifndef GPKIH_ENABLE_DEBUGGING
+          #ifndef GPRINTING_ENABLE_DEBUGGING
           PWARN("This version of gpkih wasn't compiled with debugging capabilities\n");
-          PHINT("For such thing, you can compile gpkih using the setup script: ./setup -ed OR ./setup -d GPKIH_ENABLE_DEBUGGING=ON\n");
+          PHINT("For such thing, you can compile gpkih using the setup script: ./setup -ed OR ./setup -d GPRINTING_ENABLE_DEBUGGING=ON\n");
           #endif
   
           if(i+1 == opts.size()){
-            #ifndef GPKIH_ENABLE_DEBUGGING
+            #ifndef GPRINTING_ENABLE_DEBUGGING
             opts.erase(opts.begin()+i);
             break;
             #endif
@@ -30,7 +30,7 @@ int parsers::parseGlobals(std::vector<std::string> &opts){
             ++i;
             break;
           }
-          #ifdef GPKIH_ENABLE_DEBUGGING
+          #ifdef GPRINTING_ENABLE_DEBUGGING
           PERROR("Debug level must be 0-3 (both included)\n");
           return GPKIH_FAIL;
           #endif
@@ -56,7 +56,7 @@ int parsers::parseGlobals(std::vector<std::string> &opts){
 
 // [!] parse() does not expect to receive program name in args
 int parsers::parse(std::vector<std::string> &args) {
-  PDEBUG(1,"parsers::parse()");
+  DEBUG(1,"parsers::parse()");
 
   if (args.size() == 0) {
     help::usage_brief();
@@ -67,7 +67,7 @@ int parsers::parse(std::vector<std::string> &args) {
 
   // Override global config options
   for (int i = 0; i < args.size();) {
-    strview op = args[i];
+    std::string_view op = args[i];
     if (op == "-y" || op == "--yes") {
       if(Config::set("behaviour","autoanswer","yes") == GPKIH_FAIL){
         PWARN("couldn't set '{}' opt", op);
@@ -94,7 +94,7 @@ int parsers::parse(std::vector<std::string> &args) {
     return GPKIH_OK;
   }
 
-  str action = args[0];
+  std::string action = args[0];
 
   if(action == "cli"){
     gpkih::cli::init();

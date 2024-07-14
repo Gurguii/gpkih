@@ -83,22 +83,22 @@ ProfileConfig::ProfileConfig(Profile &prof, CONFIG_FILE filesToLoad)
 } // ProfileConfig::ProfileConfig()
 
 Subject ProfileConfig::default_subject() {
-  PDEBUG(1,"ProfileConfig::default_subject()");
+  DEBUG(1,"ProfileConfig::default_subject()");
   
-  Subject subj;
+  Subject subj{};
 
-  memcpy(subj.country,(pkiConfig["subject"]["country"]).data(),2);
-  CALLOCATE(subj.state,reinterpret_cast<size_t*>(&subj.statelen),pkiConfig["subject"]["state"]);
-  CALLOCATE(subj.location,reinterpret_cast<size_t*>(&subj.locationlen),pkiConfig["subject"]["location"]);
-  CALLOCATE(subj.organisation,reinterpret_cast<size_t*>(&subj.organisationlen),pkiConfig["subject"]["organisation"]);
-  CALLOCATE(subj.cn,reinterpret_cast<size_t*>(&subj.cnlen),pkiConfig["subject"]["cn"]);
-  CALLOCATE(subj.email,reinterpret_cast<size_t*>(&subj.emaillen),pkiConfig["subject"]["email"]);
+  memcpy(const_cast<char*>(subj.country),(pkiConfig["subject"]["country"]).data(),2);
+  CALLOCATE(subj.state,reinterpret_cast<size_t*>(&subj.meta.statelen),pkiConfig["subject"]["state"]);
+  CALLOCATE(subj.location,reinterpret_cast<size_t*>(&subj.meta.locationlen),pkiConfig["subject"]["location"]);
+  CALLOCATE(subj.organisation,reinterpret_cast<size_t*>(&subj.meta.organisationlen),pkiConfig["subject"]["organisation"]);
+  CALLOCATE(subj.cn,reinterpret_cast<size_t*>(&subj.meta.cnlen),pkiConfig["subject"]["cn"]);
+  CALLOCATE(subj.email,reinterpret_cast<size_t*>(&subj.meta.emaillen),pkiConfig["subject"]["email"]);
 
   return subj;
 };
 
 ConfigMap* const ProfileConfig::getptr(CONFIG_FILE file) {
-  PDEBUG(1, "ProfileConfig::getptr()");
+  DEBUG(1, "ProfileConfig::getptr()");
 
   switch (file) {
   case CFILE_VPN:
@@ -113,7 +113,7 @@ ConfigMap* const ProfileConfig::getptr(CONFIG_FILE file) {
 }
 
 ConfigMap& ProfileConfig::get(CONFIG_FILE file){
-  PDEBUG(1, "ProfileConfig::get()");
+  DEBUG(1, "ProfileConfig::get()");
 
   switch(file){
     case CFILE_VPN:
@@ -124,13 +124,13 @@ ConfigMap& ProfileConfig::get(CONFIG_FILE file){
 }
 
 const CONFIG_FILE ProfileConfig::loadedFiles(){
-  PDEBUG(1, "ProfileConfig::loadedFiles()");
+  DEBUG(1, "ProfileConfig::loadedFiles()");
 
   return this->succesfullyLoadedFiles; 
 }
 
 int ProfileConfig::set(CONFIG_FILE file, std::string_view section, std::string_view key, std::string_view val){
-  PDEBUG(1, "ProfileConfig::set()");
+  DEBUG(1, "ProfileConfig::set()");
 
   try{
     if(file & CFILE_PKI){
@@ -148,7 +148,7 @@ int ProfileConfig::set(CONFIG_FILE file, std::string_view section, std::string_v
 }
 
 int ProfileConfig::set2(CONFIG_FILE file, std::string_view section, std::string_view key, std::string_view val){
-  PDEBUG(1, "ProfileConfig::set2()");
+  DEBUG(1, "ProfileConfig::set2()");
 
   try{
     if(file & CFILE_PKI){
@@ -182,7 +182,7 @@ int ProfileConfig::set2(CONFIG_FILE file, std::string_view section, std::string_
 }
 
 bool ProfileConfig::key_exists(std::string_view key, CONFIG_FILE file) {
-  PDEBUG(1, "ProfileConfig::key_exists()");
+  DEBUG(1, "ProfileConfig::key_exists()");
 
   auto ptr = getptr(file);
   if (ptr == nullptr) {
@@ -198,7 +198,7 @@ bool ProfileConfig::key_exists(std::string_view key, CONFIG_FILE file) {
 }
 
 bool ProfileConfig::key_exists(CONFIG_FILE file, std::string_view section, std::string_view key){
-  PDEBUG(1, "ProfileConfig::key_exists()");
+  DEBUG(1, "ProfileConfig::key_exists()");
 
   std::unordered_map<std::string, std::string> *sptr;
 
@@ -221,7 +221,7 @@ bool ProfileConfig::key_exists(CONFIG_FILE file, std::string_view section, std::
 }
 
 bool ProfileConfig::section_exists(std::string_view section, CONFIG_FILE file){
-  PDEBUG(1, "ProfileConfig::section_exists()");
+  DEBUG(1, "ProfileConfig::section_exists()");
 
   auto ptr = getptr(file);
   if(ptr == nullptr){
@@ -231,7 +231,7 @@ bool ProfileConfig::section_exists(std::string_view section, CONFIG_FILE file){
 }
 
 bool ProfileConfig::dump_vpn_conf(fs::path &outpath, ENTITY_TYPE type) {
-  PDEBUG(1, "ProfileConfig::dump_vpn_conf()");
+  DEBUG(1, "ProfileConfig::dump_vpn_conf()");
 
   if (fs::exists(outpath)) {
     PERROR("already existing file '{}'\n", outpath.string());
@@ -289,17 +289,17 @@ bool ProfileConfig::dump_vpn_conf(fs::path &outpath, ENTITY_TYPE type) {
 }
 
 int ProfileConfig::sync(CONFIG_FILE files){
-  PDEBUG(1, "ProfileConfig::sync()");
+  DEBUG(1, "ProfileConfig::sync()");
   
   if (files & CFILE_VPN){
-    PDEBUG(2, "syncing VPN - {}\n", vpnConfigPath.string());
+    DEBUGF(2, "syncing VPN - {}\n", vpnConfigPath.string());
     if(config::syncFile(vpnConfigPath.c_str(), &vpnConfig) == GPKIH_FAIL){
       return GPKIH_FAIL;
     }
   }
 
   if (files & CFILE_PKI){
-    PDEBUG(2, "syncing PKI - {}\n", pkiConfigPath.string());
+    DEBUGF(2, "syncing PKI - {}\n", pkiConfigPath.string());
     if(config::syncFile(pkiConfigPath.c_str(), &pkiConfig) == GPKIH_FAIL){
       return GPKIH_FAIL;
     }

@@ -2,6 +2,8 @@
 #include "../../config/Config.hpp"
 
 int gpkih::parsers::reset(std::vector<std::string> &opts){
+	DEBUG(1, "parsers::reset()");
+
 	db::profiles::remove_all();
 	bool autoans = Config::get("behaviour","autoanswer") == "yes" ? true : false;
 

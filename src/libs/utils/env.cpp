@@ -4,7 +4,7 @@
 #include <Windows.h>
 #endif
 
-using namespace gpkih;
+using namespace gurgui;
 
 std::string utils::env::get_environment_variable(std::string_view varname)
 {

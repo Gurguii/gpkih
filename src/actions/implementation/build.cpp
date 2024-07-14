@@ -5,11 +5,16 @@
 
 using namespace gpkih;
 
+#ifdef _WIN32
+constexpr const char *vpnConfigExtension = "ovpn";
+#else
+constexpr const char *vpnConfigExtension = "conf";
+#endif
 // Attempts to create the target path (directory or file)
 // - if dir != 0 a directory is created and any missing intermediary
-// directories will be created too, else a file will be createdPDEBUG
+// directories will be created too, else a file will be createdDEBUGF
 static int __create_outdir(fs::path &path){
-  PDEBUG(2,"__create_outdir({})",path.string());
+  DEBUGF(2,"__create_outdir({})",path.string());
 
   if(path.is_relative()){
     PERROR("path to __create_outdir() must be absolute, given path: {}", path.string());
@@ -28,25 +33,19 @@ static int __create_outdir(fs::path &path){
 
 static std::pair<std::string,std::string> __server_client_build_commands(Profile &profile, ConfigMap &pkiconf,
                                              Entity &entity, std::string_view days, std::string_view keyAlgo, std::string_view keySize) {
-  PDEBUG(2, "__server_client_build_commands()");
+  DEBUG(2, "__server_client_build_commands()");
 
   Subject &subject = entity.subject;
   // openssl req -newkey {}:{} -out {} -keyout {} -subj '{}' -outform {} -keyform {} -noenc
   
-  // if a client key is created and the configuration is changed afterwards,
-  // the format taken won't match with the actual format used when the entity
-  // was created, leading to errors
+  // STICK TO PEM HIJO DE PUTA
 
   // Set entity certificate request PATH
   std::string tmp = std::move(fmt::format("{}{}-csr.pem",profile::reqDir(profile), subject.cn));
-  //CALLOCATE(entity.csrPath,reinterpret_cast<size_t*>(&entity.csrPathLen),tmp);
 
   // Set entity key PATH
   tmp.assign("");
   tmp = std::move(fmt::format("{}{}-key.pem",profile::keyDir(profile), subject.cn));
-  //CALLOCATE(entity.keyPath,reinterpret_cast<size_t*>(&entity.keyPathLen),tmp);
-
-  tmp.assign("");
 
   std::string csr_command = std::move(fmt::format("openssl req -newkey {}:{} -out \"{}\" -keyout \"{}\" -subj {} -noenc",
     keyAlgo,
@@ -56,15 +55,12 @@ static std::pair<std::string,std::string> __server_client_build_commands(Profile
     subject::opensslOneliner(subject)
   ));
   
-  // openssl ca -config {} -in {} -out {} -subj '{}' -extfile {}x509{}{} -notext -days +{}
-
   // Set entity certificate PATH
   tmp = std::move(fmt::format("{}{}-crt.pem",profile::crtDir(profile), subject.cn));
-  //CALLOCATE(entity.crtPath,reinterpret_cast<size_t*>(&entity.crtPathLen),tmp);
 
   tmp.assign("");
   
-  std::string x509_extensions_file_path = CONF_DIRPATH + "x509" + SLASH + entity::conversion::toString(entity.type);
+  std::string x509_extensions_file_path = CONF_DIRPATH + "x509" + SLASH + entity::conversion::toString(entity.meta.type);
   
   std::string crt_command = std::move(fmt::format("openssl ca -config \"{}\" -in \"{}\" -out \"{}\" -extfile \"{}\" -days {}",
     profile::gopensslPath(profile),
@@ -87,14 +83,14 @@ static std::pair<std::string,std::string> __server_client_build_commands(Profile
 }
 
 static std::string __ca_build_command(Profile &profile, ConfigMap &pkiconf, Entity &entity, std::string_view days, std::string_view keyAlgo, std::string_view keySize){
-  PDEBUG(2, "__ca_build_command()");
+  DEBUG(2, "__ca_build_command()");
 
   std::string command = std::move(fmt::format("openssl req -config {} -new -x509 -out {} -keyout {} -subj {} -set_serial {} -newkey {}:{} -noenc -days {}",
     profile::gopensslPath(profile),
     entity.crtPath,
     entity.keyPath,
     subject::opensslOneliner(entity.subject),
-    entity.serial,
+    entity.meta.serial,
     keyAlgo,
     keySize,
     days
@@ -110,8 +106,7 @@ static std::string __ca_build_command(Profile &profile, ConfigMap &pkiconf, Enti
 
 static int __create_inline_config(Profile &profile,ProfileConfig &config,
                                  std::vector<const Entity*> &entities,bool autoanswer, bool prompt) {
-  PDEBUG(2, "__create_inline_config()");
-  auto b = Entity();
+  DEBUG(2, "__create_inline_config()");
   std::string caCertPath = std::move(profile::caCertificatePath(profile));
 
   if (!fs::exists(caCertPath)) {
@@ -121,7 +116,7 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
 
   // Load CA certificate
   size_t caCertSize = fs::file_size(caCertPath);
-  char *caCertBuffer = ALLOCATE(caCertSize);
+  char *caCertBuffer = (char*)ALLOCATE(caCertSize);
 
   if(caCertBuffer == nullptr){
     PERROR("couldn't load CA certificate '{}'\n", caCertPath);
@@ -139,7 +134,7 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
 
     auto entityInlinePath = entityDir / fmt::format("inline_{}.{}",entity->subject.cn,vpnConfigExtension);
 
-    if(config.dump_vpn_conf(entityInlinePath, entity->type) == false){
+    if(config.dump_vpn_conf(entityInlinePath, entity->meta.type) == false){
       return GPKIH_FAIL;
     }
 
@@ -183,13 +178,13 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
     ecrt.close();
     ekey.close();
 
-    FREE_MEMORY_BLOCK(caCertBuffer);
+    FREE_MEMORY_BLOCK((std::byte*)caCertBuffer, &caCertSize);
   }
   return GPKIH_OK;
 }
 
 int __create_pfx(Profile &profile, Entity &entity){
-  PDEBUG(2, "__create_pfx()");
+  DEBUG(2, "__create_pfx()");
 
   auto entityDir = fs::path{profile.source}/"packs"/entity.subject.cn;
   auto outpathPfx = entityDir / entity.subject.cn;
@@ -211,12 +206,12 @@ int __create_pfx(Profile &profile, Entity &entity){
 
 /* BUILD SELF SIGNED CA certificate */
 int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity, EntityManager &eman,std::string_view days, std::string_view keyAlgo, std::string_view keySize){
-  PDEBUG(1,"actions::build_ca()");
+  DEBUG(1,"actions::build_ca()");
 
   bool autoanswer = Config::get("behaviour","autoanswer") == "yes" ? true : false;
   bool prompt = Config::get("behaviour","prompt") == "yes" ? true : false;
 
-  if(autoanswer == false && profile.ca_created){
+  if(autoanswer == false && profile.meta.caCreated){
     auto ans = PROMPT("Profile already has CA and\ncreating a new one will cause newly created certificates not to work with older ones , continue?", "[y/n]", true, LGREEN);
     if(ans != "y" && ans != "yes"){
       return GPKIH_FAIL;
@@ -226,7 +221,7 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity, E
   ConfigMap &pkiconf = config.get(CFILE_PKI);
   std::string command = std::move(__ca_build_command(profile,pkiconf,entity,days,keyAlgo,keySize));
   
-  PDEBUG(3, "self-signed CA command - '{}'", command);
+  DEBUGF(3, "self-signed CA command - '{}'", command);
   
   if(system(command.c_str())){
     PERROR("command '{}' failed\n", command);
@@ -235,16 +230,16 @@ int actions::build_ca(Profile &profile, ProfileConfig &config, Entity &entity, E
 
   entity::incrementSerial(profile, entity);
   
-  // Update profile modification date + ca_created status
-  profile.last_modification = std::chrono::system_clock::now();
-  profile.ca_created = 1;
+  // Update profile modification date + caCreated status
+  profile.meta.lastModification = std::chrono::system_clock::now();
+  profile.meta.caCreated = 1;
 
   return GPKIH_OK;
 } // actions::build_ca()
 
 /* BUILD SERVER-CLIENT CERTIFICATES */
 int actions::build(Profile &profile, ProfileConfig &config, Entity &entity, EntityManager &eman, std::string_view days, std::string_view keyAlgo, std::string_view keySize){
-  PDEBUG(1,"actions::build()");
+  DEBUG(1,"actions::build()");
 
   ConfigMap &pkiconf = config.get(CFILE_PKI);
 
@@ -254,7 +249,7 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity, Enti
   const auto [req_command, crt_command] = __server_client_build_commands(profile, pkiconf, entity, days, keyAlgo, keySize);
 
   // Create key + csr
-  PDEBUG(2,"executing key + certificate request command - {}",req_command);
+  DEBUGF(2,"executing key + certificate request command - {}",req_command);
   if(system(req_command.c_str())){
     // fail
     PERROR("[ REQUEST ] command '{}' failed\n",req_command);
@@ -262,7 +257,7 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity, Enti
   }
 
   // Create crt
-  PDEBUG(2,"executing certificate command - {}",crt_command);
+  DEBUGF(2,"executing certificate command - {}",crt_command);
   if(system(crt_command.c_str())){
     // fail
     PERROR("[ CERTIFICATE SIGNING ] command '{}' failed\n",crt_command);
@@ -270,13 +265,14 @@ int actions::build(Profile &profile, ProfileConfig &config, Entity &entity, Enti
   }
 
   // Update modification time + client/server count
-  profile.last_modification = std::chrono::system_clock::now();
-  switch(entity.type){
+  profile.meta.lastModification = std::chrono::system_clock::now();
+
+  switch(entity.meta.type){
     case ET_SV:
-      ++profile.sv_count;
+      ++profile.meta.svCount;
       break;
     case ET_CL:
-      ++profile.cl_count;
+      ++profile.meta.clCount;
       break;
     default:
       break;

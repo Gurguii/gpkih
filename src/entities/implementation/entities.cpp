@@ -5,21 +5,21 @@
 using namespace gpkih;
 
 int entity::setCAPaths(Profile &profile, Entity &e){
-  e.keyPathLen = profile.sourcelen + 15; // 15 = /pki/ca/key.pem | /pki/ca/crt.pem
-  e.crtPathLen = e.keyPathLen;
+  e.meta.keyPathLen = profile.meta.sourceLen + 15; // 15 = /pki/ca/key.pem | /pki/ca/crt.pem
+  e.meta.crtPathLen = e.meta.keyPathLen;
   
-  e.keyPath = ALLOCATE(e.keyPathLen);
-  e.crtPath = ALLOCATE(e.crtPathLen);
+  e.keyPath = reinterpret_cast<const char *>(ALLOCATE(e.meta.keyPathLen + 1));
+  e.crtPath = reinterpret_cast<const char *>(ALLOCATE(e.meta.crtPathLen + 1));
 
   if(e.keyPath == nullptr || e.crtPath == nullptr){
     PERROR("smth is null\n");
     return GPKIH_FAIL;
   }
 
-  if(e.keyPathLen != snprintf(e.keyPath,e.keyPathLen+1,"%s%cpki%cca%ckey.pem",profile.source,SLASH,SLASH,SLASH)
+  if(e.meta.keyPathLen != snprintf(const_cast<char*>(e.keyPath),e.meta.keyPathLen+1,"%s%cpki%cca%ckey.pem",profile.source,SLASH,SLASH,SLASH)
     ||
-     e.crtPathLen != snprintf(e.crtPath,e.crtPathLen+1,"%s%cpki%cca%ccrt.pem",profile.source,SLASH,SLASH,SLASH)){
-    PERROR("snprintf() returned different than len\nkey:{}:%lu crt:{}:%lu\n",e.keyPath, e.keyPathLen, e.crtPath, e.crtPathLen);
+     e.meta.crtPathLen != snprintf(const_cast<char*>(e.crtPath),e.meta.crtPathLen+1,"%s%cpki%cca%ccrt.pem",profile.source,SLASH,SLASH,SLASH)){
+    PERROR("snprintf() returned different than len\nkey:{}:%lu crt:{}:%lu\n",e.keyPath, e.meta.keyPathLen, e.crtPath, e.meta.crtPathLen);
     return GPKIH_FAIL;
   }
 
@@ -27,24 +27,26 @@ int entity::setCAPaths(Profile &profile, Entity &e){
 }
 
 int entity::setPaths(Profile &profile, Entity &e){
-  e.keyPathLen = profile.sourcelen + 18 + e.subject.cnlen; // /pki/keys/-key.pem 
-  e.crtPathLen = profile.sourcelen + 19 + e.subject.cnlen; // /pki/certs/-crt.pem
-  e.csrPathLen = profile.sourcelen + 18 + e.subject.cnlen; // /pki/reqs/-csr.pem
+  DEBUG(1, "entity::setPaths()");
+
+  e.meta.keyPathLen = profile.meta.sourceLen + 18 + e.subject.meta.cnlen; // /pki/keys/-key.pem 
+  e.meta.crtPathLen = profile.meta.sourceLen + 19 + e.subject.meta.cnlen; // /pki/certs/-crt.pem
+  e.meta.csrPathLen = profile.meta.sourceLen + 18 + e.subject.meta.cnlen; // /pki/reqs/-csr.pem
   
-  e.keyPath = ALLOCATE(e.keyPathLen);
-  e.csrPath = ALLOCATE(e.csrPathLen);
-  e.crtPath = ALLOCATE(e.crtPathLen);
+  e.keyPath = reinterpret_cast<const char*>(ALLOCATE(e.meta.keyPathLen + 1));
+  e.csrPath = reinterpret_cast<const char*>(ALLOCATE(e.meta.csrPathLen + 1));
+  e.crtPath = reinterpret_cast<const char*>(ALLOCATE(e.meta.crtPathLen + 1));
 
   if(e.keyPath == nullptr || e.csrPath == nullptr || e.crtPath == nullptr){
     return GPKIH_FAIL;
   }
 
-  if(e.keyPathLen != snprintf(e.keyPath, e.keyPathLen+1,"%s%cpki%ckeys%c%s-key.pem",profile.source,SLASH,SLASH,SLASH,e.subject.cn)
+  if(e.meta.keyPathLen != snprintf(const_cast<char*>(e.keyPath), e.meta.keyPathLen+1,"%s%cpki%ckeys%c%s-key.pem",profile.source,SLASH,SLASH,SLASH,e.subject.cn)
     ||
-     e.csrPathLen != snprintf(e.csrPath, e.csrPathLen+1, "%s%cpki%creqs%c%s-csr.pem",profile.source,SLASH,SLASH,SLASH,e.subject.cn)
+     e.meta.csrPathLen != snprintf(const_cast<char*>(e.csrPath), e.meta.csrPathLen+1, "%s%cpki%creqs%c%s-csr.pem",profile.source,SLASH,SLASH,SLASH,e.subject.cn)
     ||
-     e.crtPathLen != snprintf(e.crtPath, e.crtPathLen+1, "%s%cpki%ccerts%c%s-crt.pem",profile.source,SLASH,SLASH,SLASH,e.subject.cn)){
-    PERROR("snprintf() returned different than len\nkey:{} csr:{} crt:{}\n",e.keyPath, e.csrPath, e.crtPath);
+     e.meta.crtPathLen != snprintf(const_cast<char*>(e.crtPath), e.meta.crtPathLen+1, "%s%cpki%ccerts%c%s-crt.pem",profile.source,SLASH,SLASH,SLASH,e.subject.cn)){
+    DEBUGF(2, "snprintf() returned different than len\nkey:{} csr:{} crt:{}\n",e.keyPath, e.csrPath, e.crtPath);
     return GPKIH_FAIL;
   }
 
@@ -52,20 +54,20 @@ int entity::setPaths(Profile &profile, Entity &e){
 }
 
 int entity::incrementSerial(Profile &profile, Entity &entity){
-  PDEBUG(2,"__increment_serial()");
+  DEBUG(1,"__increment_serial()");
   std::string serialPath = fmt::format("{}{}pki{}serial{}serial", profile.source, SLASH, SLASH, SLASH);
 
   std::ifstream rfile(serialPath);
   
   if(!rfile.is_open()){
-    PERROR("Couldn't open serial file '{}' to update serial\n", serialPath);
+    PERROR("Couldn't open serial file '{}'\n", serialPath);
     return GPKIH_FAIL;
   }
 
   std::string nserial{};
   rfile >> nserial;
 
-  nserial = fmt::format("{:x}",static_cast<decltype(Entity::serial)>(std::stoull(nserial,0,16) + 1));
+  nserial = fmt::format("{:x}",static_cast<decltype(EntityMetadata::serial)>(std::stoull(nserial,0,16) + 1));
 
   rfile.close();
   
@@ -86,7 +88,7 @@ int entity::incrementSerial(Profile &profile, Entity &entity){
 }
 
 int entity::loadSerial(Profile &profile, Entity &entity){
-  PDEBUG(2,"__load_serial()");
+  DEBUG(2,"__load_serial()");
   std::string serialPath = fmt::format("{}{}pki{}serial{}serial", profile.source, SLASH, SLASH, SLASH);
 
   if(!std::filesystem::exists(serialPath)){
@@ -106,11 +108,15 @@ int entity::loadSerial(Profile &profile, Entity &entity){
   file.close();
 
   try{
-    entity.serial = std::stoull(serial,nullptr,16);  
+    entity.meta.serial = std::stoull(serial,nullptr,16);  
   }catch(const std::invalid_argument &err){
-    PINFO("Loading serial failed, generating random serial [{}]...\n", err.what());
-    entity.serial = rand();
+    PINFO("Loading serial failed, generating random serial [error:{}]...\n", err.what());
+    entity.meta.serial = rand();
   }
 
   return GPKIH_OK;
+}
+
+void entity::setExpirationDate(Entity &entity, size_t days){
+  entity.meta.expirationDate = entity.meta.creationDate + std::chrono::seconds(3600*24*days);
 }

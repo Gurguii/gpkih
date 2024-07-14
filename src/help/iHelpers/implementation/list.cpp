@@ -28,7 +28,7 @@ note: -cn|-ef will only affect when a profile is given, else only profiles will 
 
   - Dates -
   cdate | creationDate: creation
-  lmod | last_modification: last modification
+  lmod | lastModification: last modification
   
   - Entities -
   ca : ca created (bool)

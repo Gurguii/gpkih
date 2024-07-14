@@ -42,9 +42,9 @@ static std::unordered_map <std::string, std::string(*)()>& placeholderMap()
 		{"pn", []() {return std::string{"gpkih"};}},
 		{"path", []() {return fs::current_path().string();}},
 		#ifdef _WIN32
-		{"u",[]() {return gpkih::utils::env::get_environment_variable("USERNAME");}},
+		{"u",[]() {return gurgui::utils::env::get_environment_variable("USERNAME");}},
 		#else
-		{"u",[]() {return gpkih::utils::env::get_environment_variable("USER");}},
+		{"u",[]() {return gurgui::utils::env::get_environment_variable("USER");}},
 		#endif
 	};
 
@@ -54,9 +54,9 @@ static std::unordered_map <std::string, std::string(*)()>& placeholderMap()
 static std::unordered_map<std::string, std::string(*)()>& inputPlaceholderMap(){
 	static std::unordered_map<std::string, std::string(*)()> _map{
 		#ifdef _WIN32
-		{"~",[](){return gpkih::utils::env::get_environment_variable("USERPROFILE");}},
+		{"~",[](){return gurgui::utils::env::get_environment_variable("USERPROFILE");}},
 		#else
-		{"~",[]() {return gpkih::utils::env::get_environment_variable("HOME");}},
+		{"~",[]() {return gurgui::utils::env::get_environment_variable("HOME");}},
 		#endif
 	};
 	return _map;
@@ -145,9 +145,9 @@ static inline void __setup_PS() {
 }
 
 void cli::init() {
-	PDEBUG(1,"initializing cli");
+	DEBUG(1,"initializing cli");
 	__setup_PS();
-	PDEBUG(1,"PS settled up");
+	DEBUG(1,"PS settled up");
 	std::string user_input;
 	auto placeholderMap = inputPlaceholderMap();
 	for (;;)
@@ -217,7 +217,7 @@ void cli::init() {
 		// be an action, e.g the user could input 'help' to get some help 
 		// or exit to exit
 		
-		std::vector<str> opts{};
+		std::vector<std::string> opts{};
 		std::string opt;
 		
 		if (!active_profile.empty()) {

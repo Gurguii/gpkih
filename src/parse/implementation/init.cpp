@@ -3,6 +3,8 @@
 using namespace gpkih;
 
 int parsers::init(std::vector<std::string> &opts) {
+  DEBUG(1, "parsers::init()");
+  
   opts.push_back("\0");
 
   std::string_view profileName, profileSource;

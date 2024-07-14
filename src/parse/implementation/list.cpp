@@ -31,9 +31,9 @@ profileFieldsMap() {
     {"source", static_cast<uint16_t>(PROFILE_FIELDS::source)},
     {"cdate", static_cast<uint16_t>(PROFILE_FIELDS::creationDate)},
     {"creationDate", static_cast<uint16_t>(PROFILE_FIELDS::creationDate)},
-    {"lmod", static_cast<uint16_t>(PROFILE_FIELDS::last_modification)},
-    {"last_modification", static_cast<uint16_t>(PROFILE_FIELDS::last_modification)},
-    {"ca", static_cast<uint16_t>(PROFILE_FIELDS::ca_created)},
+    {"lmod", static_cast<uint16_t>(PROFILE_FIELDS::lastModification)},
+    {"lastModification", static_cast<uint16_t>(PROFILE_FIELDS::lastModification)},
+    {"ca", static_cast<uint16_t>(PROFILE_FIELDS::caCreated)},
     {"sv", static_cast<uint16_t>(PROFILE_FIELDS::sv_count)},
     {"cl", static_cast<uint16_t>(PROFILE_FIELDS::cl_count)}
   };
@@ -42,6 +42,8 @@ profileFieldsMap() {
 // ./gpkih list <profile> <subopts>   | list entities from profile
 // ./gpkih list <subopts>             |  list profiles
 int parsers::list(std::vector<std::string> &opts) {
+  DEBUG(1, "parsers::list()");
+
   if (db::profiles::size() == 0) {
     PINFO("no profiles added yet\n");
     return GPKIH_OK;
@@ -78,8 +80,8 @@ int parsers::list(std::vector<std::string> &opts) {
         PINFO("profile fields is empty, could have been omitted\n");
       } else {
         fields = 0;
-        sstream ss(opts[++i]);
-        str field;
+        std::stringstream ss(opts[++i]);
+        std::string field;
         while (getline(ss, field, ',')) {
           if (fmap.find(field) != fmap.end()) {
             fields = fields | fmap[field];

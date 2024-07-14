@@ -4,13 +4,11 @@
 #include <string>
 #include <map>
 
-
 class EntityManager{
 private:
   static inline std::string dbDir{}; 
   std::map<std::string_view, Entity> entities{};
   std::string dbpath;
-  size_t current_size = 0;
 public:
   /// @brief absolute path aiming to logs root dir [LINUX]$HOME [WIN]$env:home 
   static const std::string &setDir(std::string_view path);
@@ -62,6 +60,6 @@ public:
   bool empty(); 
 
   /// @brief get the private umap
-  /// @return constant pointer to umap<strview,Entity>
+  /// @return constant pointer to umap<std::string_view,Entity>
   const std::map<std::string_view, Entity>* const retrieve();
 };

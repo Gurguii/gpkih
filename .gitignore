@@ -1,6 +1,7 @@
 .vscode
 build
 .error.log
+.out.log
 COMANDOS.md
 CMakeSettings.json
 .vs

@@ -3,8 +3,10 @@
 #include "../../libs/printing/printing.hpp"
 #include "../mnck.hpp"
 
-using namespace gpkih;
+constexpr size_t kProfileSafeBufferSize = sizeof(ProfileMetadata) + GPKIH_MAX_PATH + GPKIH_MAX_VARCHAR + 2; // 4390
+static std::map <std::string_view, Profile > existing_profiles{};
 
+using namespace gpkih;
 // Returns id from idfile and increases it, updating the file
 static uint64_t nextID(){
 	std::fstream file(db::profiles::idfile, std::ios::binary | std::ios::in | std::ios::out);
@@ -35,15 +37,13 @@ static uint64_t nextID(){
 	return id;
 }
 
-static std::map <std::string_view, Profile > existing_profiles{};
-
 std::map <std::string_view, Profile>* const db::profiles::get(){
 	return &existing_profiles;
 }
 
 // overwrite dbpath (data.bin) with the profiles in existing_profiles
 int db::profiles::sync(){
-	PDEBUG(1,"db::profiles::sync()");
+	DEBUG(1,"db::profiles::sync()");
 
 	std::ofstream file(dbpath, std::ios::binary);
 	if(!file.is_open()){
@@ -51,33 +51,34 @@ int db::profiles::sync(){
 		return GPKIH_FAIL;
 	}
 
-	size_t s = size();
+	size_t s = existing_profiles.size();
+
 	if(mnck::dump(file,s) == false){
 		return GPKIH_FAIL;
 	};
 
-	for(const auto &kv : existing_profiles){
-		const Profile &p = kv.second;
+	gurgui::memory::SmartMemBlock _buff(kProfileSafeBufferSize);
+	auto buffer = _buff.get();
 
-		file.write(reinterpret_cast<const char*>(&p.id), sizeof(decltype(p.id)));
+	if(buffer == nullptr){
+		throw("Couldn't allocate buffer to synchronize profiles, calloc() returned nullptr");
+	}
 
-		file.write(reinterpret_cast<const char*>(&p.namelen), sizeof(decltype(p.namelen)));
-		file.write(p.name, p.namelen);
-		
-		file.write(reinterpret_cast<const char *>(&p.sourcelen), sizeof(decltype(p.sourcelen)));
-		file.write(p.source, p.sourcelen);	
-		
-		file.write(reinterpret_cast<const char*>(&p.creationDate), sizeof(decltype(p.creationDate)));
+	int pos = 0;
+	for(const auto &[name, profile] : existing_profiles){
+		memcpy(buffer, &profile.meta, sizeof(ProfileMetadata));
+		pos+=sizeof(ProfileMetadata);
 
-		file.write(reinterpret_cast<const char*>(&p.last_modification), sizeof(decltype(p.last_modification)));
+		memcpy(buffer+pos, profile.name, profile.meta.nameLen);
+		pos+=profile.meta.nameLen + 2;
 
-		file.write(reinterpret_cast<const char*>(&p.ca_created), sizeof(decltype(p.ca_created)));
+		memcpy(buffer+pos, profile.source, profile.meta.sourceLen);
+		pos+=profile.meta.sourceLen + 2;
 
-		file.write(reinterpret_cast<const char*>(&p.sv_count), sizeof(decltype(p.sv_count)));
-
-		file.write(reinterpret_cast<const char*>(&p.cl_count), sizeof(decltype(p.cl_count)));
-
-		file.write("%",1);
+		file.write(reinterpret_cast<const char*>(buffer), pos);
+		// clear the buffer and reset pos value
+		memset(buffer, 0, pos);
+		pos = 0;
 	}
 
 	file.write("\0",1);
@@ -85,8 +86,8 @@ int db::profiles::sync(){
 	return GPKIH_OK;
 }
 
-int db::profiles::initialize(size_t &loadedProfiles){
-	PDEBUG(1, "db::profiles::initialize()");
+int db::profiles::initialize(size_t &profileCount){
+	DEBUG(1, "db::profiles::initialize()");
 
 	if(fs::exists(dbpath) == false){
 		// Create database file
@@ -105,13 +106,11 @@ int db::profiles::initialize(size_t &loadedProfiles){
 			idf.write(reinterpret_cast<const char*>(&beg), sizeof(decltype(beg)));
 			idf.close();
 			return GPKIH_OK;
-		}else{
-			return GPKIH_FAIL;
-		};
+		}
+		return GPKIH_FAIL;
 	}
 
 	// File already exists, load profiles
-	// syntax: <id><namelen><name><sourcelen><source><creationDate><last_modification><ca><total_servers><total_clients>
 	std::ifstream file(dbpath, std::ios::binary);
 	if(!file.is_open()){
 		PERROR("couldn't open profile.data '{}'",dbpath);
@@ -124,48 +123,39 @@ int db::profiles::initialize(size_t &loadedProfiles){
 	}
 	
 	// Check magic number
-	if(mnck::check(file, loadedProfiles) == false){
+	if(mnck::check(file, profileCount) == false){
 		return GPKIH_FAIL;
 	}
 
-	for(int i = 0;i < loadedProfiles; ++i){
-		Profile p{};
-		file.read(reinterpret_cast<char*>(&p.id), sizeof(decltype(p.id)));
-		
-		file.read(reinterpret_cast<char*>(&p.namelen), sizeof(decltype(p.namelen)));
+	size_t bufferSize = fs::file_size(dbpath) - 16;
+	auto buffer = ALLOCATE(bufferSize);
 
-		p.name = ALLOCATE(p.namelen);
-		if(p.name == nullptr){
-			PERROR("couldn't allocate memory for profile name\n");
-			return GPKIH_FAIL;
-		}
-		file.read(p.name, p.namelen);
-
-		file.read(reinterpret_cast<char*>(&p.sourcelen), sizeof(decltype(p.sourcelen)));
-		p.source = ALLOCATE(p.sourcelen);
-		if(p.source == nullptr){
-			PERROR("couldn't allocate memory for profile source\n");
-			return GPKIH_FAIL;
-		}
-		file.read(p.source, p.sourcelen);
-
-		file.read(reinterpret_cast<char*>(&p.creationDate), sizeof(decltype(p.creationDate)));
-		file.read(reinterpret_cast<char*>(&p.last_modification), sizeof(decltype(p.last_modification)));
-		file.read(reinterpret_cast<char*>(&p.ca_created), sizeof(decltype(p.ca_created)));
-		file.read(reinterpret_cast<char*>(&p.sv_count), sizeof(decltype(p.sv_count)));
-		file.read(reinterpret_cast<char*>(&p.cl_count), sizeof(decltype(p.cl_count)));
-
-		// Add profile to map
-     	existing_profiles.emplace(p.name, std::move(p));
-     	
-     	PDEBUG(2,"loaded profile '{}'",p.name);
-     	uint8_t next = file.get();
-     	if(next != '%'){
-     		break;
-     	}
-	}
+	file.read(reinterpret_cast<char*>(buffer), bufferSize);
 	file.close();
-	
+
+	DEBUGF(1, "Loading {} profiles", profileCount);
+
+	for(int i = 0;i < profileCount; ++i){
+		try{
+			Profile nProf{};
+			memcpy(&nProf.meta, buffer, sizeof(ProfileMetadata));
+			DEBUGF(1, "Profile metadata: [nameLen:{},sourceLen:{}]", nProf.meta.nameLen, nProf.meta.sourceLen);
+			buffer+=sizeof(ProfileMetadata);
+			nProf.name = reinterpret_cast<const char*>(buffer);
+			buffer+=nProf.meta.nameLen+2;   // +2 to skip the null byte and point to next element (source)
+			nProf.source = reinterpret_cast<const char*>(buffer);
+			buffer+=nProf.meta.sourceLen+2; // +2 to skip the null byte and point to next element (next profile's id or null byte indicating EOF)
+			DEBUGF(1, "Loaded profile [name:{},source{}]", nProf.name, nProf.source, nProf.meta.nameLen, nProf.meta.sourceLen);
+			const auto &[iter, success] = existing_profiles.emplace(nProf.name, nProf);
+			if(success == false){
+				throw("Failed loading profile map");
+			}
+		}catch(const std::exception &err){
+			PERROR("Caught exception - {}", err.what());
+			return GPKIH_FAIL;
+		}
+	}
+
 	return GPKIH_OK;
 };
 
@@ -174,16 +164,17 @@ bool db::profiles::exists(std::string_view profile_name) {
 }
 
 int db::profiles::add(Profile &buff){
-	PDEBUG(1, "db::profiles::add()");
-	if (exists(buff.name) == true) {
-		PERROR("profile with name '{}' already exists", buff.name);
+	DEBUG(1, "db::profiles::add()");
+
+	if (existing_profiles.find(buff.name) != existing_profiles.end()) {
+		PERROR("Profile with name '{}' already exists\n", buff.name);
 		return GPKIH_FAIL;
 	}
-	
 
-	buff.id = nextID();
+	buff.meta.id = nextID();
 
-	PDEBUG(3, "adding profile [id:{},name:{},source:{},ca_created:{},sv_count:{},cl_count:{}]", buff.id, buff.name, buff.source, buff.ca_created, buff.sv_count, buff.cl_count);
+	DEBUGF(3, "adding profile [id:{},name:{},source:{},caCreated:{},svCount:{},clCount:{},namelen:{},sourcelen:{}]", 
+		buff.meta.id, buff.name, buff.source, buff.meta.caCreated, buff.meta.svCount, buff.meta.clCount, buff.meta.nameLen, buff.meta.sourceLen);
 
 	existing_profiles.emplace(&buff.name[0], buff);
 	return GPKIH_OK;
@@ -201,7 +192,7 @@ int db::profiles::remove(std::string_view profile_name) {
 }
 
 size_t db::profiles::remove_all(size_t *deletedFiles) {
-	PDEBUG(1, "db::profiles::remove_all()");
+	DEBUG(1, "db::profiles::remove_all()");
 	int pcount = 0;
 	size_t _deletedFiles = 0;
 	for(auto &kv : existing_profiles){
@@ -235,9 +226,9 @@ size_t db::profiles::remove_all(size_t *deletedFiles) {
 }
 
 int db::profiles::load(uint64_t profile_id, Profile &pinfo){
-	for(const auto &kv : existing_profiles){
-		if(kv.second.id == profile_id){
-			pinfo = kv.second;
+	for(const auto &[name, profile] : existing_profiles){
+		if(profile.meta.id == profile_id){
+			pinfo = profile;
 			return GPKIH_OK;
 		}
 	}
@@ -253,9 +244,9 @@ int db::profiles::load(std::string_view profile_name, Profile &pinfo){
 }; // load profile named profile_name into struct Profile
 
 Profile *const db::profiles::get(uint64_t profile_id){
-	for(auto &kv : existing_profiles){
-		if(kv.second.id == profile_id){
-			return &kv.second;
+	for(auto &[name, profile] : existing_profiles){
+		if(profile.meta.id == profile_id){
+			return &profile;
 		}
 	}
 	return nullptr;

@@ -1,4 +1,5 @@
 #pragma once
+#include <cstdio>
 #include <string>
 #include <vector>
 #include <cstdint>
@@ -15,14 +16,15 @@ public:
   const char *what() const noexcept override; 
 };
 
-class Buffer{
+class Buffer
+{
 private:
-  std::vector<std::pair<size_t,char*>>freedBlocks{};
+  std::vector<std::pair<size_t,std::byte*>>freedBlocks{};
 
-  char *memBlock = nullptr;
+  std::byte *memBlock = nullptr;
   const size_t memBlockSize = 0;
   
-  char *next = nullptr;
+  std::byte *next = nullptr;
   size_t availableBytes;
 
   std::string lastError;
@@ -30,17 +32,27 @@ public:
   explicit Buffer(size_t size);
   ~Buffer();
 
-  char* allocate(size_t bytes);
-  char* allocate_and_copy(char *&st, size_t *length, std::string_view src);
+  std::byte* allocate(size_t bytes);
   
   size_t available();
   size_t size();
 
-  int freeblock(char *ptr, size_t *size = nullptr);
+  int freeblock(void *ptr, size_t *size = nullptr);
+
   size_t dump(const char *path, uint32_t blockSize = 4096);
 
   const std::string &getLastError();
-  const char *const head();
+  const std::byte *const head();
+};
+
+struct SmartMemBlock{
+private:
+  std::byte *__buffer = nullptr;
+public:
+  explicit SmartMemBlock(size_t bytes);
+  std::byte *const get();
+  ~SmartMemBlock();
 };
 
 }
+

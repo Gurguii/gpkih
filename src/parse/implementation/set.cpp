@@ -7,7 +7,7 @@
 using namespace gpkih;
 
 size_t __handleScopedProfile(std::vector<std::string>::iterator &iter, std::vector<std::string>::iterator end, ProfileConfig &pconf, CONFIG_FILE &alteredFiles){
-	PDEBUG(2, "__handleScopedProfile()");
+	DEBUG(2, "__handleScopedProfile()");
 
 	std::string scfile;
 	CONFIG_FILE cfile;
@@ -115,7 +115,7 @@ size_t __handleScopedProfile(std::vector<std::string>::iterator &iter, std::vect
 }
 
 int __handleGpkih(std::vector<std::string> &opts){
-	PDEBUG(1, "__handleGpkih()");
+	DEBUG(1, "__handleGpkih()");
 
 	const char *section = nullptr;
 	for(auto current = opts.begin(); current != opts.end(); ++current){
@@ -147,12 +147,15 @@ int __handleGpkih(std::vector<std::string> &opts){
 				if(Config::set(section, key, nval) == GPKIH_FAIL){
 					return GPKIH_FAIL;
 				}
-			}					
+			}
+			
+			break;				
 		}else{
 			int dots = std::count(current->begin(), current->end(), '.');
 			
 			if(dots != 1){
 				PWARN("In this context (global gpkih configuration) the syntax must be 'section.key=nval'\n");
+				PINFO("Current: {}\n", *current);
 				continue;
 			}
 			
@@ -178,7 +181,7 @@ int __handleGpkih(std::vector<std::string> &opts){
 }
 
 int __handleProfile(std::vector<std::string> &opts){
-	PDEBUG(2, "__handleProfile()");
+	DEBUG(2, "__handleProfile()");
 
 	Profile profile;
 	CONFIG_FILE alteredFiles = CFILE_NONE;
@@ -277,7 +280,7 @@ int __handleProfile(std::vector<std::string> &opts){
 
 int parsers::set(std::vector<std::string> &opts)
 {
-	PDEBUG(1,"parsers::set()");
+	DEBUG(1,"parsers::set()");
 
 	// ./gpkih set @behaviour
 	if(opts.size() == 0){

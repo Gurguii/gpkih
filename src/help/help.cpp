@@ -1,6 +1,5 @@
 #include "help.hpp"
 
-#include "iHelpers/iface.hpp"
 #include "iHelpers/implementation/init.cpp"
 #include "iHelpers/implementation/build.cpp"
 #include "iHelpers/implementation/rename.cpp"
@@ -14,10 +13,9 @@
 
 #include "../gpkih.hpp"
 
-#include <stdexcept>
-#include <map>
-#include <tuple>
 using namespace gpkih;
+constexpr const char *GPKIH_DESCRIPTION_BRIEF = "CLI tool to manage self-signed PKI";
+constexpr const char *GPKIH_VERSION = "1.0";
 
 int help::callHelper(std::string_view msg){
     if(msg == "init"){
