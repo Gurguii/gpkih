@@ -10,9 +10,7 @@ constexpr const char *vpnConfigExtension = "ovpn";
 #else
 constexpr const char *vpnConfigExtension = "conf";
 #endif
-// Attempts to create the target path (directory or file)
-// - if dir != 0 a directory is created and any missing intermediary
-// directories will be created too, else a file will be createdDEBUGF
+
 static int __create_outdir(fs::path &path){
   DEBUGF(2,"__create_outdir({})",path.string());
 
@@ -37,15 +35,6 @@ static std::pair<std::string,std::string> __server_client_build_commands(Profile
 
   Subject &subject = entity.subject;
   // openssl req -newkey {}:{} -out {} -keyout {} -subj '{}' -outform {} -keyform {} -noenc
-  
-  // STICK TO PEM HIJO DE PUTA
-
-  // Set entity certificate request PATH
-  std::string tmp = std::move(fmt::format("{}{}-csr.pem",profile::reqDir(profile), subject.cn));
-
-  // Set entity key PATH
-  tmp.assign("");
-  tmp = std::move(fmt::format("{}{}-key.pem",profile::keyDir(profile), subject.cn));
 
   std::string csr_command = std::move(fmt::format("openssl req -newkey {}:{} -out \"{}\" -keyout \"{}\" -subj {} -noenc",
     keyAlgo,
@@ -54,11 +43,6 @@ static std::pair<std::string,std::string> __server_client_build_commands(Profile
     entity.keyPath,
     subject::opensslOneliner(subject)
   ));
-  
-  // Set entity certificate PATH
-  tmp = std::move(fmt::format("{}{}-crt.pem",profile::crtDir(profile), subject.cn));
-
-  tmp.assign("");
   
   std::string x509_extensions_file_path = CONF_DIRPATH + "x509" + SLASH + entity::conversion::toString(entity.meta.type);
   
@@ -178,7 +162,7 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
     ecrt.close();
     ekey.close();
 
-    FREE_MEMORY_BLOCK((std::byte*)caCertBuffer, &caCertSize);
+    FREE_MEMORY_BLOCK(caCertBuffer, caCertSize);
   }
   return GPKIH_OK;
 }

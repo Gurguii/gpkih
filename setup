@@ -27,6 +27,7 @@ pmList["guix"]="install"
 pm="" # package manager to use if a package is required to be installed
 pmInstallOpt="" # package manager subopt to install e.g 'install' on apt
 
+##### Optionally compilable features #####
 GPKIH_ENABLE_DEBUGGING=false
 
 #-DCMAKE_EXPORT_COMPILE_COMMANDS=1 -> create a build/compile_commands.json that comes in handy for certain scenarios
@@ -170,7 +171,7 @@ function parse(){
 
         for (( i=0 ; i < $argc ; ++i )); do
                 arg="${args[$i],,}"
-                if [[ "$arg" == "-h" || "$arg" == "--help" ]]; then
+                if [[ "$arg" == "-h" || "$arg" == "--help" || "$arg" == "help" || "$arg" == "h" || "$arg" == "--h" || "$arg" == "-help" ]]; then
                         usage
                 elif [[ "$arg" == "-docker" || "$arg" == "--docker" ]]; then
                         __runDockerTests
@@ -184,6 +185,8 @@ function parse(){
                         commands[0]="${commands[0]} -D${args[++i]}"
                 elif [[ "$arg" == "-ed" || "$arg" == "--enable-debugging" ]]; then
                         GPKIH_ENABLE_DEBUGGING=true
+                else
+                        printf "[!] Unkown option '%s'\n" "$arg"
                 fi
         done
 

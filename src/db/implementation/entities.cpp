@@ -5,7 +5,6 @@
 #include "../../entities/entities.hpp"
 #include "../../entities/conv.hpp"
 #include <cstddef>
-#include <cstdint>
 
 using namespace gpkih;
 
@@ -214,7 +213,6 @@ int EntityManager::add(Entity &entity){
 
 bool EntityManager::exists(std::string_view cn){
 	DEBUGF(1,"EntityManager::exists({})",cn);
-
 	return entities.find(cn) != entities.end();
 }
 

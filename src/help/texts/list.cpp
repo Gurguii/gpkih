@@ -1,12 +1,6 @@
-#include "../iface.hpp"
-
-namespace gpkih::help::iHelper
+namespace gpkih::help::list
 {
-  class list : public IHelper{
-  public:
-    list() = default;
-    void usage(bool brief = false){
-  fmt::print(R"(== list ==
+	const char *usage = R"(== list ==
 list profiles/entities
 
 [ syntax ]
@@ -52,6 +46,6 @@ note: -cn|-ef will only affect when a profile is given, else only profiles will 
   - Other -
   type: entity type, ca|client|server
   status: current status, active|marked|revoked
-)");
-}};
-} // namespace
+)";
+	const char *examples = R"()";
+}

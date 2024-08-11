@@ -129,7 +129,7 @@ int __set_date(){
   return GPKIH_OK;
 }
 
-int actions::list_profiles(uint16_t fields){
+int actions::list(uint16_t fields){
   DEBUG(1, "actions::list_profiles()");
 
   if(__set_date() == GPKIH_FAIL){
@@ -157,7 +157,7 @@ int actions::list_profiles(uint16_t fields){
   return GPKIH_OK;
 };
 
-int actions::list_entities(std::string_view profileName,uint16_t fields){
+int actions::list(std::string_view profileName,uint16_t fields){
   DEBUG(1, "actions::list_entities()");
 
   if(__set_date() == GPKIH_FAIL){

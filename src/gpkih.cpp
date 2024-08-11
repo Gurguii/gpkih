@@ -4,7 +4,11 @@
 #include "parse/parser.hpp"
 #include "entities/entities.hpp"
 #include "signals/signals.cpp"
+#include "experimental/export.hpp"
+
+#include <exception>
 #include <future>
+
 using namespace gpkih;
 
 constexpr size_t gpkihReservedMemory = gurgui::utils::units::toBytes(4,'m');
@@ -12,7 +16,7 @@ constexpr size_t gpkihReservedMemory = gurgui::utils::units::toBytes(4,'m');
 static constexpr const char* DB_DIRNAME  = "db";
 static constexpr const char* CFG_DIRNAME = "config";
 static constexpr const char* LOG_DIRNAME = "logs";
-static constexpr const char *gpkihConfigFilename = "gpkih.conf";
+static constexpr const char* gpkihConfigFilename = "gpkih.conf";
 
 /* Current path */
 static std::string CURRENT_PATH;
@@ -105,7 +109,7 @@ static int __setPlatformDependantVariables()
 }
 
 static int __setVariables() {
-    DEBUGF(1, "__setVariables({})","hola");
+    DEBUG(1, "__setVariables()");
 
     if (__setPlatformDependantVariables() != GPKIH_OK) {
         return GPKIH_FAIL;
@@ -259,7 +263,7 @@ int main(int argc, const char **args) {
   if(__setLogger() == GPKIH_FAIL){
     return GPKIH_FAIL;
   }
-
+  
   // Parse options
   if (parsers::parse(opts) != GPKIH_OK) {
     return GPKIH_FAIL;

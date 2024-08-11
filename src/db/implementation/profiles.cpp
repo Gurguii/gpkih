@@ -66,6 +66,7 @@ int db::profiles::sync(){
 
 	int pos = 0;
 	for(const auto &[name, profile] : existing_profiles){
+		DEBUGF(3, "Writing profile [{}:{},{}:{}]", name,profile.meta.nameLen, profile.source, profile.meta.sourceLen);
 		memcpy(buffer, &profile.meta, sizeof(ProfileMetadata));
 		pos+=sizeof(ProfileMetadata);
 
@@ -139,14 +140,19 @@ int db::profiles::initialize(size_t &profileCount){
 		try{
 			Profile nProf{};
 			memcpy(&nProf.meta, buffer, sizeof(ProfileMetadata));
+			
 			DEBUGF(1, "Profile metadata: [nameLen:{},sourceLen:{}]", nProf.meta.nameLen, nProf.meta.sourceLen);
+			
 			buffer+=sizeof(ProfileMetadata);
 			nProf.name = reinterpret_cast<const char*>(buffer);
 			buffer+=nProf.meta.nameLen+2;   // +2 to skip the null byte and point to next element (source)
 			nProf.source = reinterpret_cast<const char*>(buffer);
 			buffer+=nProf.meta.sourceLen+2; // +2 to skip the null byte and point to next element (next profile's id or null byte indicating EOF)
+			
 			DEBUGF(1, "Loaded profile [name:{},source{}]", nProf.name, nProf.source, nProf.meta.nameLen, nProf.meta.sourceLen);
+			
 			const auto &[iter, success] = existing_profiles.emplace(nProf.name, nProf);
+			
 			if(success == false){
 				throw("Failed loading profile map");
 			}

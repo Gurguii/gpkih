@@ -1,12 +1,6 @@
-#include "../iface.hpp"
-
-namespace gpkih::help::iHelper
+namespace gpkih::help::get
 {
-  class get : public IHelper{
-  public:
-    get() = default;
-    void usage(bool brief = false){
-      fmt::print(R"(== get ==
+	const char *usage = R"(== get ==
 get generic/profile-specific configuration
 
 [ syntax ]
@@ -24,7 +18,6 @@ configuration its global, e.g './gpkih get behaviour'
   ./gpkih get test pki : print all pki configuration
   ./gpkih get test pki.key : print [key] section
   ./gpkih get test pki.key.size : print `size` property from [key] section
-      )");
-    };
-  };
-} // namespace gpkih::help::iHelper
+)";
+	const char *examples = R"()";
+}

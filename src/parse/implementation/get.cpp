@@ -154,15 +154,7 @@ static size_t __handleScopePrinting (std::string_view &scope_opt, std::vector<st
 	}
 	return opts.size();
 }
-// ConfigMap == std::unordered_map<str, std::unordered_map<str, str>>
-// @file.section
-//
-/**
- * @brief      Handles calls like './gpki get <...>' where no profile is specified, assumes 'gpkih.conf'  
- * 
- * @param[in]  Iterator to the first element containing user input, e.g ./gpkih get behaviour logs -> iterator to 'behaviour'
- * @param[in]  Iterator to the end of the user input
- */
+
 static void __handle_gpkih_scope_printing(std::vector<std::string>::iterator next, std::vector<std::string>::iterator end)
 {
 	// assume scope @gpkih

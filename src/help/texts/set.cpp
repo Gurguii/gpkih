@@ -1,13 +1,6 @@
-#include "../iface.hpp"
-
-namespace gpkih::help::iHelper
+namespace gpkih::help::set
 {
-	class set : public IHelper
-	{
-	public:
-		set() = default;
-		void usage(bool brief = false){
-			fmt::print(R"(== set ==
+	const char *usage = R"(== set ==
 PARTIALLY IMPLEMENTED
 set generic/profile-specific configuration
 
@@ -25,7 +18,6 @@ sections will be sections in gpkih.conf.
 	./gpkih set @behaviour autoanswer=no headers=yes
 	./gpkih set myProfile @pki.output create_pfx=no create_inline=yes
 	./gpkih set myProfile @vpn.client remote="192.168.1.14 9999" @vpn.common cipher=AES-256-GCM
-)");
-		}
-	};
-} // namespace
+)";
+	const char *examples = R"()";
+}

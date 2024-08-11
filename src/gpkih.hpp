@@ -38,6 +38,7 @@ enum class GPKIH_RETURN_CODES : int {
   __we_bad  = 1,
   __we_done = 2,
 };
+
 constexpr int GPKIH_OK = static_cast<int>(GPKIH_RETURN_CODES::__we_good);
 constexpr int GPKIH_FAIL = static_cast<int>(GPKIH_RETURN_CODES::__we_bad);
 constexpr int GPKIH_FATAL = static_cast<int>(GPKIH_RETURN_CODES::__we_done);

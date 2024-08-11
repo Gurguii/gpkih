@@ -37,7 +37,7 @@ public:
   size_t available();
   size_t size();
 
-  int freeblock(void *ptr, size_t *size = nullptr);
+  int freeblock(void *ptr, size_t size);
 
   size_t dump(const char *path, uint32_t blockSize = 4096);
 
@@ -55,4 +55,3 @@ public:
 };
 
 }
-

@@ -228,11 +228,6 @@ void cli::init() {
 			opts.push_back(opt);
 		}
 
-		if (ACTION_PARSERS.find(action) == ACTION_PARSERS.end()) {
-			PERROR("action '{}' doesn't exist\n", action);
-			continue;
-		}
-
 		if( parsers::parseGlobals(opts) == GPKIH_FAIL
 			|| parsers::parse(opts) == GPKIH_FAIL){
 			continue;

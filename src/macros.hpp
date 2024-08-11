@@ -16,6 +16,11 @@
 #define ENOUGH_AVAILABLE(x) static_cast<bool>(gpkihBuffer->available()-x > 0)
 
 /* Limits */
-#define GPKIH_MAX_PATH 4096
-#define GPKIH_MAX_VARCHAR 254
+constexpr int GPKIH_MAX_PATH = 4096;
+constexpr int GPKIH_MAX_VARCHAR = 254;
+
+/* Preprocessing directives
+GPKIH_SQLITE - enable/disable 
+
+*/
 #endif

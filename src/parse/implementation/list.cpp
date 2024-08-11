@@ -50,7 +50,7 @@ int parsers::list(std::vector<std::string> &opts) {
   }
   
   if (opts.empty()) {
-    return actions::list_profiles(static_cast<uint16_t>(P_ALL));
+    return actions::list(static_cast<uint16_t>(P_ALL));
   }
   
   opts.push_back("\0");
@@ -104,5 +104,5 @@ int parsers::list(std::vector<std::string> &opts) {
     return GPKIH_OK;
   }
 
-  return pname.empty() ? actions::list_profiles(fields) : actions::list_entities(pname, fields);
+  return pname.empty() ? actions::list(fields) : actions::list(pname, fields);
 }

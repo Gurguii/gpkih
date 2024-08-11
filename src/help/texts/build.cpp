@@ -1,14 +1,6 @@
-#include "../iface.hpp"
-
-namespace gpkih::help::iHelper
+namespace gpkih::help::build
 {
-class build : public IHelper
-{
-public:
-  build() = default;
-  
-  void usage(bool brief = false){
-    fmt::print(R"(== build ==
+	const char *usage = R"(== build ==
 build certificates for a profile
 
 [ syntax ]
@@ -39,7 +31,18 @@ build certificates for a profile
   ** output **
   -inline | --inline : create inline file
   -pfx    | --pfx    : create pfx file (pkcs12), *will get prompted for password
-)");
+)";
+	const char *examples = R"(== build examples ==
+      1. Building a CA
+          ./gpkih build <myProfile> ca -cn <myCA>
+
+      2. Building a SERVER avoiding user confirmation required
+          ./gpkih build <myProfile> sv -cn <mySV> -country "ES" -location "Mi Casa" -y
+      
+      3. Build a CLIENT and create a .pfx file (will get prompted for password)
+          ./gpkih build <myProfile> cl -cn <myCL> -pfx
+      
+      4. Build a CLIENT with all available options
+          ./gpkih build <myProfile> cl -cn gurgui -co "ES" -lo "Gran Canarias" -org "Mariwanos" -mail "gurgui@mariwanos.com" -serial 200 -st "StateOfElevation" -pfx -algo rsa -keysize 2048 
+    )";
 }
-};
-} // namespace gpkih::help::iHelper

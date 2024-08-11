@@ -97,6 +97,23 @@ target_include_directories(gpkih PUBLIC "${FMT_LIBRARY_INCLUDE}")
 target_link_libraries(gpkih PUBLIC gpkih_entities_lib gpkih_profiles_lib gpkih_parser_lib gpkih_db_lib gpkih_actions_lib 
     gpkih_config_lib gpkih_help_lib gpkih_cli_lib gpkih_formatter_lib gpkih_mem_lib gprintinglib gutilslib glogginglib gmemorylib)
 
+if(GPKIH_SQLITE)
+  message(STATUS "SQLite3 support ENABLED")
+
+  # Search for libraries with or without the prefix "lib"
+  find_library(SQLITE3_LIBRARY NAMES sqlite3 sqlite3.so PATHS "/usr/lib/")
+
+  if(NOT SQLITE3_LIBRARY)
+    message(FATAL_ERROR "Couldn't find requested sqlite3 library")
+  else()
+    message(STATUS "Found sqlite3 library: ${SQLITE3_LIBRARY}")
+    target_link_libraries(gpkih PRIVATE ${SQLITE3_LIBRARY})
+  endif()
+else()
+  message(STATUS "SQLite3 support DISABLED")
+endif()
+
+
 if(GPRINTING_ENABLE_DEBUGGING)
     message(STATUS "GPKIH Debugging capabilities ENABLED")
     set_property(TARGET gpkih ${GPKIH_LIBRARIES} PROPERTY COMPILE_DEFINITIONS GPRINTING_ENABLE_DEBUGGING)

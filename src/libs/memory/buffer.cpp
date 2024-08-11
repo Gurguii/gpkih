@@ -80,7 +80,7 @@ size_t Buffer::available(){
 	return availableBytes;
 }
 
-int Buffer::freeblock(void *ptr, size_t *size){
+int Buffer::freeblock(void *ptr, size_t size){
 	if(ptr < memBlock || ptr > (memBlock + memBlockSize)){
 		lastError = "Cannot free a pointer outside the managed memory block";
 		return -1;
@@ -90,13 +90,12 @@ int Buffer::freeblock(void *ptr, size_t *size){
 	// The performance difference might be huge between calls depending
 	// on if size is given, cause if not the length of the ptr will get
 	// calculated, and if its a big ass array it might be a pain
-	size_t length = size == nullptr ? strlen((char*)ptr): *size;
 	
-	memset(ptr, 0, length);
-	availableBytes+=length+1; // length + null byte
+	memset(ptr, 0, size);
+	availableBytes+=size+1; // size + null byte
 
 	// Keep track of freed blocks
-	freedBlocks.emplace_back(length,reinterpret_cast<std::byte*>(ptr));
+	freedBlocks.emplace_back(size,reinterpret_cast<std::byte*>(ptr));
 
 	return 0;
 }

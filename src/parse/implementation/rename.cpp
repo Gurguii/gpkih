@@ -19,12 +19,12 @@ int gpkih::parsers::rename(std::vector<std::string> &opts){
 		PERROR("couldn't retrieve profile ptr");
 		return GPKIH_FAIL;
 	}
-	
+	PWARN("XD -> {}\n", profile->source);
 	std::string oldpath = fmt::format("{}{}_entities.data",DB_DIRPATH,profile->name);
 	
-	FREE_MEMORY_BLOCK(const_cast<char*>(profile->name), reinterpret_cast<size_t*>(&profile->meta.nameLen));
+	FREE_MEMORY_BLOCK(const_cast<char*>(profile->name), profile->meta.nameLen+1);
 	CALLOCATE(profile->name, reinterpret_cast<size_t*>(&profile->meta.nameLen), opts[1]);
-	
+	PWARN("NEW NAME -> {} NEW SOURCE -> {} NEW SIZE -> {}\n", profile->name, profile->source, profile->meta.nameLen);
 	std::string newpath = fmt::format("{}{}_entities.data",DB_DIRPATH,profile->name);
 
 	if(DRY_RUN == true){

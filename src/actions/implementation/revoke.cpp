@@ -80,7 +80,7 @@ int actions::revoke(Profile &profile, std::vector<std::string> &common_names, st
     if (ans == "y" || ans == "yes") {
       return actions::gencrl(profile);
     }
-    PINFO("Not generating...");
+    PINFO("Not generating...\n");
   }
   
   return GPKIH_OK;

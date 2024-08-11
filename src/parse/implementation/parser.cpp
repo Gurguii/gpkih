@@ -2,6 +2,44 @@
 #include "../../help/help.hpp"
 #include "../../cli/cli.hpp"
 #include "../../config/Config.hpp"
+
+std::unordered_map<std::string, int (*)(std::vector<std::string> &opts)> ACTION_PARSERS{
+    {"init", gpkih::parsers::init},
+    {"i", gpkih::parsers::init},
+
+    {"list", gpkih::parsers::list},
+    {"l", gpkih::parsers::list},
+
+    {"build", gpkih::parsers::build},
+    {"b", gpkih::parsers::build},
+
+    {"revoke", gpkih::parsers::revoke},
+    {"r", gpkih::parsers::revoke},
+
+    {"gencrl", gpkih::parsers::gencrl},
+
+    {"remove", gpkih::parsers::remove},
+    {"rm", gpkih::parsers::remove},
+
+    {"genkey", gpkih::parsers::genkey},
+    {"gk", gpkih::parsers::genkey},
+
+    {"get", gpkih::parsers::get},
+    {"g", gpkih::parsers::get}, // Conflict with "gencrl"
+
+    {"set", gpkih::parsers::set},
+    {"s", gpkih::parsers::set},
+
+    {"rename", gpkih::parsers::rename},
+    {"rn", gpkih::parsers::rename},
+
+    {"reset", gpkih::parsers::reset},
+    {"rs", gpkih::parsers::reset},
+
+    {"export", gpkih::parsers::dbexport},
+    {"e", gpkih::parsers::dbexport}
+};
+
 using namespace gpkih;
 
 int parsers::parseGlobals(std::vector<std::string> &opts){
@@ -60,8 +98,6 @@ int parsers::parse(std::vector<std::string> &args) {
 
   if (args.size() == 0) {
     help::usage_brief();
-    // TODO - add a gpkih cli mode where the call to gpkih 
-    // can be omitted, something like 'virsh'
     return GPKIH_OK;
   }
 
@@ -102,11 +138,23 @@ int parsers::parse(std::vector<std::string> &args) {
   }
 
   // Check if user is requesting some sort of help
-  if (action == "help" || action == "--help" || action == "-help" ||
-      action == "-h") {
-    if (args.size() > 1) {
-      help::callHelper(args[1]);
-    } else {
+  if (action == "help" || action == "--help" || action == "-help" || action == "-h") {
+    if(args.size() > 1){
+      if(help::helpers.find(args[1]) == help::helpers.end()){
+        PERROR("Help for action '{}' doesn't exist\n", args[1]);
+        return GPKIH_FAIL;
+      }
+      if(args.size() > 2){
+        std::string_view subHelp = args[2];
+        if(subHelp == "examples"){  
+          fmt::print("{}",help::helpers[args[1]].examples);
+        }else{
+          PERROR("Unexistant help sub-option {}", subHelp);
+        }
+      }else{
+        fmt::print("{}", help::helpers[args[1]].usage);
+      }
+    }else{
       help::usage();
     }
     return GPKIH_OK;
@@ -114,7 +162,7 @@ int parsers::parse(std::vector<std::string> &args) {
 
   // Check if action exists
   if (ACTION_PARSERS.find(action) == ACTION_PARSERS.end()) {
-    PERROR("action '{}' doesn't exist\n", action);
+    PERROR("Action '{}' doesn't exist\n", action);
     return GPKIH_FAIL;
   }
   

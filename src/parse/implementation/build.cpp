@@ -106,7 +106,7 @@ int parsers::build(std::vector<std::string> &opts) {
       CALLOCATE(entity.subject.organisation,reinterpret_cast<size_t*>(&entity.subject.meta.organisationlen),opts[++i]);
     }else if(opt == "-st" || opt == "--state"){
       CALLOCATE(entity.subject.state, reinterpret_cast<size_t*>(&entity.subject.meta.statelen), opts[++i]);
-    }else if(opt == "-email" || opt == "--email"){
+    }else if(opt == "-email" || opt == "--email" || opt == "-mail" || opt == "--mail  "){
       CALLOCATE(entity.subject.email, reinterpret_cast<size_t*>(&entity.subject.email), opts[++i]);
     }else if(opt == "-pfx" || opt == "--pfx"){
       config.set(CFILE_PKI, "output", "create_pfx","yes");
@@ -141,7 +141,7 @@ int parsers::build(std::vector<std::string> &opts) {
   
   std::string_view keySize = pkiconf["key"]["size"];
   std::string_view keyAlgo = pkiconf["key"]["algorithm"];
-  std::string_view days = pkiconf["crt"]["days"];
+  std::string_view days    = pkiconf["crt"]["days"];
 
   if(entity.meta.type & ET_CA){
     
@@ -179,7 +179,7 @@ int parsers::build(std::vector<std::string> &opts) {
     rcode = actions::build(*profile,config,entity,eman,days,keyAlgo,keySize);
   }
 
-  if(rcode == GPKIH_FAIL){
+  if(rcode != GPKIH_OK){
     return rcode;
   }
 

@@ -5,10 +5,12 @@
 #include "../actions/actions.hpp"
 #include "../db/profiles.hpp"
 
+
 namespace gpkih::parsers 
 {
 
-// TESTING
+
+/// @brief does global parsing
 extern int parseGlobals(std::vector<std::string> &opts);
 
 /// @brief does generic parsing and calls specialized parser
@@ -45,15 +47,12 @@ extern int get(std::vector<std::string> &opts);
 extern int set(std::vector<std::string> &opts);
 
 /// @brief generate key
-// unimplementes
+// unimplemented
 extern int genkey(std::vector<std::string> &opts);
+
+/// @brief exports database
+extern int dbexport(std::vector<std::string> &opts);
+
 } // namespace gpkih::parsers
 
-inline std::unordered_map<std::string, int (*)(std::vector<std::string> &opts)> ACTION_PARSERS
-{
-  {"init", gpkih::parsers::init},     {"list", gpkih::parsers::list},
-  {"build", gpkih::parsers::build},   {"revoke", gpkih::parsers::revoke},
-  {"gencrl", gpkih::parsers::gencrl}, {"remove", gpkih::parsers::remove},
-  {"genkey", gpkih::parsers::genkey}, {"get", gpkih::parsers::get}, {"set", gpkih::parsers::set},
-  {"rename", gpkih::parsers::rename}, {"reset", gpkih::parsers::reset},
-};
+extern std::unordered_map<std::string, int (*)(std::vector<std::string> &opts)> ACTION_PARSERS;
