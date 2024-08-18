@@ -1,8 +1,18 @@
 #include "../cli.hpp"
+
 #include "../../parse/parser.hpp"
+
 #include "../../libs/utils/utils.hpp"
 #include "../../libs/printing/printing.hpp"
+
 #include "../../config/Config.hpp"
+
+#include "../../db/profiles.hpp"
+
+#include "../../actions/actions.hpp"
+
+#include "../../gpkih.hpp"
+
 #include <iostream>
 
 namespace gpkih::cli::commands
@@ -145,9 +155,8 @@ static inline void __setup_PS() {
 }
 
 void cli::init() {
-	DEBUG(1,"initializing cli");
+	DEBUG(1,"cli::init()");
 	__setup_PS();
-	DEBUG(1,"PS settled up");
 	std::string user_input;
 	auto placeholderMap = inputPlaceholderMap();
 	for (;;)
@@ -213,6 +222,7 @@ void cli::init() {
 		else if (action == "exit" || action == "quit") {
 			return;
 		}
+		
 		// TODO - add checks for 'action' since it doesn't necesarily need to
 		// be an action, e.g the user could input 'help' to get some help 
 		// or exit to exit
@@ -233,7 +243,8 @@ void cli::init() {
 			continue;
 		}
 
+		actions::GetAction(action, opts).value()->exec();
 		// call action's parser which will do the rest
-		ACTION_PARSERS[action](opts);
+		// ACTION_PARSERS[action](opts);
 	}
 }

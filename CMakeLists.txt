@@ -97,6 +97,7 @@ target_include_directories(gpkih PUBLIC "${FMT_LIBRARY_INCLUDE}")
 target_link_libraries(gpkih PUBLIC gpkih_entities_lib gpkih_profiles_lib gpkih_parser_lib gpkih_db_lib gpkih_actions_lib 
     gpkih_config_lib gpkih_help_lib gpkih_cli_lib gpkih_formatter_lib gpkih_mem_lib gprintinglib gutilslib glogginglib gmemorylib)
 
+set(gpkih_optional_features GPKIH_SQLITE GPKIH_MYSQL GPKIH_PSQL)
 if(GPKIH_SQLITE)
   message(STATUS "SQLite3 support ENABLED")
 
@@ -112,7 +113,6 @@ if(GPKIH_SQLITE)
 else()
   message(STATUS "SQLite3 support DISABLED")
 endif()
-
 
 if(GPRINTING_ENABLE_DEBUGGING)
     message(STATUS "GPKIH Debugging capabilities ENABLED")

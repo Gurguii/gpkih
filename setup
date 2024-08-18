@@ -28,10 +28,21 @@ pm="" # package manager to use if a package is required to be installed
 pmInstallOpt="" # package manager subopt to install e.g 'install' on apt
 
 ##### Optionally compilable features #####
-GPKIH_ENABLE_DEBUGGING=false
+declare -A gpkihFeatures
+gpkihFeatures['SQLITE']="GPKIH_SQLITE=OFF"
+gpkihFeatures['DEBUGGING']="GPRINTING_ENABLE_DEBUGGING=OFF"
+
+##### Unimplemented features #####
+
+# TODO - implement them, JSON and CSV should 
+# be added by default, and not as an optional feature, specially CSV
+gpkihFeatures['MYSQL']="GPKIH_MYSQL=OFF" 
+gpkihFeatures['PSQL']="GPKIH_PSQL=OFF"
 
 #-DCMAKE_EXPORT_COMPILE_COMMANDS=1 -> create a build/compile_commands.json that comes in handy for certain scenarios
-commands=("cmake .." "make -j" "cp $buildDir/gpkih $binaryOutpath") # [!] note : this will be executed inside build/ 
+
+# These commands will be executed inside build/ 
+commands=("cmake .." "make -j" "cp $buildDir/gpkih $binaryOutpath")
 #############################################################################
 
 function gecho(){
@@ -154,9 +165,19 @@ Usage: ./setup <options>
   -docker | --docker            = used for developing, will create ${#dockerOsList[@]} containers to test compiling and running gpkih: ${dockerOsList[@]}
   -docs   | --documentation     = create doxygen documentation - *not super fancy*
   -d      | --define <KEY=VAL>  = add preprocessing directives
+
+* Options to manage optional program features to include when compiling * 
   -ed     | --enable-debugging  = enable debugging capabilities - default false
+  -sqlite | --sqlite            = enable sqlite features - default false
 EOF
         exit 0
+}
+
+function checkWritePerms(){
+        # $@
+        for filePath in "$@"; do
+                > "$filePath" &>/dev/null || { gecho "[!] Don't have permissions to write to file '$filePath'\n"; exit 1; }
+        done
 }
 
 function parse(){
@@ -184,26 +205,29 @@ function parse(){
                         fi
                         commands[0]="${commands[0]} -D${args[++i]}"
                 elif [[ "$arg" == "-ed" || "$arg" == "--enable-debugging" ]]; then
-                        GPKIH_ENABLE_DEBUGGING=true
+                        gpkihFeatures['DEBUGGING']="GPRINTING_ENABLE_DEBUGGING=ON"
+                elif [[ "$arg" == "-sqlite" || "$arg" == "--sqlite" ]]; then
+                        gpkihFeatures['SQLITE']="GPKIH_SQLITE=ON"
                 else
                         printf "[!] Unkown option '%s'\n" "$arg"
                 fi
         done
 
-        if $GPKIH_ENABLE_DEBUGGING; then
-                gecho "[+] Debugging capabilities ENABLED\n" && commands[0]="${commands[0]} -DGPRINTING_ENABLE_DEBUGGING=1"
-        else
-                gecho "[+] Debugging capabilities DISABLED\n" && commands[0]="${commands[0]} -DGPRINTING_ENABLE_DEBUGGING=0"
-        fi
+        gecho "======== Features ========\n"
+        for feature in "${!gpkihFeatures[@]}"; do
+                status=$(cut -d '=' -f 2 <<< ${gpkihFeatures[$feature]})
+                if [ "${status,,}" == "on" ]; then
+                        gecho "[+] $feature ENABLED\n"
+                        commands[0]="${commands[0]} -D ${gpkihFeatures[$feature]}"
+                else
+                        gecho "[-] $feature DISABLED\n"
+                        commands[0]="${commands[0]} -D ${gpkihFeatures[$feature]}"
+                fi
+        done
+        gecho "\n\n"
 }
 
-function main(){
-        
-        > "$logStderr" &>/dev/null  || { gecho "[!] Don't have permissions to write stdout log file '$logStderr'\n"; exit 1; }
-        > "$logStdout" &>/dev/null  || { gecho "[!] Don't have permissions to write stderr log file '$logStdout'\n"; exit 1; }
-
-        parse
-
+function compile(){
         if ! [ -e "$buildDir" ]; then
                 mkdir "$buildDir"
                 if (( $? != 0 )); then
@@ -213,17 +237,22 @@ function main(){
         fi
         
         cd "$buildDir"
-
+        gecho "======== Building ========\n"
         for command in "${commands[@]}"; do
                 
-                gecho "[running] $command\n"
+                gecho "-- RUNNING $command\n"
                 $command 1>> "$logStdout" 2>> "$logStderr" 
                 
-                (( $? != 0 )) && gecho "Something failed running '$command'\ncheck '$logStderr' for more information\n" && exit $?
+                (( $? != 0 )) && gecho "\nSomething failed running '$command'\ncheck '$logStderr' for more information\n" && exit $?
         done
-        
-        gecho "[info] gpkih succesfully compiled: $binaryOutpath\n[info] building process' logs can be found at '$logStdout'\n"
-        
+
+        gecho "\n\n======== Success ========\n-- gpkih: $binaryOutpath\n-- logs: $logStdout\n"
+}
+
+function main(){
+        checkWritePerms "$logStderr" "$logStdout"
+        parse
+        compile
         exit 0        
 }
 

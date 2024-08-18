@@ -1,5 +1,6 @@
 #ifndef GPKIH_MACROS
 #define GPKIH_MACROS
+
 #pragma once
 
 /* Logging */
@@ -15,12 +16,4 @@
 #define BUFFER_DUMP gpkihBuffer->dump
 #define ENOUGH_AVAILABLE(x) static_cast<bool>(gpkihBuffer->available()-x > 0)
 
-/* Limits */
-constexpr int GPKIH_MAX_PATH = 4096;
-constexpr int GPKIH_MAX_VARCHAR = 254;
-
-/* Preprocessing directives
-GPKIH_SQLITE - enable/disable 
-
-*/
 #endif
