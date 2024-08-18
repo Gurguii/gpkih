@@ -12,3 +12,4 @@ misc
 documentation/
 gpkih
 *.db
+CMakeFiles/
