@@ -2,12 +2,16 @@
 
 class ARename : public IAction 
 {
+private:
+	ARename() = default;
 protected:
-	const char *usage() override;
-	const char *examples() override;
+	const char *usage() const override;
+	const char *examples() const override;
 public:
-	ARename(std::vector<std::string> &args):IAction(args){};
-	ARename() = delete;
+	static const ARename& get(){
+		static ARename _singleton{};
+		return _singleton;
+	}
 	ARename(ARename&) = delete; 
-	int exec() override;
+	int exec(std::vector<std::string> &args) const override;
 };

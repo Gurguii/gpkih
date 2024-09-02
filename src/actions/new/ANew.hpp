@@ -3,13 +3,16 @@
 
 class ANew : public IAction 
 {
+private:
+	ANew() = default;
 protected:
-	const char *usage() override;
-	const char *examples() override;
+	const char *usage() const override;
+	const char *examples() const override;
 public:
-	static inline const char *name = "new";
-	ANew(std::vector<std::string> &args):IAction(args){};
-	ANew() = delete;
+	static const ANew& get(){
+		static ANew _singleton{};
+		return _singleton;
+	}
 	ANew(ANew&) = delete; 
-	int exec() override;
+	int exec(std::vector<std::string> &args) const override;
 };

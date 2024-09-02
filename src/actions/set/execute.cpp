@@ -285,8 +285,7 @@ int __handleProfile(std::vector<std::string> &opts){
 	return GPKIH_OK;
 }
 
-int ASet::exec()
-{
+int ASet::exec(std::vector<std::string> &args) const {
 	/* BEG - Parse args */
 	DEBUG(1,"parsers::set()");
 

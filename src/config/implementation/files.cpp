@@ -114,7 +114,7 @@ int config::loadFile(std::string_view path, ConfigMap &buff) {
   std::ifstream file(path.data());
   
   if (!file.is_open()) {
-    PERROR("couldn't open gpkih.conf '{}'", path);
+    PERROR("couldn't open gpkih.conf '{}'\n", path);
     return GPKIH_FAIL;
   }
 

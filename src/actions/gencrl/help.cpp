@@ -15,10 +15,10 @@ constexpr const char *_examples = R"(== gencrl examples ==
   ./gpkih gencrl myProfile 
 )";
 
-const char *AGencrl::usage(){
+const char *AGencrl::usage() const {
 	return _usage;
 };
 
-const char *AGencrl::examples(){
+const char *AGencrl::examples() const {
 	return _examples;
 }

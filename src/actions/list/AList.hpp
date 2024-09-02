@@ -1,17 +1,19 @@
 #pragma once
 
 #include "../iface.hpp"
-#include "../../libs/printing/printing.hpp"
 
 class AList : public IAction 
 {
+private:
+	AList() = default;
 protected:
-	const char *usage() override;
-	const char *examples() override;
-	
+	const char *usage() const override;
+	const char *examples() const override;
 public:
-	AList(std::vector<std::string> &args):IAction(args){};
-	AList() = delete;
+	static const AList& get(){
+		static AList _singleton{};
+		return _singleton;
+	}
 	AList(AList&) = delete; 
-	int exec() override;
+	int exec(std::vector<std::string> &args) const override;
 };

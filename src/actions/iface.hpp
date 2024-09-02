@@ -14,14 +14,12 @@
 
 class IAction {
 protected:
-	std::vector<std::string> &args;
-	virtual const char *usage() = 0;
-	virtual const char *examples() = 0;
+	virtual const char *usage() const = 0;
+	virtual const char *examples() const = 0;
 public:
-	IAction(std::vector<std::string> &args):args(args){};
-	virtual int exec() = 0;
+	virtual int exec(std::vector<std::string> &args) const = 0;
 	virtual ~IAction() = default;
-	void help(){
+	void help(std::vector<std::string> &args) const{
 		bool reqFullfilled = false;
 		for(std::string &arg : args){
 			if(arg == "-e" || arg == "--examples"){

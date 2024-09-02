@@ -14,10 +14,10 @@ constexpr const char *_examples = R"(== reset examples ==
   ./gpkih reset -y
 )";
 
-const char *AReset::usage(){
+const char *AReset::usage() const {
 	return _usage;
 };
 
-const char *AReset::examples(){
+const char *AReset::examples() const {
 	return _examples;
 }

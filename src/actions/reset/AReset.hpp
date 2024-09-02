@@ -2,12 +2,16 @@
 
 class AReset : public IAction 
 {
+private:
+	AReset() = default;
 protected:
-	const char *usage() override;
-	const char *examples() override;
+	const char *usage() const override;
+	const char *examples() const override;
 public:
-	AReset(std::vector<std::string> &args):IAction(args){};
-	AReset() = delete;
+	static const AReset& get(){
+		static AReset _singleton{};
+		return _singleton;
+	}
 	AReset(AReset&) = delete; 
-	int exec() override;
+	int exec(std::vector<std::string> &args) const override;
 };

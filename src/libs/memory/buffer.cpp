@@ -86,13 +86,8 @@ int Buffer::freeblock(void *ptr, size_t size){
 		return -1;
 	}
 
-	// Set freed memory block to 0 to avoid leaks
-	// The performance difference might be huge between calls depending
-	// on if size is given, cause if not the length of the ptr will get
-	// calculated, and if its a big ass array it might be a pain
-	
 	memset(ptr, 0, size);
-	availableBytes+=size+1; // size + null byte
+	availableBytes+=size;
 
 	// Keep track of freed blocks
 	freedBlocks.emplace_back(size,reinterpret_cast<std::byte*>(ptr));
@@ -110,7 +105,6 @@ size_t Buffer::dump(const char *path, uint32_t blockSize){
 	auto *current = memBlock;
 	size_t iters = memBlockSize / blockSize;
 	size_t rest = memBlockSize % blockSize;
-
 	size_t written = 0;
 
 	for(int i = 0; i < iters; ++i){

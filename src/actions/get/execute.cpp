@@ -232,7 +232,7 @@ static void __handle_gpkih_full_printing()
 	}
 }
 
-int AGet::exec()
+int AGet::exec(std::vector<std::string> &args) const 
 {
 		DEBUG(1, "parsers::get()");
 

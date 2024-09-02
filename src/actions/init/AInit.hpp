@@ -2,12 +2,16 @@
 
 class AInit : public IAction 
 {
+private:
+	AInit() = default;
 protected:
-	const char *usage() override;
-	const char *examples() override;
+	const char *usage() const override;
+	const char *examples() const override;
 public:
-	AInit(std::vector<std::string> &args):IAction(args){};
-	AInit() = delete;
+	static const AInit& get(){
+		static AInit _singleton{};
+		return _singleton;
+	}
 	AInit(AInit&) = delete; 
-	int exec() override;
+	int exec(std::vector<std::string> &args) const override;
 };

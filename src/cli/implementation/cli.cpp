@@ -243,7 +243,11 @@ void cli::init() {
 			continue;
 		}
 
-		actions::GetAction(action, opts).value()->exec();
+		auto a = actions::GetAction(action);
+		
+		if(a != nullptr){
+			a->exec(opts);
+		}
 		// call action's parser which will do the rest
 		// ACTION_PARSERS[action](opts);
 	}

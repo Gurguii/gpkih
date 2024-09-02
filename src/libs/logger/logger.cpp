@@ -1,6 +1,5 @@
 #include "logger.hpp"
 #include <filesystem>
-#include <fmt/color.h>
 #include <unordered_map>
 #include <ctime>
 #include <fmt/format.h>
@@ -105,9 +104,9 @@ Logger::Logger(std::string &&filename, size_t maxSizeBytes, logMsgField iFields,
 
 std::string formatMsg(logMsgField iFields, logLevel level, std::string_view& msg){
 	static std::unordered_map<logLevel, std::string> level2string{
-		{LL_INFO, fmt::format(fg(fmt::color::green), "INFO")},
-		{LL_WARN, fmt::format(fg(fmt::color::orange), "WARNING")},
-		{LL_ERROR, fmt::format(fg(fmt::color::red), "ERROR")},
+		{LL_INFO, "info"},
+		{LL_WARN, "warning"},
+		{LL_ERROR,"error"},
 	};
 
 	std::ostringstream log{};

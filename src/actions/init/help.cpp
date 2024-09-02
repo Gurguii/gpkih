@@ -18,10 +18,10 @@ constexpr const char *_examples = R"(== init examples ==
   ./gpkih init -n myProfile -s ~/MyProfileDir --noprompt
 )";
 
-const char *AInit::usage(){
+const char *AInit::usage() const {
 	return _usage;
 };
 
-const char *AInit::examples(){
+const char *AInit::examples() const {
 	return _examples;
 }

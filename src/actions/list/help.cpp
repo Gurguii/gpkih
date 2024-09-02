@@ -59,10 +59,10 @@ constexpr const char *_examples = R"(
   ./gpkih list -f name,cdate,lmod
 )";
 
-const char *AList::usage(){
+const char *AList::usage() const {
 	return _usage;
 };
 
-const char *AList::examples(){
+const char *AList::examples() const {
 	return _examples;
 }

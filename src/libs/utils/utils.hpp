@@ -37,17 +37,20 @@ namespace gurgui::utils::str
 	/// @return number of characters or 0 if st == nullptr
 	extern size_t gslength(const char *st);
 
-	/// @brief replaces ocurrences in a char array
-	/// @return pointer to given charr array
+	extern bool compareViews(std::string_view &s0, std::string_view &s1, size_t nchars);
+	extern bool compareViews(std::string_view s0, std::string_view s1, size_t nchars);
+	#define COMPARE_VIEWS gurgui::utils::str::compareViews
+
 	extern char *replace_if(char *st, size_t nchars, char find, char replace);
 
 	/// @brief checks if buff contains any char from badcharlist
 	/// @return true | false indicating badchar presence
 	extern bool has_badchar(std::string& buff, std::string &badcharlist);
+	#define HAS_BADCHAR gurgui::utils::str::has_badchar
 
 	/// @brief removes any badchars from buff effectively calling std::string::erase()
-	/// @return true if badchars were removed, else false
 	extern bool remove_badchar(std::string& buff, std::string &badcharlist);
+	#define REMOVE_BADCHAR gurgui::utils::str::remove_badchar
 }
 
 namespace gurgui::utils::fs

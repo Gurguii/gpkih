@@ -2,12 +2,16 @@
 
 class AGencrl : public IAction 
 {
+private:
+	AGencrl() = default;
 protected:
-	const char *usage() override;
-	const char *examples() override;
+	const char *usage() const override;
+	const char *examples() const override;
 public:
-	AGencrl(std::vector<std::string> &args):IAction(args){};
-	AGencrl() = delete;
+	static const AGencrl& get(){
+		static AGencrl _singleton{};
+		return _singleton;
+	}
 	AGencrl(AGencrl&) = delete; 
-	int exec() override;
+	int exec(std::vector<std::string> &args) const override;
 };

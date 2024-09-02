@@ -6,7 +6,7 @@
 
 using namespace gpkih;
 
-int ARename::exec()
+int ARename::exec(std::vector<std::string> &args) const
 {
 	/* BEG - Parse args */
 	DEBUG(1,"ARename::exec()");
@@ -16,46 +16,66 @@ int ARename::exec()
 		return GPKIH_OK;
 	}
 
-	std::string_view profile_name = args[0];
-	if(db::profiles::exists(profile_name) == false){
-		PWARN("Profile '{}' doesn't exist\n", profile_name);
-		return GPKIH_OK;
-	}
+	std::string_view oldProfileName = args[0];
+	std::string_view newProfileName = args[1];
 
-	Profile *profile = db::profiles::get(profile_name);
-	if(profile == nullptr){
-		PERROR("couldn't retrieve profile ptr");
+	auto profiles = db::profiles::get();
+	auto iter = profiles->find(oldProfileName);
+
+	/* BEG - Profile name/source checks */
+	if(iter == profiles->end()){
+		PERROR("Profile '{}' doesn't exist\n", oldProfileName);
 		return GPKIH_FAIL;
 	}
-	PWARN("XD -> {}\n", profile->source);
-	std::string oldpath = fmt::format("{}{}_entities.data",DB_DIRPATH,profile->name);
-	
-	FREE_MEMORY_BLOCK(const_cast<char*>(profile->name), profile->meta.nameLen+1);
-	CALLOCATE(profile->name, reinterpret_cast<size_t*>(&profile->meta.nameLen), args[1]);
-	PWARN("NEW NAME -> {} NEW SOURCE -> {} NEW SIZE -> {}\n", profile->name, profile->source, profile->meta.nameLen);
-	std::string newpath = fmt::format("{}{}_entities.data",DB_DIRPATH,profile->name);
+
+	if(profiles->find(newProfileName) != profiles->end()){
+		PERROR("Profile '{}' already exists\n", oldProfileName);
+		return GPKIH_FAIL;
+	}
 
 	if(DRY_RUN == true){
-		PINFO("Renaming '{}' to '{}'\n", oldpath, newpath);
+		PINFO("Renaming '{}' to '{}'\n", oldProfileName, newProfileName);
 		return GPKIH_OK;
 	}
+	/* END - Profile name/source checks */
+	
+	/* BEG - memory management */
+	Profile _copy = iter->second;
+	
+	_copy.meta.lastModification = std::chrono::system_clock::now();
+	_copy.meta.sourceLen = iter->second.meta.sourceLen;
+	
+	CALLOCATE(_copy.name, reinterpret_cast<size_t*>(&_copy.meta.nameLen), newProfileName);
+	CALLOCATE(_copy.source, reinterpret_cast<size_t*>(&_copy.meta.sourceLen), iter->second.source);
 
-	fs::rename(oldpath,newpath);
+	const char *p1 = iter->second.name;
+	const char *p2 = iter->second.source;
 
-	if(fs::exists(newpath) == false){
-		PERROR("couldn't rename old file");
+	profiles->erase(iter);
+
+	FREE_MEMORY_BLOCK(const_cast<char*>(p1), oldProfileName.size());
+	FREE_MEMORY_BLOCK(const_cast<char*>(p2), _copy.meta.sourceLen + 1);
+	/* END - memory management */
+
+	/* BEG - Change database filename */
+	std::string oldpath = fmt::format("{}{}_entities.data",DB_DIRPATH,oldProfileName);
+	std::string newpath = fmt::format("{}{}_entities.data",DB_DIRPATH,newProfileName);
+
+	if(profiles->emplace(_copy.name, _copy).second == false){
 		return GPKIH_FAIL;
 	}
-	
-	profile->meta.lastModification = std::chrono::system_clock::now();
 
-	if(db::profiles::sync() == GPKIH_FAIL){
+	fs::rename(oldpath, newpath);
+
+	if(!fs::exists(newpath)){
+		PERROR("Couldn't rename db file\n");
 		return GPKIH_FAIL;
 	}
+	/* END - Change database filename */
+
+	PSUCCESS("Renamed profile '{}' to '{}'\n", oldProfileName, newProfileName);
+	ADD_LOG(LL_INFO, fmt::format("profile:{} action:rename oldname:{}",newProfileName,oldProfileName));
 	
-	PSUCCESS("Renamed profile '{}' to '{}'\n", args[0], args[1]);
-	ADD_LOG(LL_INFO, fmt::format("profile:{} action:rename oldname:{}",args[1],args[0]));
-	
-	return GPKIH_OK;
+	return db::profiles::sync();
 	/* END - Parse args */
 }

@@ -30,7 +30,7 @@ template <typename ...T> static inline void PINFO(const char *fmt, T&& ...args){
 
 /* warning */
 template <typename ...T> static inline void PWARN(const char *fmt, T&& ...args){
-	if(ENABLE_PRINTING){fmt::print(S_WARNING, "[warn] {}", fmt::format(fmt, std::forward<T>(args)...));};
+	if(ENABLE_PRINTING){fmt::print(S_WARNING, "[warning] {}", fmt::format(fmt, std::forward<T>(args)...));};
 };
 
 /* hint */

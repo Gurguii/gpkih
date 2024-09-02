@@ -351,7 +351,7 @@ static int initializeProfile(std::string_view &profileName, std::string_view &pr
 }
 
 /* Entrypoint */
-int AInit::exec(){
+int AInit::exec(std::vector<std::string> &args) const {
 
 	/* BEG - Parse arguments */
 	DEBUG(1, "AInit::exec()");
@@ -367,9 +367,9 @@ int AInit::exec(){
   	    UNKNOWN_OPTION_MESSAGE(opt);
   	  }
   	}
-  	
-  	initializeProfile(profileName,profileSource);
 	/* END - Parse arguments */
 	
-	return GPKIH_OK;
+  initializeProfile(profileName,profileSource);
+	
+  return GPKIH_OK;
 }

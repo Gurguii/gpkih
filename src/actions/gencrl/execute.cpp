@@ -32,7 +32,7 @@ static int generateNewCRL(Profile &profile){
   return GPKIH_OK;
 }
 
-int AGencrl::exec(){
+int AGencrl::exec(std::vector<std::string> &args) const {
 
 	/* BEG - Parse arguments */
 	 DEBUG(1, "parsers::gencrl()");

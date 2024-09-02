@@ -4,6 +4,24 @@
 
 using namespace gurgui;
 
+bool utils::str::compareViews(std::string_view &s0, std::string_view &s1, size_t nchars){
+	for(int i = 0; i < nchars; ++i){
+		if(s0[i] != s1[i]){
+			return false;
+		}
+	}
+	return true;
+};
+
+bool utils::str::compareViews(std::string_view s0, std::string_view s1, size_t nchars){
+	for(int i = 0; i < nchars; ++i){
+		if(s0[i] != s1[i]){
+			return false;
+		}
+	}
+	return true;
+};
+
 size_t utils::str::glength(const char *st){
 	size_t l = 0;
 	while(st[l] != '\0'){

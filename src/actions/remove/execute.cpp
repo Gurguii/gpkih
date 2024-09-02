@@ -67,7 +67,7 @@ static int removeProfile(std::vector<std::string> &profiles_to_remove, int remov
   return GPKIH_OK;
 }
 
-int ARemove::exec()
+int ARemove::exec(std::vector<std::string> &args) const
 {
 	/* BEG - Parse args */
 	DEBUG(1, "parsers::remove()");

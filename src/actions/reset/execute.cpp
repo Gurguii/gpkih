@@ -7,7 +7,7 @@
 
 using namespace gpkih;
 
-int AReset::exec()
+int AReset::exec(std::vector<std::string> &args) const
 {
 	DEBUG(1, "parsers::reset()");
 

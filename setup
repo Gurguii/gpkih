@@ -138,7 +138,7 @@ function __runDockerTests(){
         for os in "${dockerOsList[@]}"; do
                 # -T : no TTY, required to avoid 'no input TTY available' problems
                 # --rm : deletes the container when stopped, which will be after the command returns
-                compileCmd="docker-compose run --quiet-pull -T --rm $os bash ./compile.sh /home/gpkih/docker/results"
+                compileCmd="docker-compose run --quiet-pull -T --rm $os bash ./compile.sh ./results"
                 gecho "[+] Operating System: $os\n"
                 $quiet && $compileCmd &>/dev/null || $compileCmd
                 # waitpid $!

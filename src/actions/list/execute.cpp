@@ -249,7 +249,7 @@ profileFieldsMap() {
   };
 }
 
-int AList::exec(){
+int AList::exec(std::vector<std::string> &args) const {
 	/* BEG - Parse args */
   DEBUG(1, "AList::exec()");
 

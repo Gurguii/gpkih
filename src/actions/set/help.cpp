@@ -34,10 +34,10 @@ constexpr const char *_examples = R"(== set examples ==
 
 )";
 
-const char *ASet::usage(){
+const char *ASet::usage() const {
 	return _usage;
 };
 
-const char *ASet::examples(){
+const char *ASet::examples() const {
 	return _examples;
 }

@@ -2,12 +2,16 @@
 
 class AGet : public IAction 
 {
+private:
+	AGet() = default;
 protected:
-	const char *usage() override;
-	const char *examples() override;
+	const char *usage() const override;
+	const char *examples() const override;
 public:
-	AGet(std::vector<std::string> &args):IAction(args){};
-	AGet() = delete;
+	static const AGet& get(){
+		static AGet _singleton{};
+		return _singleton;
+	}
 	AGet(AGet&) = delete; 
-	int exec() override;
+	int exec(std::vector<std::string> &args) const override;
 };

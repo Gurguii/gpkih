@@ -3,12 +3,16 @@
 
 class AExport : public IAction 
 {
+private:
+	AExport() = default;
 protected:
-	const char *usage() override;
-	const char *examples() override;
+	const char *usage() const override;
+	const char *examples() const override;
 public:
-	AExport(std::vector<std::string> &args):IAction(args){};
-	AExport() = delete;
+	static const AExport& get(){
+		static const AExport _singleton{};
+		return _singleton;
+	};
 	AExport(AExport&) = delete; 
-	int exec() override;
+	int exec(std::vector<std::string> &args) const override;
 };

@@ -2,12 +2,16 @@
 
 class ARemove : public IAction 
 {
+private:
+	ARemove() = default;
 protected:
-	const char *usage() override;
-	const char *examples() override;
+	const char *usage() const override;
+	const char *examples() const override;
 public:
-	ARemove(std::vector<std::string> &args):IAction(args){};
-	ARemove() = delete;
+	static const ARemove& get(){
+		static ARemove _singleton{};
+		return _singleton;
+	}
 	ARemove(ARemove&) = delete; 
-	int exec() override;
+	int exec(std::vector<std::string> &args) const override;
 };

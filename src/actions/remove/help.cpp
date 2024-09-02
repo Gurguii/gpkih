@@ -18,10 +18,10 @@ constexpr const char *_examples = R"(== remove examples ==
   ./gpkih remove --all
 )";
 
-const char *ARemove::usage(){
+const char *ARemove::usage() const {
 	return _usage;
 };
 
-const char *ARemove::examples(){
+const char *ARemove::examples() const {
 	return _examples;
 }

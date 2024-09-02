@@ -17,10 +17,10 @@ constexpr const char *_examples = R"(== export examples ==
     ./gpkih export -t sqlite -o ./gpkih_sqlite.db
 )";
 
-const char *AExport::usage(){
+const char *AExport::usage() const{
 	return _usage;
 };
 
-const char *AExport::examples(){
+const char *AExport::examples() const{
 	return _examples;
 }

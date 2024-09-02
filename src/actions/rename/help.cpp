@@ -15,10 +15,10 @@ constexpr const char *_examples = R"(== rename examples ==
   ./gpkih rename myProfile myNewProfileName
 )";
 
-const char *ARename::usage(){
+const char *ARename::usage() const {
 	return _usage;
 };
 
-const char *ARename::examples(){
+const char *ARename::examples() const {
 	return _examples;
 }

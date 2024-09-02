@@ -1,6 +1,7 @@
 #pragma once
 #include "../profiles/structs.hpp"
 #include <map>
+#include <vector>
 
 namespace gpkih::db::profiles 
 {
@@ -45,11 +46,15 @@ namespace gpkih::db::profiles
   /// @param profile struct Profile to add to profiles.data
   /// @return GPKIH_OK on success else GPKIH_FAIL
   extern int add(Profile &profile);									              
-      
+  
   /// @param profile_name name of profile to remove
-  /// @param GPKIH_OK on success else GPKIH_FAIL
+  /// @return GPKIH_OK on success else GPKIH_FAIL
   extern int remove(std::string_view profile_name);					      
   
+  /// @param vector of std::string_view with the names of the profiles to remove
+  /// @return number of profiles removed
+  extern int remove(std::vector<std::string_view> profiles);
+
   /// @return number of files
   extern size_t remove_all(size_t *deletedFiles = nullptr);											                  
   

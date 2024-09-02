@@ -291,7 +291,7 @@ extern int build(Profile &profile, ProfileConfig &config, Entity &entity, Entity
   return GPKIH_OK;
 };
 
-int ANew::exec(){
+int ANew::exec(std::vector<std::string> &args) const {
   DEBUG(1, "parsers::build()");
 
   // ./gpki build <profile> <ca|sv|cl> [subopts]
@@ -308,6 +308,7 @@ int ANew::exec(){
   entity.meta.status = ES_NONE;
 
   profile = db::profiles::get(profilename);
+
   if(profile == nullptr){
     PERROR("Profile '{}' doesn't exist\n", profilename);
     return GPKIH_FAIL;

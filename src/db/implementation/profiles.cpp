@@ -2,6 +2,7 @@
 #include "../../gpkih.hpp"
 #include "../../libs/printing/printing.hpp"
 #include "../mnck.hpp"
+#include <filesystem>
 
 constexpr size_t kProfileSafeBufferSize = sizeof(ProfileMetadata) + GPKIH_MAX_PATH + GPKIH_MAX_VARCHAR + 2; // 4390
 static std::map <std::string_view, Profile > existing_profiles{};
@@ -195,6 +196,20 @@ int db::profiles::remove(std::string_view profile_name) {
 	// profile found
 	existing_profiles.erase(iter);
 	return GPKIH_OK;
+}
+
+int db::profiles::remove(std::vector<std::string_view> profiles) {
+	int deletedProfiles = 0;
+	for(const auto &profile : profiles){
+		auto iter = existing_profiles.find(profile.data());
+		if (iter == existing_profiles.end()) {
+			// profile not found
+			return GPKIH_FAIL;
+		}
+		// profile found
+		existing_profiles.erase(iter);
+	}
+	return deletedProfiles;
 }
 
 size_t db::profiles::remove_all(size_t *deletedFiles) {

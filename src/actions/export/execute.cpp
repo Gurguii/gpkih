@@ -11,7 +11,7 @@ static std::unordered_map<std::string, int(*)(std::string_view)> exportFunctions
 	{"sqlite",gpkih::sqlite::exportDB},
 };
 
-int AExport::exec(){
+int AExport::exec(std::vector<std::string> &args) const {
 	DEBUG(1, "AExport::exec()");
 
 	/* BEG - Parse arguments */

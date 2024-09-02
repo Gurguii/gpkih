@@ -13,6 +13,8 @@
 //#include <sstream>
 #include "../../libs/logger/enums.hpp"
 
+#include "../actions.hpp"
+
 #include "../../gpkih.hpp"
 
 using namespace gpkih;
@@ -90,9 +92,10 @@ int revoke(Profile &profile, std::vector<std::string> &common_names, std::vector
   /* Extra questions */
   bool prompt = Config::get("behaviour","prompt") == "yes" ? true : false;
   if(prompt){
-    auto ans = PROMPT("Generate new crl?", "[y/n:]", true);
+    auto ans = PROMPT("Generate new crl?", "[y/n]", true);
     if (ans == "y" || ans == "yes") {
-    	PINFO("This hasn't been implemented yet");
+      std::vector<std::string> _tmpargs{profile.name};
+      actions::GetAction("gencrl")->exec(_tmpargs);
     	return GPKIH_OK;
     }
     PINFO("Not generating...\n");
@@ -101,7 +104,7 @@ int revoke(Profile &profile, std::vector<std::string> &common_names, std::vector
   return GPKIH_OK;
 };
 
-int ARevoke::exec(){
+int ARevoke::exec(std::vector<std::string> &args)const {
 	/* BEG - Parse args */
 	  DEBUG(1, "parsers::revoke()");
 

@@ -33,10 +33,10 @@ constexpr const char *_examples = R"(== get examples ==
   ./gpkih get myProfile @pki.key algorithm size
 )";
 
-const char *AGet::usage(){
+const char *AGet::usage() const {
 	return _usage;
 };
 
-const char *AGet::examples(){
+const char *AGet::examples() const {
 	return _examples;
 }

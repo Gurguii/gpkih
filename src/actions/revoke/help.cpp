@@ -17,10 +17,10 @@ constexpr const char *_examples = R"(== gencrl examples ==
   ./gpkih gencrl myProfile 
 )";
 
-const char *ARevoke::usage(){
+const char *ARevoke::usage() const {
 	return _usage;
 };
 
-const char *ARevoke::examples(){
+const char *ARevoke::examples() const {
 	return _examples;
 }

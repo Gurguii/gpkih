@@ -116,23 +116,23 @@ int parsers::parse(std::vector<std::string> &args) {
     std::string _a = args[1];
     args.erase(args.begin(), args.begin()+2);
 
-    auto a = actions::GetAction(_a, args);
+    auto a = actions::GetAction(_a);
 
-    if(a.has_value()){
-      a.value()->help();
-    }
-    else{
+    if(a == nullptr){
       PERROR("Action '{}' doesn't exist\n", _a);
     }
+
+    a->help(args);
+
     return GPKIH_OK;
   }
 
   args.erase(args.begin());
   // Check if action exists
-  auto a = actions::GetAction(action, args);  
+  auto a = actions::GetAction(action);  
 
-  if(a.has_value()){
-    return a.value()->exec();
+  if(a != nullptr){
+    return a->exec(args);
   }
 
   PERROR("Action '{}' doesn't exist\n", action);

@@ -11,12 +11,16 @@ the whole logic of the Action.
 */
 class AName : public IAction 
 {
+private:
+	AName() = default;
 protected:
-	const char *usage() override;
-	const char *examples() override;
+	const char *usage() const override;
+	const char *examples() const override;
 public:
-	AName(std::vector<std::string> &args):IAction(args){};
-	AName() = delete;
+	static const AName& get(){
+		static AName _singleton{};
+		return _singleton;
+	}
 	AName(AName&) = delete; 
-	int exec() override;
+	int exec(std::vector<std::string> &args) const override;
 };

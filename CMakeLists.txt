@@ -9,9 +9,11 @@ set(CMAKE_CXX_STANDARD_REQUIRED TRUE)
 set(GPKIH_ROOT_DIR "${CMAKE_CURRENT_SOURCE_DIR}")
 set(GPKIH_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(GPKIH_INCLUDE_DIR "${GPKIH_SRC_DIR}")  # Include directory for all components
+
 set(GURGUI_LIBRARIES gprintinglib glogginglib gutilslib gmemorylib)
-#gmemorylib
 set(GPKIH_LIBRARIES gpkih_mem_lib gpkih_profiles_lib gpkih_entities_lib gpkih_config_lib gpkih_actions_lib gpkih_db_lib gpkih_help_lib gpkih_parser_lib gpkih_formatter_lib gpkih_cli_lib)
+
+set(gpkih_optional_features GPKIH_SQLITE GPKIH_MYSQL GPKIH_PSQL)
 
 # Platform-specific settings
 function(configure_platform)
@@ -97,7 +99,7 @@ target_include_directories(gpkih PUBLIC "${FMT_LIBRARY_INCLUDE}")
 target_link_libraries(gpkih PUBLIC gpkih_entities_lib gpkih_profiles_lib gpkih_parser_lib gpkih_db_lib gpkih_actions_lib 
     gpkih_config_lib gpkih_help_lib gpkih_cli_lib gpkih_formatter_lib gpkih_mem_lib gprintinglib gutilslib glogginglib gmemorylib)
 
-set(gpkih_optional_features GPKIH_SQLITE GPKIH_MYSQL GPKIH_PSQL)
+
 if(GPKIH_SQLITE)
   message(STATUS "SQLite3 support ENABLED")
 

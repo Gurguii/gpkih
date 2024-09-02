@@ -1,9 +1,15 @@
 #include "../entities.hpp"
-#include "../mnck.hpp"
-#include "../../libs/printing/printing.hpp"
-#include "../../gpkih.hpp"
+
 #include "../../entities/entities.hpp"
 #include "../../entities/conv.hpp"
+
+#include "../mnck.hpp"
+
+#include "../../libs/printing/printing.hpp"
+
+#include "../../gpkih.hpp"
+
+
 #include <cstddef>
 
 using namespace gpkih;
@@ -74,6 +80,7 @@ EntityManager::EntityManager(std::string_view profileName)
 	file.close();
 
 	auto current = buffer;
+	
 	for(int i = 0;i < entityCount; ++i){
 		Entity nEnt{};
 		Subject &sub = nEnt.subject;
@@ -158,7 +165,7 @@ int EntityManager::sync(){
 		
 		memcpy(buff + pos, &entity.subject.meta, sizeof(SubjectMetadata));
 		pos += sizeof(SubjectMetadata);
-		/////////7
+		
 		memcpy(buff + pos, entity.subject.country, sizeof(entity.subject.country));
 		pos += sizeof(entity.subject.country) + 1;
 		

@@ -12,44 +12,52 @@
 #include "rename/ARename.hpp"
 #include "set/ASet.hpp"
 
-#include <memory>
+/* 
+- Alternative approach -
 
-std::optional<std::unique_ptr<IAction>> gpkih::actions::GetAction(std::string_view name, std::vector<std::string> &args)
+#include <unordered_map>
+std::unordered_map<std::string, const IAction&> _testing{
+	{"get",AInit::get()},
+	{"new",ANew::get()},
+};
+
+*/
+const IAction* gpkih::actions::GetAction(std::string_view name)
 {
 	if(name == "init" || name == "i"){
-		return std::make_unique<AInit>(args);
+		return &AInit::get();
 	}
 	else if(name == "new" || name == "n"){
-		return std::make_unique<ANew>(args);
+		return &ANew::get();
 	}
 	else if(name == "export" || name == "e"){
-		return std::make_unique<AExport>(args);	
+		return &AExport::get();	
 	}
 	else if(name == "revoke" || name == "rev"){
-		return std::make_unique<ARevoke>(args);
+		return &ARevoke::get();;
 	}
 	else if(name == "list" || name == "l"){
-		return std::make_unique<AList>(args);
+		return &AList::get();
 	}
 	else if(name == "rename" || name == "ren"){
-		return std::make_unique<ARename>(args);
+		return &ARename::get();
 	}
 	else if(name == "get" || name == "g"){
-		return std::make_unique<AGet>(args);
+		return &AGet::get();
 	}
 	else if(name == "set" || name == "s"){
-		return std::make_unique<ASet>(args);
+		return &ASet::get();
 	}
 	else if(name == "gencrl" || name == "genc"){
-		return std::make_unique<AGencrl>(args);
+		return &AGencrl::get();
 	}
 	else if(name == "reset" || name == "res"){
-		return std::make_unique<AReset>(args);
+		return &AReset::get();
 	}
 	else if(name == "remove" || name == "rem"){
-		return std::make_unique<ARemove>(args);
+		return &ARemove::get();
 	}
 	else{
-		return {};
+		return nullptr;
 	}
 }

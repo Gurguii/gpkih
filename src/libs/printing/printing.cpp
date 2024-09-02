@@ -75,6 +75,6 @@ void printDebugMsg(int debugLevel, const char *fp, int ln, std::string_view msg)
 		}
 	}
 	if(ENABLE_PRINTING && ENABLE_DEBUG_MESSAGES){
-		printf("%-40s (%-3i) - %-s\n",fp+offset, ln, msg.data());
+		printf("%s (%i) - %s\n",fp+offset, ln, msg.data());
 	}
 }
