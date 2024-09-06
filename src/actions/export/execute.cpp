@@ -25,9 +25,9 @@ int AExport::exec(std::vector<std::string> &args) const {
 
 	for(int i = 0; i < args.size(); ++i){
 		std::string_view opt = args[i];
-		if(opt == "-o" || opt == "--out"){
+		if(opt == "-o" || "-out" || opt == "--out"){
 			outFile = args[++i];
-		}else if(opt == "-t" || opt == "--type"){
+		}else if(opt == "-t" || "-type" || opt == "--type"){
 			exportFunction = exportFunctions.find(args[++i]);
 			if(exportFunction == exportFunctions.end()){
 				PERROR("Type {} doesn't exist, valid types - sqlite | mysql | psql | json | csv\n", args[i]);

@@ -1,6 +1,10 @@
 #pragma once
+
 #include "enums.hpp"
 #include <chrono>
+
+#include "../libs/ssl/pkey/ifaces.hpp"
+#include "../libs/ssl/pkey/ed25519.hpp"
 
 /**
  * @struct SubjectMetadata
@@ -108,4 +112,5 @@ struct Entity{
   // keyInfo *keyMetadata = nullptr;
   // crtInfo *crtMetadata = nullptr;
   Entity() = delete;
+  // TODO - Implement -> ISmartPKEY *pkey = nullptr;
 };

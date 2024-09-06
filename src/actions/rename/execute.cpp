@@ -29,15 +29,15 @@ int ARename::exec(std::vector<std::string> &args) const
 	}
 
 	if(profiles->find(newProfileName) != profiles->end()){
-		PERROR("Profile '{}' already exists\n", oldProfileName);
+		PERROR("Profile '{}' already exists\n", newProfileName);
 		return GPKIH_FAIL;
 	}
-
+	/* END - Profile name/source checks */
+	
 	if(DRY_RUN == true){
 		PINFO("Renaming '{}' to '{}'\n", oldProfileName, newProfileName);
 		return GPKIH_OK;
 	}
-	/* END - Profile name/source checks */
 	
 	/* BEG - memory management */
 	Profile _copy = iter->second;

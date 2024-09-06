@@ -29,7 +29,7 @@ pmInstallOpt="" # package manager subopt to install e.g 'install' on apt
 
 ##### Optionally compilable features #####
 declare -A gpkihFeatures
-gpkihFeatures['SQLITE']="GPKIH_SQLITE=OFF"
+gpkihFeatures['SQLITE']="GPKIH_SQLITE=ON"
 gpkihFeatures['DEBUGGING']="GPRINTING_ENABLE_DEBUGGING=OFF"
 
 ##### Unimplemented features #####

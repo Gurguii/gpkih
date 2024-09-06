@@ -33,7 +33,6 @@ std::string conversion::toString(ENTITY_STATUS status)
 
 template <>
 ENTITY_TYPE conversion::toEnum<ENTITY_TYPE>(std::string_view enumName){
-  {
     static std::unordered_map<std::string_view, ENTITY_TYPE> _map{
       {"cl",ET_CL},
       {"client",ET_CL},
@@ -42,22 +41,22 @@ ENTITY_TYPE conversion::toEnum<ENTITY_TYPE>(std::string_view enumName){
       {"ca", ET_CA}
     };
     if(_map.find(enumName) == _map.end()){
-      return {};
+      return ET_NONE;
     }
     return _map[enumName];
-  };
-}
+};
+
 template <>
 ENTITY_STATUS conversion::toEnum<ENTITY_STATUS>(std::string_view enumName){
-  {
-    static std::unordered_map<std::string_view, ENTITY_STATUS> _map{
-      {"active",ES_ACTIVE},
-      {"revoked",ES_REVOKED},
-      {"marked",ES_MARKED}
-    };
-    if(_map.find(enumName) == _map.end()){
-      return {};
-    }
-    return _map[enumName];
+  static std::unordered_map<std::string_view, ENTITY_STATUS> _map{
+    {"active",ES_ACTIVE},
+    {"revoked",ES_REVOKED},
+    {"marked",ES_MARKED}
   };
-}
+
+  if(_map.find(enumName) == _map.end()){
+    return ES_NONE;
+  }
+
+  return _map[enumName];
+};

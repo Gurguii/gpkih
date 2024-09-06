@@ -1,5 +1,6 @@
 #include "structs.hpp"
 #include "../profiles/structs.hpp"
+
 namespace gpkih::entity
 {
   extern int setCAPaths(Profile &profile, Entity &entity);

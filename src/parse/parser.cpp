@@ -120,6 +120,7 @@ int parsers::parse(std::vector<std::string> &args) {
 
     if(a == nullptr){
       PERROR("Action '{}' doesn't exist\n", _a);
+      return GPKIH_FAIL;
     }
 
     a->help(args);

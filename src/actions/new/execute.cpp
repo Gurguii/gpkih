@@ -200,12 +200,9 @@ int __create_pfx(Profile &profile, Entity &entity){
   return GPKIH_OK;
 }
 
-extern int build_ca(Profile &profile, ProfileConfig &config, Entity &entity, EntityManager &eman,std::string_view days, std::string_view keyAlgo, std::string_view keySize)
+static int build_ca(Profile &profile, ProfileConfig &config, Entity &entity, EntityManager &eman,std::string_view days, std::string_view keyAlgo, std::string_view keySize, bool autoanswer, bool prompt)
 {
 	 DEBUG(1,"actions::build_ca()");
-
-  bool autoanswer = Config::get("behaviour","autoanswer") == "yes" ? true : false;
-  bool prompt = Config::get("behaviour","prompt") == "yes" ? true : false;
 
   if(autoanswer == false && profile.meta.caCreated){
     auto ans = PROMPT("Profile already has CA and\ncreating a new one will cause newly created certificates not to work with older ones , continue?", "[y/n]", true, LGREEN);
@@ -233,15 +230,12 @@ extern int build_ca(Profile &profile, ProfileConfig &config, Entity &entity, Ent
   return GPKIH_OK;
 };
 
-extern int build(Profile &profile, ProfileConfig &config, Entity &entity, EntityManager &eman, std::string_view days, std::string_view keyAlgo, std::string_view keySize)
+static int build(Profile &profile, ProfileConfig &config, Entity &entity, EntityManager &eman, std::string_view days, std::string_view keyAlgo, std::string_view keySize, bool autoanswer, bool prompt)
 {
 	  DEBUG(1,"actions::build()");
 
   ConfigMap &pkiconf = config.get(CFILE_PKI);
 
-  bool autoanswer = Config::get("behaviour","autoanswer") == "yes" ? true : false;
-  bool prompt = Config::get("behaviour","prompt") == "yes" ? true : false;
-  
   const auto [req_command, crt_command] = __server_client_build_commands(profile, pkiconf, entity, days, keyAlgo, keySize);
 
   // Create key + csr
@@ -291,6 +285,7 @@ extern int build(Profile &profile, ProfileConfig &config, Entity &entity, Entity
   return GPKIH_OK;
 };
 
+
 int ANew::exec(std::vector<std::string> &args) const {
   DEBUG(1, "parsers::build()");
 
@@ -314,41 +309,16 @@ int ANew::exec(std::vector<std::string> &args) const {
     return GPKIH_FAIL;
   }
   
-  if(args.size() == 1){
-    PERROR("Entity type must be specified - ca|sv|cl\n");
-    return GPKIH_OK;
-  }
+  args.erase(args.begin());
 
-  std::string_view eTypeStr = args[1];
-
-  if(eTypeStr == "cl" || eTypeStr == "client"){
-    entity.meta.type = ET_CL;
-  }else if(eTypeStr == "sv" || eTypeStr == "server"){
-    entity.meta.type = ET_SV;
-  }else if(eTypeStr == "ca"){
-    entity.meta.type = ET_CA;
-  }else{
-    PERROR("Invalid entity type '{}', valid entities: cl|client|sv|server|ca\n",eTypeStr);
-    return GPKIH_FAIL;
-  }
-
-  args.erase(args.begin(),args.begin()+2);
-  
   /* Profile configuration + Entity manager */
   ProfileConfig config(*profile);
   EntityManager eman(profile->name);
   CONFIG_FILE succesfullyLoaded = config.loadedFiles();
 
-  if( (succesfullyLoaded & CFILE_PKI) == false){
+  if( !(succesfullyLoaded & CFILE_PKI) ){
     PWARN("Couldn't load profile PKI configuration file\n");;
     return GPKIH_FAIL;
-  }
-
-  if((entity.meta.type & ET_CL || entity.meta.type & ET_SV) && profile->meta.caCreated == false)
-  {
-    PWARN("CA must be created before creating server/client entities\n");
-    PHINT("./gpkih build {} ca -cn MyCA\n",profile->name);
-    return GPKIH_OK;
   }
 
   // Load next serial
@@ -404,9 +374,26 @@ int ANew::exec(std::vector<std::string> &args) const {
       config.set(CFILE_PKI, "crt", "days", args[i]);
     }else if(opt == "\0"){
       continue;
+    }else if(opt == "-t" || opt == "--type"){
+      entity.meta.type = entity::conversion::toEnum<ENTITY_TYPE>(args[++i]); 
+      if(entity.meta.type == ET_NONE){
+        PERROR("Unknown entity type '{}' valid types: ca,cl,sv,client,server\n", args[i]);
+        return GPKIH_FAIL;
+      }
     }else {
       UNKNOWN_OPTION_MESSAGE(opt);
     }
+  }
+
+  /* BEG - Checks */
+  if((entity.meta.type & ET_CL || entity.meta.type & ET_SV) && profile->meta.caCreated == false)
+  {
+    PWARN("CA must be created before creating server/client entities\n");
+    PHINT("./gpkih new {} ca -cn {}_CA\n",profile->name, profile->name);
+    return GPKIH_OK;
+  }else if(entity.meta.type == ET_NONE){
+    PERROR("Missing mandatory option -t | --type <ca|cl|sv|client|server>\n");
+    return GPKIH_FAIL;
   }
 
   if(entity.subject.cn == nullptr){
@@ -414,14 +401,18 @@ int ANew::exec(std::vector<std::string> &args) const {
     auto sub = config.default_subject();  
     subject::promptForSubject(profile->name, entity.subject, sub, eman);
   }
+  /* END - Checks */
+
 
   int rcode = GPKIH_FAIL;
   
   auto pkiconf = config.get(CFILE_PKI);
 
+  /* Generic configuration retrieval */
   bool autoanswer = Config::get("behaviour","autoanswer") == "yes" ? true : false;
   bool prompt = Config::get("behaviour","prompt") == "yes" ? true : false;
   
+  /* Profile configuration retrieval */
   std::string_view keySize = pkiconf["key"]["size"];
   std::string_view keyAlgo = pkiconf["key"]["algorithm"];
   std::string_view days    = pkiconf["crt"]["days"];
@@ -433,7 +424,7 @@ int ANew::exec(std::vector<std::string> &args) const {
       return GPKIH_FAIL;
     };
 
-    rcode = build_ca(*profile,config,entity,eman,days,keyAlgo,keySize);
+    rcode = build_ca(*profile,config,entity,eman,days,keyAlgo,keySize, autoanswer, prompt);
   
   }else if(entity.meta.type & ET_CL || entity.meta.type & ET_SV){
     
@@ -449,7 +440,7 @@ int ANew::exec(std::vector<std::string> &args) const {
       Entity newCA{};
       subject::promptForSubject(profile->name, newCA.subject, sub, eman);
       
-      if(build_ca(*profile, config, newCA, eman, days, keyAlgo, keySize) == GPKIH_FAIL){
+      if(build_ca(*profile, config, newCA, eman, days, keyAlgo, keySize, autoanswer, prompt) != GPKIH_OK){
         return GPKIH_FAIL;
       }
     }
@@ -459,7 +450,7 @@ int ANew::exec(std::vector<std::string> &args) const {
       return GPKIH_FAIL;
     }
 
-    rcode = build(*profile,config,entity,eman,days,keyAlgo,keySize);
+    rcode = build(*profile,config,entity,eman,days,keyAlgo,keySize, autoanswer, prompt);
   }
 
   if(rcode != GPKIH_OK){
