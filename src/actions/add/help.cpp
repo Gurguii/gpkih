@@ -1,4 +1,4 @@
-#include "ANew.hpp"
+#include "AAdd.hpp"
 
 constexpr const char *_usage = R"(== new ==
 Add new entities
@@ -47,10 +47,10 @@ constexpr const char *_examples = R"(== new examples ==
     ./gpkih new <myProfile> cl -cn gurgui -co "ES" -lo "Gran Canarias" -org "Mariwanos" -mail "gurgui@mariwanos.com" -serial 200 -st "StateOfElevation" -pfx -algo rsa -keysize 2048 
 )";
 
-const char *ANew::usage() const {
+const char *AAdd::usage() const {
 	return _usage;
 };
 
-const char *ANew::examples() const {
+const char *AAdd::examples() const {
 	return _examples;
 }

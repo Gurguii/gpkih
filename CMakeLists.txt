@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-cmake_policy(SET CMP0079 NEW) # Allows linking libraries not built in this directory (line 87-88)
+#cmake_policy(SET CMP0079 NEW) # Allows linking libraries not built in this directory (line 87-88)
 
 project(gpkih VERSION 1.0)
 
@@ -99,11 +99,10 @@ target_include_directories(gpkih PUBLIC "${FMT_LIBRARY_INCLUDE}")
 target_link_libraries(gpkih PUBLIC gpkih_entities_lib gpkih_profiles_lib gpkih_parser_lib gpkih_db_lib gpkih_actions_lib 
     gpkih_config_lib gpkih_help_lib gpkih_cli_lib gpkih_formatter_lib gpkih_mem_lib gprintinglib gutilslib glogginglib gmemorylib)
 
-
+# BEG - GPKIH_SQLITE 
 if(GPKIH_SQLITE)
   message(STATUS "SQLite3 support ENABLED")
 
-  # Search for libraries with or without the prefix "lib"
   find_library(SQLITE3_LIBRARY NAMES sqlite3 sqlite3.so PATHS "/usr/lib/")
 
   if(NOT SQLITE3_LIBRARY)
@@ -115,6 +114,24 @@ if(GPKIH_SQLITE)
 else()
   message(STATUS "SQLite3 support DISABLED")
 endif()
+# END - GPKIH_SQLITE
+
+# BEG - GPKIH_PSQL
+if(GPKIH_PSQL)
+  message(STATUS "PostgreSQL support ENABLED")
+  
+  find_library(PSQL_LIBRARY NAMES pq pq.so PATHS "/usr/lib/")
+
+  if(NOT PSQL_LIBRARY)
+    message(FATAL_ERROR "Couldn't find requested libpq library")
+  else()
+    message(STATUS "Found libpq library: ${PSQL_LIBRARY}")
+    target_link_libraries(gpkih PRIVATE ${PSQL_LIBRARY})
+  endif()
+else()
+    message(STATUS "PSQL support DISABLED")
+endif()
+# END - GPKIH_PSQL
 
 if(GPRINTING_ENABLE_DEBUGGING)
     message(STATUS "GPKIH Debugging capabilities ENABLED")

@@ -1,3 +1,4 @@
+#include "export.hpp"
 #include "SQLiteConnection.hpp"
 
 #include "../../../db/profiles.hpp"
@@ -6,8 +7,8 @@
 #include "../../../entities/conv.hpp"
 #include "../../../consts.hpp"
 
-namespace gpkih::sqlite
-{
+#include "../../../libs/printing/printing.hpp"
+
 
 constexpr const char *STMT_CREATE_PROFILE_TABLE = R"(CREATE TABLE entities (
     		profile_id INTEGER NOT NULL,
@@ -20,28 +21,32 @@ constexpr const char *STMT_CREATE_PROFILE_TABLE = R"(CREATE TABLE entities (
     		organisation VARCHAR(255),
     		email VARCHAR(255),
     		keypath CHECK(length(keypath) <= 4096) NOT NULL,
-    		crtpath CHECK(length(crtpath) <= 4096) NOT NULL,
     		csrpath CHECK(length(csrpath) <= 4096),
+    		crtpath CHECK(length(crtpath) <= 4096) NOT NULL,
     		status VARCHAR(255) NOT NULL,
     		creation_date VARCHAR(255) NOT NULL,
     		expiration_date VARCHAR(255) NOT NULL  		
-    	);)";
+);)";
 
 constexpr const char *STMT_CREATE_ENTITY_TABLE = R"(CREATE TABLE profiles (
     		profile_id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
     		name TEXT UNIQUE NOT NULL,
     		source TEXT COLLATE NOCASE CHECK(length(source) <= 4096) NOT NULL
-		);)";
+);)";
 
-int exportDB(std::string_view dbPath){
+using namespace gpkih;
+
+int sqlite::exportDB(std::string_view dbDIR, std::vector<std::string> &args){
 	auto ProfileMap = gpkih::db::profiles::get();
 	
 	if(ProfileMap->empty()){
 		return GPKIH_FAIL;
 	}
 
+	std::string outPath = std::string{dbDIR} + SLASH + "gpkih_sqlite3.db";
+
 	try{
-		SQLiteConnection conn(dbPath);
+		SQLiteConnection conn(outPath);
 		
 		/* Create profiles and entities tables */
 		for(const auto &statement : {STMT_CREATE_PROFILE_TABLE, STMT_CREATE_ENTITY_TABLE}){
@@ -117,8 +122,8 @@ int exportDB(std::string_view dbPath){
 					||sqlite3_bind_text(stmt, 8, entity.subject.organisation, -1, SQLITE_TRANSIENT)
 					||sqlite3_bind_text(stmt, 9, entity.subject.email, -1, SQLITE_TRANSIENT)
 					||sqlite3_bind_text(stmt, 10, entity.keyPath, -1, SQLITE_TRANSIENT)
-					||sqlite3_bind_text(stmt, 11, entity.crtPath, -1, SQLITE_TRANSIENT)
-					||sqlite3_bind_text(stmt, 12, entity.csrPath, -1, SQLITE_TRANSIENT)
+					||sqlite3_bind_text(stmt, 11, entity.csrPath, -1, SQLITE_TRANSIENT)
+					||sqlite3_bind_text(stmt, 12, entity.crtPath, -1, SQLITE_TRANSIENT)
 					||sqlite3_bind_text(stmt, 13, gpkih::entity::conversion::toString(entity.meta.status).c_str(), -1, SQLITE_TRANSIENT)
 					||sqlite3_bind_text(stmt, 14, fmt::format("{:%d-%m-%Y @ %H:%M}", entity.meta.creationDate).c_str(), -1, SQLITE_TRANSIENT)
 					||sqlite3_bind_text(stmt, 15, fmt::format("{:%d-%m-%Y @ %H:%M}", entity.meta.expirationDate).c_str(), -1, SQLITE_TRANSIENT)
@@ -143,6 +148,4 @@ int exportDB(std::string_view dbPath){
 	}
 
 	return GPKIH_OK;
-}
-
 }

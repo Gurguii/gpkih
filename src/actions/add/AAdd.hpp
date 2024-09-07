@@ -1,18 +1,18 @@
 #pragma once
 #include "../iface.hpp"
 
-class ANew : public IAction 
+class AAdd : public IAction 
 {
 private:
-	ANew() = default;
+	AAdd() = default;
 protected:
 	const char *usage() const override;
 	const char *examples() const override;
 public:
-	static const ANew& get(){
-		static ANew _singleton{};
+	static const AAdd& get(){
+		static AAdd _singleton{};
 		return _singleton;
 	}
-	ANew(ANew&) = delete; 
+	AAdd(AAdd&) = delete; 
 	int exec(std::vector<std::string> &args) const override;
 };

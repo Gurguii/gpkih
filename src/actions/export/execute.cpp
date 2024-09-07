@@ -3,13 +3,20 @@
 #include "../../libs/printing/printing.hpp"
 #include "../../consts.hpp"
 
+#include <filesystem>
 #include <unordered_map>
 
 #include "sqlite/export.hpp"
+#include "csv/export.hpp"
+#include "postgres/export.hpp"
 
-static std::unordered_map<std::string, int(*)(std::string_view)> exportFunctions{
-	{"sqlite",gpkih::sqlite::exportDB},
+static std::unordered_map<std::string, int(*)(std::string_view, std::vector<std::string> &args)> exportFunctions{
+	{"csv", gpkih::csv::exportDB},
+	{"psql", gpkih::postgres::exportDB},
+	{"sqlite", gpkih::sqlite::exportDB}
 };
+
+// ./gpkih export -t | --type <sqlite|json|csv|psql|mysql>  -o | --out <outDir> ... <subopts>
 
 int AExport::exec(std::vector<std::string> &args) const {
 	DEBUG(1, "AExport::exec()");
@@ -20,17 +27,26 @@ int AExport::exec(std::vector<std::string> &args) const {
 		return GPKIH_OK;
 	}
 
-	std::string_view outFile;
-	std::unordered_map<std::string, int(*)(std::string_view)>::iterator exportFunction = exportFunctions.end();
+	std::string_view outDir = ".";
+	auto exportFunction = exportFunctions.end();
 
 	for(int i = 0; i < args.size(); ++i){
 		std::string_view opt = args[i];
-		if(opt == "-o" || "-out" || opt == "--out"){
-			outFile = args[++i];
-		}else if(opt == "-t" || "-type" || opt == "--type"){
-			exportFunction = exportFunctions.find(args[++i]);
+		if(opt == "-o" || opt == "-out" || opt == "--out"){
+			outDir = args[++i];
+			if(std::filesystem::is_directory(outDir) == false){
+				PERROR("Given path '{}' is not a directory\n", outDir);
+				return GPKIH_FAIL;
+			}
+			args.erase(args.begin()+i);
+		}else if(opt == "-t" || opt == "-type" || opt == "--type"){
+			exportFunction = exportFunctions.find(args[++i]);			
 			if(exportFunction == exportFunctions.end()){
-				PERROR("Type {} doesn't exist, valid types - sqlite | mysql | psql | json | csv\n", args[i]);
+				PERROR("Type doesn't exist, valid types - ");
+				for(const auto &[typeName, typeFunc] : exportFunctions){
+					fmt::print(S_ERROR, "{} ", typeName);
+				}
+				std::cout << "\n";
 				return GPKIH_FAIL;
 			};
 		}
@@ -38,11 +54,6 @@ int AExport::exec(std::vector<std::string> &args) const {
 	/* END - Parse arguments */
 
 	/* BEG - Check arguments */
-	if(outFile.empty()){
-		PINFO("No outpath given, try gpkih help export\n");
-		return GPKIH_FAIL;
-	}
-
 	if(exportFunction == exportFunctions.end()){
 		PINFO("No type given, try gpkih help export\n");
 		return GPKIH_FAIL;
@@ -50,6 +61,6 @@ int AExport::exec(std::vector<std::string> &args) const {
 	/* END - Check arguments */
 
 	/* BEG - Call export function */
-	return exportFunction->second(outFile);
+	return exportFunction->second(outDir, args);
 	/* END - Call export function */
 }

@@ -64,6 +64,9 @@ const std::unordered_map<std::string, COLOR>& map_str_color(){
 }
 
 void printDebugMsg(int debugLevel, const char *fp, int ln, std::string_view msg){
+	if(debugLevel > MAX_DEBUG_LEVEL){
+		return;
+	}
 	static int offset = 0;
 	if(offset == 0){
 		// set offset
@@ -74,7 +77,7 @@ void printDebugMsg(int debugLevel, const char *fp, int ln, std::string_view msg)
 			}
 		}
 	}
-	if(ENABLE_PRINTING && ENABLE_DEBUG_MESSAGES){
+	if(ENABLE_DEBUG_MESSAGES){
 		printf("%s (%i) - %s\n",fp+offset, ln, msg.data());
 	}
 }

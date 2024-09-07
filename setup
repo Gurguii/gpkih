@@ -30,14 +30,14 @@ pmInstallOpt="" # package manager subopt to install e.g 'install' on apt
 ##### Optionally compilable features #####
 declare -A gpkihFeatures
 gpkihFeatures['SQLITE']="GPKIH_SQLITE=ON"
-gpkihFeatures['DEBUGGING']="GPRINTING_ENABLE_DEBUGGING=OFF"
+gpkihFeatures['DEBUGGING']="GPRINTING_ENABLE_DEBUGGING=ON"
 
 ##### Unimplemented features #####
 
 # TODO - implement them, JSON and CSV should 
 # be added by default, and not as an optional feature, specially CSV
 gpkihFeatures['MYSQL']="GPKIH_MYSQL=OFF" 
-gpkihFeatures['PSQL']="GPKIH_PSQL=OFF"
+gpkihFeatures['PSQL']="GPKIH_PSQL=ON"
 
 #-DCMAKE_EXPORT_COMPILE_COMMANDS=1 -> create a build/compile_commands.json that comes in handy for certain scenarios
 
@@ -208,6 +208,8 @@ function parse(){
                         gpkihFeatures['DEBUGGING']="GPRINTING_ENABLE_DEBUGGING=ON"
                 elif [[ "$arg" == "-sqlite" || "$arg" == "--sqlite" ]]; then
                         gpkihFeatures['SQLITE']="GPKIH_SQLITE=ON"
+                elif [[ "$arg" == "-psql" || "$arg" == "-postgres" ]]; then
+                        gpkihFeatures['PSQL']="GPKIH_PSQL=ON"
                 else
                         printf "[!] Unkown option '%s'\n" "$arg"
                 fi

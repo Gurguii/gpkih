@@ -1,6 +1,6 @@
 #include "actions.hpp"
 
-#include "new/ANew.hpp"
+#include "add/AAdd.hpp"
 #include "export/AExport.hpp"
 #include "gencrl/AGencrl.hpp"
 #include "get/AGet.hpp"
@@ -27,8 +27,8 @@ const IAction* gpkih::actions::GetAction(std::string_view name)
 	if(name == "init" || name == "i"){
 		return &AInit::get();
 	}
-	else if(name == "new" || name == "n"){
-		return &ANew::get();
+	else if(name == "add" || name == "a"){
+		return &AAdd::get();
 	}
 	else if(name == "export" || name == "e"){
 		return &AExport::get();	

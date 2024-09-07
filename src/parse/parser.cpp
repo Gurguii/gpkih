@@ -113,13 +113,13 @@ int parsers::parse(std::vector<std::string> &args) {
       return GPKIH_OK;
     }
 
-    std::string _a = args[1];
+    action = args[1];
     args.erase(args.begin(), args.begin()+2);
 
-    auto a = actions::GetAction(_a);
+    auto a = actions::GetAction(action);
 
     if(a == nullptr){
-      PERROR("Action '{}' doesn't exist\n", _a);
+      PERROR("Action '{}' doesn't exist\n", action);
       return GPKIH_FAIL;
     }
 
