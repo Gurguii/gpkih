@@ -29,15 +29,14 @@ pmInstallOpt="" # package manager subopt to install e.g 'install' on apt
 
 ##### Optionally compilable features #####
 declare -A gpkihFeatures
-gpkihFeatures['SQLITE']="GPKIH_SQLITE=ON"
-gpkihFeatures['DEBUGGING']="GPRINTING_ENABLE_DEBUGGING=ON"
+gpkihFeatures['SQLITE']="GPKIH_SQLITE=OFF"
+gpkihFeatures['DEBUGGING']="GPRINTING_ENABLE_DEBUGGING=OFF"
 
 ##### Unimplemented features #####
-
-# TODO - implement them, JSON and CSV should 
+# TODO - implement them, JSON and CSV should - CSV done JSON missing 
 # be added by default, and not as an optional feature, specially CSV
 gpkihFeatures['MYSQL']="GPKIH_MYSQL=OFF" 
-gpkihFeatures['PSQL']="GPKIH_PSQL=ON"
+gpkihFeatures['PSQL']="GPKIH_PSQL=OFF"
 
 #-DCMAKE_EXPORT_COMPILE_COMMANDS=1 -> create a build/compile_commands.json that comes in handy for certain scenarios
 
@@ -169,6 +168,7 @@ Usage: ./setup <options>
 * Options to manage optional program features to include when compiling * 
   -ed     | --enable-debugging  = enable debugging capabilities - default false
   -sqlite | --sqlite            = enable sqlite features - default false
+  -psql   | -postgres           = enable postgres features - default false
 EOF
         exit 0
 }
@@ -210,6 +210,8 @@ function parse(){
                         gpkihFeatures['SQLITE']="GPKIH_SQLITE=ON"
                 elif [[ "$arg" == "-psql" || "$arg" == "-postgres" ]]; then
                         gpkihFeatures['PSQL']="GPKIH_PSQL=ON"
+                elif [[ "$arg" == "-mysql" || "$arg" == "--mysql" ]]; then
+                        gpkihFeatures['MYSQL']="GPKIH_MYSQL=ON"
                 else
                         printf "[!] Unkown option '%s'\n" "$arg"
                 fi

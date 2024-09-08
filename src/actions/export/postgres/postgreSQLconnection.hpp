@@ -9,6 +9,7 @@ private:
 	bool closed = false;
 	
 public:
+	PostgreSQLConnection() = delete;
 	PostgreSQLConnection(std::string_view dbUri);
 	~PostgreSQLConnection();
 	int exec(std::string_view query);

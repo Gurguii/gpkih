@@ -3,7 +3,6 @@
 #include <exception>
 #include <libpq-fe.h>
 
-#include "../../../consts.hpp"
 #include "../../../libs/printing/printing.hpp"
 
 #include "postgreSQLconnection.hpp"
@@ -16,7 +15,7 @@
 
 #include "../../../libs/printing/printing.hpp"
 
-constexpr const char *STMT_CREATE_PROFILE_TABLE = R"(CREATE TABLE entities (
+constexpr const char *STMT_CREATE_ENTITY_TABLE = R"(CREATE TABLE entities (
     profile_id INTEGER NOT NULL,
     serial INTEGER NOT NULL,
     common_name VARCHAR(255) NOT NULL,
@@ -37,7 +36,7 @@ constexpr const char *STMT_CREATE_PROFILE_TABLE = R"(CREATE TABLE entities (
     CONSTRAINT crtpath_length_chk CHECK (length(crtpath) <= 4096)
 );)";
 
-constexpr const char *STMT_CREATE_ENTITY_TABLE = R"(CREATE TABLE profiles (
+constexpr const char *STMT_CREATE_PROFILE_TABLE = R"(CREATE TABLE profiles (
     profile_id SERIAL PRIMARY KEY,
     name TEXT UNIQUE NOT NULL,
     source TEXT COLLATE "C" CHECK (length(source) <= 4096) NOT NULL
@@ -65,7 +64,6 @@ static int _export(std::string_view host, std::string_view user, std::string_vie
 
 int postgres::exportDB(std::string_view outDir, std::vector<std::string> &args){
 	std::string_view connectionURL = "";
-
 	/* BEG - Parse */
 	for(int i = 0; i < args.size(); ++i){
 		const std::string &opt = args[i];
@@ -82,16 +80,23 @@ int postgres::exportDB(std::string_view outDir, std::vector<std::string> &args){
 
 	try{
 		PostgreSQLConnection connection(connectionURL);
-		/* Create profile table */
-		connection.exec(STMT_CREATE_PROFILE_TABLE);
-		
-		/* Create entity table */
-		connection.exec(STMT_CREATE_ENTITY_TABLE);
+		/* BEG - create tables */
+		if(connection.exec(STMT_CREATE_PROFILE_TABLE) != GPKIH_OK
+		|| connection.exec(STMT_CREATE_ENTITY_TABLE) != GPKIH_OK
+		){
+			PERROR(connection.getError());
+			return GPKIH_FAIL;
+		}
+		/* END - create database + tables */
 
+		/* BEG - Insert gpkih data into database */
 		auto profiles = db::profiles::get();
 		
 		for(const auto &[profileName, profile] : *profiles){
-			connection.exec(fmt::format(TMPL_INSERT_PROFILE, profile.meta.id, profile.name, profile.source));
+			if(connection.exec(fmt::format(TMPL_INSERT_PROFILE, profile.meta.id, profile.name, profile.source)) != GPKIH_OK){
+				PERROR(connection.getError());
+				return GPKIH_FAIL;
+			};
 
 			EntityManager entities(profileName);
 			for(const auto &[cn, entity] : *entities.retrieve()){
@@ -101,8 +106,7 @@ int postgres::exportDB(std::string_view outDir, std::vector<std::string> &args){
 				);
 			}
 		}
-
-		connection.close();
+		/* END - Insert gpkih data into database */
 	}catch(const std::exception &err){
 		PERROR(err.what());
 		return GPKIH_FAIL;

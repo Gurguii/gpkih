@@ -31,7 +31,6 @@ static int __create_outdir(fs::path &path){
   return GPKIH_OK;
 };
 
-
 static std::pair<std::string,std::string> __server_client_build_commands(Profile &profile, ConfigMap &pkiconf,
                                              Entity &entity, std::string_view days, std::string_view keyAlgo, std::string_view keySize) {
   DEBUG(2, "__server_client_build_commands()");

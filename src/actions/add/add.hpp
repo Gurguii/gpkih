@@ -9,7 +9,8 @@ namespace gpkih::actions::add
 	// TODO - add doxygen comments
 	extern int add(Profile &profile, 
 		ProfileConfig &config, 
-		Entity &entity, EntityManager &eman, 
+		Entity &entity, 
+		EntityManager &eman, 
 		std::string_view days, 
 		std::string_view keyAlgo, 
 		std::string_view keySize, 

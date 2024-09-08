@@ -6,14 +6,26 @@
 #include <filesystem>
 #include <unordered_map>
 
+#include "mysql/export.hpp"
 #include "sqlite/export.hpp"
 #include "csv/export.hpp"
+
 #include "postgres/export.hpp"
 
 static std::unordered_map<std::string, int(*)(std::string_view, std::vector<std::string> &args)> exportFunctions{
 	{"csv", gpkih::csv::exportDB},
+	
+	#ifdef GPKIH_PSQL
 	{"psql", gpkih::postgres::exportDB},
-	{"sqlite", gpkih::sqlite::exportDB}
+	#endif
+
+	#ifdef GPKIH_SQLITE
+	{"sqlite", gpkih::sqlite::exportDB},
+	#endif
+
+	#ifdef GPKIH_MYSQL
+	{"mysql", gpkih::mysql::exportDB},
+	#endif
 };
 
 // ./gpkih export -t | --type <sqlite|json|csv|psql|mysql>  -o | --out <outDir> ... <subopts>

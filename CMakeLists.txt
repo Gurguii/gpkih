@@ -1,5 +1,5 @@
 cmake_minimum_required(VERSION 3.10)
-#cmake_policy(SET CMP0079 NEW) # Allows linking libraries not built in this directory (line 87-88)
+cmake_policy(SET CMP0079 NEW) # Allows linking libraries not built in this directory (line 87-88)
 
 project(gpkih VERSION 1.0)
 
@@ -11,9 +11,7 @@ set(GPKIH_SRC_DIR "${CMAKE_CURRENT_SOURCE_DIR}/src")
 set(GPKIH_INCLUDE_DIR "${GPKIH_SRC_DIR}")  # Include directory for all components
 
 set(GURGUI_LIBRARIES gprintinglib glogginglib gutilslib gmemorylib)
-set(GPKIH_LIBRARIES gpkih_mem_lib gpkih_profiles_lib gpkih_entities_lib gpkih_config_lib gpkih_actions_lib gpkih_db_lib gpkih_help_lib gpkih_parser_lib gpkih_formatter_lib gpkih_cli_lib)
-
-set(gpkih_optional_features GPKIH_SQLITE GPKIH_MYSQL GPKIH_PSQL)
+set(GPKIH_LIBRARIES gpkih_mem_lib gpkih_profiles_lib gpkih_entities_lib gpkih_config_lib gpkih_db_lib gpkih_help_lib gpkih_parser_lib gpkih_formatter_lib gpkih_cli_lib gpkih_actions_lib)
 
 # Platform-specific settings
 function(configure_platform)
@@ -96,64 +94,31 @@ add_executable(gpkih
 
 target_include_directories(gpkih PUBLIC "${FMT_LIBRARY_INCLUDE}")
 
-target_link_libraries(gpkih PUBLIC gpkih_entities_lib gpkih_profiles_lib gpkih_parser_lib gpkih_db_lib gpkih_actions_lib 
-    gpkih_config_lib gpkih_help_lib gpkih_cli_lib gpkih_formatter_lib gpkih_mem_lib gprintinglib gutilslib glogginglib gmemorylib)
-
-# BEG - GPKIH_SQLITE 
-if(GPKIH_SQLITE)
-  message(STATUS "SQLite3 support ENABLED")
-
-  find_library(SQLITE3_LIBRARY NAMES sqlite3 sqlite3.so PATHS "/usr/lib/")
-
-  if(NOT SQLITE3_LIBRARY)
-    message(FATAL_ERROR "Couldn't find requested sqlite3 library")
-  else()
-    message(STATUS "Found sqlite3 library: ${SQLITE3_LIBRARY}")
-    target_link_libraries(gpkih PRIVATE ${SQLITE3_LIBRARY})
-  endif()
-else()
-  message(STATUS "SQLite3 support DISABLED")
-endif()
-# END - GPKIH_SQLITE
-
-# BEG - GPKIH_PSQL
-if(GPKIH_PSQL)
-  message(STATUS "PostgreSQL support ENABLED")
-  
-  find_library(PSQL_LIBRARY NAMES pq pq.so PATHS "/usr/lib/")
-
-  if(NOT PSQL_LIBRARY)
-    message(FATAL_ERROR "Couldn't find requested libpq library")
-  else()
-    message(STATUS "Found libpq library: ${PSQL_LIBRARY}")
-    target_link_libraries(gpkih PRIVATE ${PSQL_LIBRARY})
-  endif()
-else()
-    message(STATUS "PSQL support DISABLED")
-endif()
-# END - GPKIH_PSQL
+target_link_libraries(gpkih PUBLIC gpkih_entities_lib gpkih_profiles_lib gpkih_parser_lib gpkih_db_lib 
+  gpkih_config_lib gpkih_help_lib gpkih_cli_lib gpkih_formatter_lib gpkih_mem_lib gpkih_actions_lib gprintinglib gutilslib glogginglib gmemorylib)
 
 if(GPRINTING_ENABLE_DEBUGGING)
-    message(STATUS "GPKIH Debugging capabilities ENABLED")
-    set_property(TARGET gpkih ${GPKIH_LIBRARIES} PROPERTY COMPILE_DEFINITIONS GPRINTING_ENABLE_DEBUGGING)
+  message(STATUS "GPKIH Debugging capabilities ENABLED")
+  add_compile_definitions(GPRINTING_ENABLE_DEBUGGING)
+  #set_property(TARGET gpkih ${GPKIH_LIBRARIES} PROPERTY COMPILE_DEFINITIONS GPRINTING_ENABLE_DEBUGGING)
 else()
-    message(STATUS "GPKIH Debugging capabilities DISABLED")
+  message(STATUS "GPKIH Debugging capabilities DISABLED")
 endif()
 
 if(FMT_LIBRARY)
-    # Compile with FMT found in the system
-    message(STATUS "GPKIH will be compiled with found fmtlib")
-    target_link_libraries(gpkih PRIVATE 
-        ${GPKIH_LIBRARIES}
-        FMT_LIBRARY
-    )
+  # Compile with FMT found in the system
+  message(STATUS "GPKIH will be compiled with found fmtlib")
+  target_link_libraries(gpkih PRIVATE 
+      ${GPKIH_LIBRARIES}
+      FMT_LIBRARY
+  )
 else()
-    # Use compiled FMT from github clone
-    message(STATUS "GPKIH will be compiled with cloned fmtlib")
-    target_link_libraries(gpkih PRIVATE 
-        ${GPKIH_LIBRARIES}
-        fmt::fmt
-    )
+  # Use compiled FMT from github clone
+  message(STATUS "GPKIH will be compiled with cloned fmtlib")
+  target_link_libraries(gpkih PRIVATE 
+      ${GPKIH_LIBRARIES}
+      fmt::fmt
+  )
 endif()
 
 return()

@@ -21,6 +21,7 @@ PostgreSQLConnection::~PostgreSQLConnection(){
 }
 
 int PostgreSQLConnection::exec(std::string_view query){
+	DEBUGF(2, "PostgreSQLConnection::exec({})", query);
 	if(connection == nullptr){
 		return -1;
 	}

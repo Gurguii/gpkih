@@ -10,7 +10,7 @@
 #include "../../../libs/printing/printing.hpp"
 
 
-constexpr const char *STMT_CREATE_PROFILE_TABLE = R"(CREATE TABLE entities (
+constexpr const char *STMT_CREATE_ENTITY_TABLE = R"(CREATE TABLE entities (
     		profile_id INTEGER NOT NULL,
     		serial INTEGER NOT NULL,
     		common_name VARCHAR(255) NOT NULL,
@@ -28,7 +28,7 @@ constexpr const char *STMT_CREATE_PROFILE_TABLE = R"(CREATE TABLE entities (
     		expiration_date VARCHAR(255) NOT NULL  		
 );)";
 
-constexpr const char *STMT_CREATE_ENTITY_TABLE = R"(CREATE TABLE profiles (
+constexpr const char *STMT_CREATE_PROFILE_TABLE = R"(CREATE TABLE profiles (
     		profile_id INTEGER PRIMARY KEY AUTOINCREMENT UNIQUE,
     		name TEXT UNIQUE NOT NULL,
     		source TEXT COLLATE NOCASE CHECK(length(source) <= 4096) NOT NULL

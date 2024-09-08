@@ -67,7 +67,8 @@ int Config::set(std::string_view section, std::string_view key, std::string_view
   std::string oval{gpkihConfig[section.data()][key.data()]};
   gpkihConfig[section.data()][key.data()] =  val.data();
 
-  PSUCCESS("Changed 'gpkih.{}.{}' from '{}' to '{}'\n", section, key, oval, val);  
+  // TODO - Move the success message to whoever calls this function
+  //PSUCCESS("Changed 'gpkih.{}.{}' from '{}' to '{}'\n", section, key, oval, val);  
   return GPKIH_OK;    
 } // Config::set()
 

@@ -29,5 +29,5 @@ std::string profile::crtDir(Profile &ref){
 }
 
 std::string profile::crlDir(Profile &ref){
-	return std::string{ref.source} + SLASH + "pki" + SLASH + "reqs";
+	return std::string{ref.source} + SLASH + "pki" + SLASH + "crl";
 }
