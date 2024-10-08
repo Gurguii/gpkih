@@ -9,8 +9,11 @@ private:
 	bool closed = false;
 	
 public:
+
 	PostgreSQLConnection() = delete;
 	PostgreSQLConnection(std::string_view dbUri);
+	PostgreSQLConnection(std::string_view host, std::string_view user, std::string_view passwd, std::string_view port = "5432");
+
 	~PostgreSQLConnection();
 	int exec(std::string_view query);
 	const PGconn* const getConnection();

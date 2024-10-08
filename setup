@@ -212,6 +212,11 @@ function parse(){
                         gpkihFeatures['PSQL']="GPKIH_PSQL=ON"
                 elif [[ "$arg" == "-mysql" || "$arg" == "--mysql" ]]; then
                         gpkihFeatures['MYSQL']="GPKIH_MYSQL=ON"
+                elif [[ "$arg" == "-all" || "$arg" == "--all" ]]; then
+                        gpkihFeatures['DEBUGGING']="GPRINTING_ENABLE_DEBUGGING=ON"
+                        gpkihFeatures['SQLITE']="GPKIH_SQLITE=ON"
+                        gpkihFeatures['PSQL']="GPKIH_PSQL=ON"
+                        gpkihFeatures['MYSQL']="GPKIH_MYSQL=ON"
                 else
                         printf "[!] Unkown option '%s'\n" "$arg"
                 fi

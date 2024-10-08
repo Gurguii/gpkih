@@ -58,10 +58,9 @@ int AAdd::exec(std::vector<std::string> &args) const {
   // Load next serial
   entity::loadSerial(*profile, entity);
   
-  // override default build params with user arguments
+  /* BEG - parse args */
   for (int i = 0; i < args.size(); ++i) {
     std::string_view opt = args[i];
-
     if(opt == "-algo" || opt == "--algorithm"){
       // check its a valid algorithm
       config.set(CFILE_PKI,"key","algorithm",std::move(args[++i]));
@@ -118,6 +117,7 @@ int AAdd::exec(std::vector<std::string> &args) const {
       UNKNOWN_OPTION_MESSAGE(opt);
     }
   }
+  /* END - parse args */
 
   /* BEG - Checks */
   if((entity.meta.type & ET_CL || entity.meta.type & ET_SV) && profile->meta.caCreated == false)
@@ -136,7 +136,6 @@ int AAdd::exec(std::vector<std::string> &args) const {
     subject::promptForSubject(profile->name, entity.subject, sub, eman);
   }
   /* END - Checks */
-
 
   int rcode = GPKIH_FAIL;
   

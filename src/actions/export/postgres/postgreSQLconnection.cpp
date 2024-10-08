@@ -11,6 +11,20 @@ PostgreSQLConnection::PostgreSQLConnection(std::string_view dbUri):connection(PQ
 	}
 }
 
+PostgreSQLConnection::PostgreSQLConnection(st_view host, st_view user, st_view passwd, st_view port):connection(PQsetdbLogin(host.data(), 
+	port.data(), 
+	nullptr, 
+	nullptr, 
+	nullptr, 
+	user.data(), 
+	passwd.data())
+){
+	DEBUG(2, "PostgreSQLConnection()");
+	if(connection == nullptr){
+		throw(std::string{"Couldn't connect to postgreSQL database - error: "} + PQerrorMessage(connection));
+	}
+};
+
 PostgreSQLConnection::~PostgreSQLConnection(){
 	if(closed){
 		return;

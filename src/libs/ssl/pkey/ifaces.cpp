@@ -24,8 +24,8 @@ FILE *ISmartPKEY::pem_dump_private(FILE *file){
 	return file;
 }
 
-int ISmartPKEY::pem_dump_private(const char *filePath){
-	FILE* file = fopen(filePath, "wb");
+int ISmartPKEY::pem_dump_private(std::string_view filePath){
+	FILE* file = fopen(filePath.data(), "wb");
 	if(file == nullptr){
 		return -1;
 	}
@@ -46,8 +46,8 @@ FILE *ISmartPKEY::pem_dump_public(FILE *file){
 	return file;
 }
 
-int ISmartPKEY::pem_dump_public(const char *filePath){
-	FILE* file = fopen(filePath, "wb");
+int ISmartPKEY::pem_dump_public(std::string_view filePath){
+	FILE* file = fopen(filePath.data(), "wb");
 	if(file == nullptr){
 		return -1;
 	}

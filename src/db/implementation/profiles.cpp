@@ -137,6 +137,8 @@ int db::profiles::initialize(size_t &profileCount){
 
 	DEBUGF(1, "Loading {} profiles", profileCount);
 
+	bool unexistantSource = false;
+
 	for(int i = 0;i < profileCount; ++i){
 		try{
 			Profile nProf{};
@@ -145,11 +147,19 @@ int db::profiles::initialize(size_t &profileCount){
 			DEBUGF(1, "Profile metadata: [nameLen:{},sourceLen:{}]", nProf.meta.nameLen, nProf.meta.sourceLen);
 			
 			buffer+=sizeof(ProfileMetadata);
+			
 			nProf.name = reinterpret_cast<const char*>(buffer);
 			buffer+=nProf.meta.nameLen+2;   // +2 to skip the null byte and point to next element (source)
+
 			nProf.source = reinterpret_cast<const char*>(buffer);
 			buffer+=nProf.meta.sourceLen+2; // +2 to skip the null byte and point to next element (next profile's id or null byte indicating EOF)
 			
+			if(fs::exists(nProf.source) == false){
+				PWARN("Profile source '{}' doesn't exist, might have manually removed.", nProf.source);
+				unexistantSource = true;			
+				continue;
+			}
+
 			DEBUGF(1, "Loaded profile [name:{},source{}]", nProf.name, nProf.source, nProf.meta.nameLen, nProf.meta.sourceLen);
 			
 			const auto &[iter, success] = existing_profiles.emplace(nProf.name, nProf);
@@ -157,10 +167,19 @@ int db::profiles::initialize(size_t &profileCount){
 			if(success == false){
 				throw("Failed loading profile map");
 			}
+
 		}catch(const std::exception &err){
-			PERROR("Caught exception - {}", err.what());
+			PERROR("Caught exception - {}\n", err.what());
 			return GPKIH_FAIL;
 		}
+	}
+
+	if(unexistantSource){
+		DEBUG(1, "Syncing profile db file due to unexistant source");
+		if(sync() == GPKIH_OK){
+			PINFO("Succesfully removed unexistant sources from profile.\n");
+		}
+		return GPKIH_FATAL;
 	}
 
 	return GPKIH_OK;

@@ -1,5 +1,6 @@
 #pragma once
 #include <openssl/evp.h>
+#include <string_view>
 
 struct ISmartPKEY{
 private:
@@ -12,11 +13,11 @@ public:
     
     FILE *pem_dump_public(FILE *file);
 	// return -1 on failure 0 on success
-    int pem_dump_public(const char *filePath);
+    int pem_dump_public(std::string_view filePath);
 
     FILE *pem_dump_private(FILE *file);
     // return -1 on failure 0 on success
-    int pem_dump_private(const char *filePath);
+    int pem_dump_private(std::string_view filePath);
 
     ISmartPKEY() = delete;
     ISmartPKEY(ISmartPKEY&) = delete;

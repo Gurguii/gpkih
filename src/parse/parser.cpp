@@ -11,6 +11,7 @@
 using namespace gpkih;
 
 int parsers::parseGlobals(std::vector<std::string> &opts){
+  /* BEG - Parse global opts */
   for(int i = 0; i < opts.size(); ++i){
       if(opts[i] == "-debug" || opts[i] == "--debug"){
           #ifndef GPRINTING_ENABLE_DEBUGGING
@@ -42,6 +43,9 @@ int parsers::parseGlobals(std::vector<std::string> &opts){
           #endif
       }
   }
+  /* END - Parse global opts */
+
+  /* BEG - Parse 'each-run' opts */
   for(int i = 0; i < opts.size();){
       std::string_view opt = opts[i];
       if(opt == "-q" || opt == "--quiet"){
@@ -57,6 +61,8 @@ int parsers::parseGlobals(std::vector<std::string> &opts){
           ++i;    
       }
   }
+  /* END - Parse 'each-run' opts */
+
   return GPKIH_OK;
 }
 
@@ -105,6 +111,7 @@ int parsers::parse(std::vector<std::string> &args) {
     return GPKIH_OK;
   }
 
+  const IAction *desiredAction = nullptr;
   // Check if user is requesting some sort of help
   if (action == "help" || action == "--help" || action == "-help" || action == "-h") {
     
@@ -116,24 +123,25 @@ int parsers::parse(std::vector<std::string> &args) {
     action = args[1];
     args.erase(args.begin(), args.begin()+2);
 
-    auto a = actions::GetAction(action);
+    desiredAction = actions::GetAction(action);
 
-    if(a == nullptr){
+    if(desiredAction == nullptr){
       PERROR("Action '{}' doesn't exist\n", action);
       return GPKIH_FAIL;
     }
 
-    a->help(args);
+    desiredAction->help(args);
 
     return GPKIH_OK;
   }
 
   args.erase(args.begin());
-  // Check if action exists
-  auto a = actions::GetAction(action);  
 
-  if(a != nullptr){
-    return a->exec(args);
+  // Check if action exists
+  desiredAction = actions::GetAction(action);  
+
+  if(desiredAction != nullptr){
+    return desiredAction->exec(args);
   }
 
   PERROR("Action '{}' doesn't exist\n", action);
