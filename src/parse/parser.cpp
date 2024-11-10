@@ -14,6 +14,7 @@ int parsers::parseGlobals(std::vector<std::string> &opts){
   /* BEG - Parse global opts */
   for(int i = 0; i < opts.size(); ++i){
       if(opts[i] == "-debug" || opts[i] == "--debug"){
+          
           #ifndef GPRINTING_ENABLE_DEBUGGING
           PWARN("This version of gpkih wasn't compiled with debugging capabilities\n");
           PHINT("For such thing, you can compile gpkih using the setup script: ./setup -ed OR ./setup -d GPRINTING_ENABLE_DEBUGGING=ON\n");

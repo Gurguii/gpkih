@@ -63,6 +63,14 @@ endif()
 
 message(STATUS "FMT include dir: ${FMT_LIBRARY_INCLUDE}")
 
+# Check GPKIH optional features
+if(GPRINTING_ENABLE_DEBUGGING)
+  message(STATUS "GPKIH Debugging capabilities ENABLED")
+  add_compile_definitions(GPRINTING_ENABLE_DEBUGGING)
+else()
+  message(STATUS "GPKIH Debugging capabilities DISABLED")
+endif()
+
 # Compile STATIC standalone libs
 add_subdirectory("${GPKIH_SRC_DIR}/libs/utils")
 add_subdirectory("${GPKIH_SRC_DIR}/libs/printing")
@@ -96,14 +104,6 @@ target_include_directories(gpkih PUBLIC "${FMT_LIBRARY_INCLUDE}")
 
 target_link_libraries(gpkih PUBLIC gpkih_entities_lib gpkih_profiles_lib gpkih_parser_lib gpkih_db_lib 
   gpkih_config_lib gpkih_help_lib gpkih_cli_lib gpkih_formatter_lib gpkih_mem_lib gpkih_actions_lib gprintinglib gutilslib glogginglib gmemorylib)
-
-if(GPRINTING_ENABLE_DEBUGGING)
-  message(STATUS "GPKIH Debugging capabilities ENABLED")
-  add_compile_definitions(GPRINTING_ENABLE_DEBUGGING)
-  #set_property(TARGET gpkih ${GPKIH_LIBRARIES} PROPERTY COMPILE_DEFINITIONS GPRINTING_ENABLE_DEBUGGING)
-else()
-  message(STATUS "GPKIH Debugging capabilities DISABLED")
-endif()
 
 if(FMT_LIBRARY)
   # Compile with FMT found in the system

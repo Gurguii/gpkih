@@ -9,6 +9,7 @@ argc=$#
 baseDir=$( cd -- "$( dirname -- "${BASH_SOURCE[0]}" )" &> /dev/null && pwd )
 buildDir="$baseDir/build"
 srcDir="$baseDir/src"
+cfgDir="$baseDir/config"
 binaryOutpath="$baseDir/gpkih"
 cmakelists="$baseDir/CMakeLists.txt"
 logStderr="$baseDir/.error.log"
@@ -143,7 +144,6 @@ function __runDockerTests(){
                 # waitpid $!
                 $quiet || cat << EOF 
 [+] Compilation results: $(grep -E "^Compilation" "$dockerResultsFile" | tail -1 | awk '{print $3}')
-
 EOF
         done 
 
@@ -236,6 +236,28 @@ function parse(){
         gecho "\n\n"
 }
 
+function setBaseDir(){
+        local logDir=~/.config/gpkih/logs 
+        local bdDir=~/.config/gpkih/db
+
+        if [ ! -e ~/.config/gpkih/ ]; then
+                mkdir ~/.config/gpkih/
+        fi
+
+        if [ ! -e ~/.config/gpkih/config ]; then
+                cp -rf "$cfgDir" ~/.config/gpkih/config
+        fi
+
+        for path in $logDir $bdDir; do
+                if [ ! -e $path ]; then
+                        if ! mkdir -p "$path"; then
+                                printf -- "-- Couldn't create directory '%s'\n" "$path"
+                                return 1
+                        fi
+                fi
+        done
+}
+
 function compile(){
         if ! [ -e "$buildDir" ]; then
                 mkdir "$buildDir"
@@ -254,12 +276,17 @@ function compile(){
                 
                 (( $? != 0 )) && gecho "\nSomething failed running '$command'\ncheck '$logStderr' for more information\n" && exit $?
         done
+       
+        if [ ! -e ~/.config/gpkih ]; then 
+                setBaseDir
+        fi
 
         gecho "\n\n======== Success ========\n-- gpkih: $binaryOutpath\n-- logs: $logStdout\n"
 }
 
 function main(){
         checkWritePerms "$logStderr" "$logStdout"
+        setBaseDir
         parse
         compile
         exit 0        

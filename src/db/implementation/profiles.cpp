@@ -94,9 +94,11 @@ int db::profiles::initialize(size_t &profileCount){
 	if(fs::exists(dbpath) == false){
 		// Create database file
 		std::ofstream file(dbpath, std::ios::binary);
+
 		if(!file.is_open()){
 			return GPKIH_FAIL;
 		}
+
 		mnck::dump(file, 0);
 		file.close();
 
@@ -109,6 +111,7 @@ int db::profiles::initialize(size_t &profileCount){
 			idf.close();
 			return GPKIH_OK;
 		}
+
 		return GPKIH_FAIL;
 	}
 
@@ -245,7 +248,7 @@ size_t db::profiles::remove_all(size_t *deletedFiles) {
 			};
 
 			_deletedFiles += n;
-			n = fs::remove_all(fmt::format("{}{}_entities.data",DB_DIRPATH,kv.first));
+			n = fs::remove_all(fmt::format("{}{}_entities.data",GPKIH_DIR_DB,kv.first));
 			
 			if( n == 0){
 				PERROR("Couldn't remove entity db for profile '{}'\n", kv.second.name);

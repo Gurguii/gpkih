@@ -258,6 +258,7 @@ bool ProfileConfig::dump_vpn_conf(fs::path &outpath, ENTITY_TYPE type) {
     break;
   case ET_CL:
     if (this->vpnConfig.find("client") != this->vpnConfig.end()) {
+      file << "client\n";
       for (auto &kv : vpnConfig["client"]) {
         if (kv.second == "UNSET") {
           file << "# ";

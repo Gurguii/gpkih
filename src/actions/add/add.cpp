@@ -46,7 +46,7 @@ static std::pair<std::string,std::string> __server_client_build_commands(Profile
     subject::opensslOneliner(subject)
   ));
   
-  std::string x509_extensions_file_path = CONF_DIRPATH + "x509" + SLASH + entity::conversion::toString(entity.meta.type);
+  std::string x509_extensions_file_path = GPKIH_DIR_CONFIG + "x509" + SLASH + entity::conversion::toString(entity.meta.type);
   
   std::string crt_command = std::move(fmt::format("openssl ca -config \"{}\" -in \"{}\" -out \"{}\" -extfile \"{}\" -days {}",
     profile::gopensslPath(profile),
@@ -135,7 +135,7 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
     // add inline entity key
     file << "<key>" << EOL << ekey.rdbuf() << "</key>" << EOL;
     // add inline entity certificate
-    file << "<crt>" << EOL << ecrt.rdbuf() << "</crt>" << EOL;
+    file << "<cert>" << EOL << ecrt.rdbuf() << "</cert>" << EOL;
     // add inline ca certificate
     file << "<ca>" << EOL << caCertBuffer << "</ca>" << EOL;
 

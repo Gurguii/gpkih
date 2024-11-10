@@ -58,8 +58,8 @@ int ARename::exec(std::vector<std::string> &args) const
 	/* END - memory management */
 
 	/* BEG - Change database filename */
-	std::string oldpath = fmt::format("{}{}_entities.data",DB_DIRPATH,oldProfileName);
-	std::string newpath = fmt::format("{}{}_entities.data",DB_DIRPATH,newProfileName);
+	std::string oldpath = fmt::format("{}{}_entities.data",GPKIH_DIR_DB,oldProfileName);
+	std::string newpath = fmt::format("{}{}_entities.data",GPKIH_DIR_DB,newProfileName);
 
 	if(profiles->emplace(_copy.name, _copy).second == false){
 		return GPKIH_FAIL;

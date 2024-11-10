@@ -3,33 +3,53 @@
 -- {fmt} version: 11.0.2
 -- Build type: 
 -- FMT include dir: /home/gurgui/github/gpkih/build/fmtlib/include
--- SQLite3 support DISABLED
--- PSQL support DISABLED
--- MYSQL support DISABLED
 -- GPKIH Debugging capabilities ENABLED
+-- SQLite3 support ENABLED
+-- Found sqlite3 library: /usr/lib/libsqlite3.so
+-- PSQL support ENABLED
+-- Found libpq library: /usr/lib/libpq.so
+-- MYSQL support ENABLED
+-- Found MYSQL library: /usr/lib/libmariadb.so
 -- GPKIH will be compiled with cloned fmtlib
--- Configuring done (0.0s)
+-- Configuring done (0.1s)
 -- Generating done (0.0s)
 -- Build files have been written to: /home/gurgui/github/gpkih/build
-[ 17%] Built target gpkih_help_lib
-[ 17%] Built target gmemorylib
-[ 17%] Built target gpkih_formatter_lib
-[ 21%] Built target gprintinglib
-[ 21%] Built target fmt
-[ 17%] Building CXX object CMakeFiles/gpkih_mem_lib.dir/src/buffer.cpp.o
-[ 23%] Built target gutilslib
-[ 26%] Built target glogginglib
-[ 47%] Built target gpkih_parser_lib
-[ 47%] Built target gpkih_entities_lib
-[ 47%] Built target gpkih_cli_lib
-[ 50%] Built target gpkih_profiles_lib
-[ 47%] Built target gpkih_csv
-[ 50%] Built target gpkih_db_lib
-[ 56%] Built target gpkih_config_lib
-[ 60%] Built target gpkih_actions_export
-[ 95%] Built target gpkih_actions_lib
-[ 97%] Linking CXX static library libgpkih_mem_lib.a
-[ 97%] Built target gpkih_mem_lib
-[ 98%] Building CXX object CMakeFiles/gpkih.dir/src/gpkih.cpp.o
-[100%] Linking CXX executable gpkih
+[  5%] Built target gpkih_help_lib
+[  5%] Built target gpkih_formatter_lib
+[ 10%] Building CXX object src/actions/export/mysql/CMakeFiles/gpkih_mysql.dir/export.cpp.o
+[ 11%] Building CXX object src/actions/export/mysql/CMakeFiles/gpkih_mysql.dir/MySqlConnection.cpp.o
+[ 11%] Built target fmt
+[ 14%] Built target gpkih_mem_lib
+[ 16%] Built target gprintinglib
+[ 21%] Built target gutilslib
+[ 23%] Building CXX object src/config/CMakeFiles/gpkih_config_lib.dir/implementation/ProfileConfig.cpp.o
+[ 25%] Built target glogginglib
+[ 28%] Built target gmemorylib
+[ 29%] Building CXX object src/actions/export/sqlite/CMakeFiles/gpkih_sqlite.dir/export.cpp.o
+[ 33%] Built target gpkih_profiles_lib
+[ 34%] Building CXX object src/actions/export/sqlite/CMakeFiles/gpkih_sqlite.dir/SQLiteConnection.cpp.o
+[ 39%] Built target gpkih_entities_lib
+[ 42%] Built target gpkih_csv
+[ 47%] Built target gpkih_db_lib
+[ 50%] Built target gpkih_cli_lib
+[ 51%] Building CXX object src/actions/export/postgres/CMakeFiles/gpkih_postgres.dir/export.cpp.o
+[ 52%] Building CXX object src/actions/export/postgres/CMakeFiles/gpkih_postgres.dir/postgreSQLconnection.cpp.o
+[ 55%] Built target gpkih_parser_lib
+[ 56%] Linking CXX static library libgpkih_sqlite.a
+[ 57%] Linking CXX static library libgpkih_mysql.a
+[ 57%] Built target gpkih_sqlite
+[ 58%] Linking CXX static library libgpkih_config_lib.a
+[ 58%] Built target gpkih_mysql
+[ 61%] Built target gpkih_config_lib
+[ 62%] Linking CXX static library libgpkih_postgres.a
+[ 62%] Built target gpkih_postgres
+[ 64%] Building CXX object src/actions/export/CMakeFiles/gpkih_actions_export.dir/execute.cpp.o
+[ 65%] Building CXX object src/actions/export/CMakeFiles/gpkih_actions_export.dir/help.cpp.o
+[ 66%] Linking CXX static library libgpkih_actions_export.a
+[ 66%] Built target gpkih_actions_export
+[ 67%] Building CXX object src/actions/CMakeFiles/gpkih_actions_lib.dir/add/add.cpp.o
+[ 69%] Building CXX object src/actions/CMakeFiles/gpkih_actions_lib.dir/init/execute.cpp.o
+[ 70%] Linking CXX static library libgpkih_actions_lib.a
+[ 97%] Built target gpkih_actions_lib
+[ 98%] Linking CXX executable gpkih
 [100%] Built target gpkih

@@ -12,9 +12,9 @@
 extern bool DRY_RUN;
 extern bool SHOW_HEADER;
 
-extern string GPKIH_BASEDIR;
-extern string CONF_DIRPATH;
-extern string DB_DIRPATH;
+extern string GPKIH_DIR_ROOT;   // ~/.config/gpkih
+extern string GPKIH_DIR_CONFIG; // ~/.config/gpkih/config
+extern string GPKIH_DIR_DB;     // ~/.config/gpkih/db
 
 extern GpkihBuffer *gpkihBuffer;
 

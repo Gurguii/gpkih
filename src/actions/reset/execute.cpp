@@ -27,9 +27,10 @@ int AReset::exec(std::vector<std::string> &args) const
 		return GPKIH_FAIL;
 	}
 
-	size_t deletedSourceFiles = fs::remove_all(GPKIH_BASEDIR);
+	size_t deletedSourceFiles = fs::remove_all(GPKIH_DIR_ROOT);
+	
 	if(deletedSourceFiles == 0){
-		PERROR("Couldn't remove gpkih root directory '{}'\n", GPKIH_BASEDIR);
+		PERROR("Couldn't remove gpkih root directory '{}'\n", GPKIH_DIR_ROOT);
 		return GPKIH_FAIL;
 	};
  

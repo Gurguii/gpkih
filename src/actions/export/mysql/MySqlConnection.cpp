@@ -17,7 +17,7 @@ MySqlConnection::MySqlConnection(std::string_view host, std::string_view user, s
 }
 
 MySqlConnection::~MySqlConnection(){
-	DEBUGF(3, "~MySqlConnection()");
+	DEBUG(3,"~MySqlConnection()");
 	
 	if(connection != nullptr){
 		mysql_close(connection);

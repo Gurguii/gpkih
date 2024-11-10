@@ -17,12 +17,14 @@
 
 constexpr const char *opensslConfFilename = "gopenssl.conf";
 
-static int createDH(std::string_view outpath, size_t size = 1024) {
+static int createDH(std::string_view outpath, size_t size = 4096) {
   std::string command = fmt::format("openssl dhparam -quiet -out {} {}", outpath, size);
+
   if (system(command.c_str())) {
-    return -1;
+    return GPKIH_FAIL;
   }
-  return 0;
+
+  return GPKIH_OK;
 }
 
 static inline std::vector<std::string> RELATIVE_DIRECTORY_PATHS(){
@@ -156,7 +158,7 @@ int __create_pki_filestruct(Profile &profile){
   // Copy required config files to profile
   for (const auto &filename :
        {vpnConfFilename, pkiConfFilename}) {
-    std::string src = fmt::format("{}{}", CONF_DIRPATH, filename);
+    std::string src = fmt::format("{}{}", GPKIH_DIR_CONFIG, filename);
     std::string dst = fmt::format("{}{}{}", profile.source, SLASH, filename);
     fs::copy(src, dst);
     if (!fs::exists(dst)) {
@@ -165,7 +167,7 @@ int __create_pki_filestruct(Profile &profile){
     }
   }
   
-  std::string gopenssl_sed_src = fmt::format("{}{}",CONF_DIRPATH,opensslConfFilename);
+  std::string gopenssl_sed_src = fmt::format("{}{}",GPKIH_DIR_CONFIG,opensslConfFilename);
   std::string gopenssl_sed_dst = fmt::format("{}{}{}",profile.source,SLASH,opensslConfFilename);
 
 // [Windows] - change \ for / since openssl processes slashes as / in the openssl.conf file
@@ -174,7 +176,7 @@ int __create_pki_filestruct(Profile &profile){
 #endif
 
 // [Linux | Windows] - adapt gopenssl.cnf 
-if (__sed(gopenssl_sed_src, gopenssl_sed_dst, {{"GPKIH_BASEDIR", fmt::format("{}/pki",profile.source)}})) {
+if (__sed(gopenssl_sed_src, gopenssl_sed_dst, {{"GPKIH_PATH_ROOTDIR", fmt::format("{}/pki",profile.source)}})) {
   PERROR("__sed failed()\n");
   return GPKIH_FAIL;
 }
@@ -294,7 +296,12 @@ static int initializeProfile(std::string_view &profileName, std::string_view &pr
 
     if (autoans) {
       // QUESTION 1 - create dhparam?
-      createDH(fmt::format("{}{}pki{}tls{}dhparam1024",profile.source, SLASH, SLASH, SLASH));
+      std::string path = fmt::format("{}{}pki{}tls{}dhparam4096", profile.source, SLASH, SLASH, SLASH); 
+
+      if(createDH(path, 4096) == GPKIH_OK){
+        PSUCCESS("Diffie-Hellman param created - {}\n", path);
+      }
+      
       // QUESTION 2 - create ca?
       // also had to manually set the type
       auto sub = pconf.default_subject();
@@ -314,8 +321,12 @@ static int initializeProfile(std::string_view &profileName, std::string_view &pr
                                               "(highly recommended)"),
              "[y/n]", true);
 
+      std::string path = fmt::format("{}{}pki{}tls{}dhparam4096", profile.source, SLASH, SLASH, SLASH);
+      
       if (ans == "y" || ans == "yes") {
-        createDH(fmt::format("{}{}pki{}tls{}dhparam1024",profile.source, SLASH, SLASH, SLASH), 1024);
+        if(createDH(path, 4096) == GPKIH_OK){
+          PSUCCESS("Diffie-Hellman param created - {}\n", path);
+        };
       }
 
       ans = PROMPT("Create CA?","[y/n]",true);
