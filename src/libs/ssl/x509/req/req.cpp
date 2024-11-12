@@ -31,5 +31,3 @@
 X509Req::X509Req(ISmartPKEY *pkey):pkey(pkey),req(X509_REQ_new())
 {
 }
-
-X509Req

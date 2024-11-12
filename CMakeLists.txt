@@ -103,7 +103,8 @@ add_executable(gpkih
 target_include_directories(gpkih PUBLIC "${FMT_LIBRARY_INCLUDE}")
 
 target_link_libraries(gpkih PUBLIC gpkih_entities_lib gpkih_profiles_lib gpkih_parser_lib gpkih_db_lib 
-  gpkih_config_lib gpkih_help_lib gpkih_cli_lib gpkih_formatter_lib gpkih_mem_lib gpkih_actions_lib gprintinglib gutilslib glogginglib gmemorylib)
+  gpkih_config_lib gpkih_help_lib gpkih_cli_lib gpkih_formatter_lib gpkih_mem_lib gpkih_actions_lib gprintinglib gutilslib glogginglib gmemorylib
+)
 
 if(FMT_LIBRARY)
   # Compile with FMT found in the system

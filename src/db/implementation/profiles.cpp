@@ -158,7 +158,7 @@ int db::profiles::initialize(size_t &profileCount){
 			buffer+=nProf.meta.sourceLen+2; // +2 to skip the null byte and point to next element (next profile's id or null byte indicating EOF)
 			
 			if(fs::exists(nProf.source) == false){
-				PWARN("Profile source '{}' doesn't exist, might have manually removed.", nProf.source);
+				PWARN("Profile '{}' with root dir @ '{}' doesn't exist, might have been manually removed, removing from DB...\n", nProf.name, nProf.source);
 				unexistantSource = true;			
 				continue;
 			}
@@ -180,7 +180,7 @@ int db::profiles::initialize(size_t &profileCount){
 	if(unexistantSource){
 		DEBUG(1, "Syncing profile db file due to unexistant source");
 		if(sync() == GPKIH_OK){
-			PINFO("Succesfully removed unexistant sources from profile.\n");
+			PINFO("Succesfully removed unexistant profiles.\n");
 		}
 		return GPKIH_FATAL;
 	}

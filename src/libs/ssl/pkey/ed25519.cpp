@@ -19,6 +19,8 @@ ED25519keypair* ed25519::generateKeypair(){
 	if(EVP_PKEY_keygen(ctx, &key) <= 0){
 		return nullptr;
 	}
+	// TODO - test
+	//EVP_PKEY_CTX_free(ctx);
 	auto kp = new ED25519keypair(key);
 	return kp;
 }
