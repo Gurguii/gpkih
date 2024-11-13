@@ -241,7 +241,7 @@ function setBaseDir(){
         local bdDir=~/.config/gpkih/db
 
         if [ ! -e ~/.config/gpkih/ ]; then
-                mkdir ~/.config/gpkih/
+                mkdir -p ~/.config/gpkih/
         fi
 
         if [ ! -e ~/.config/gpkih/config ]; then

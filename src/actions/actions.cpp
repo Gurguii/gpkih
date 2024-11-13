@@ -11,6 +11,7 @@
 #include "revoke/ARevoke.hpp"
 #include "rename/ARename.hpp"
 #include "set/ASet.hpp"
+#include "dhparam/dhparam.hpp"
 
 /* 
 - Alternative approach -
@@ -56,6 +57,9 @@ const IAction* gpkih::actions::GetAction(std::string_view name)
 	}
 	else if(name == "remove" || name == "rem"){
 		return &ARemove::get();
+	}
+	else if(name == "dhparam" || name == "dh"){
+		return &ADHparam::get();
 	}
 	else{
 		return nullptr;

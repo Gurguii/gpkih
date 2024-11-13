@@ -76,6 +76,7 @@ add_subdirectory("${GPKIH_SRC_DIR}/libs/utils")
 add_subdirectory("${GPKIH_SRC_DIR}/libs/printing")
 add_subdirectory("${GPKIH_SRC_DIR}/libs/logger")
 add_subdirectory("${GPKIH_SRC_DIR}/libs/memory")
+add_subdirectory("${GPKIH_SRC_DIR}/libs/ssl")
 
 # Compile STATIC gpkih libs
 add_subdirectory("${GPKIH_SRC_DIR}/profiles")
@@ -103,22 +104,20 @@ add_executable(gpkih
 target_include_directories(gpkih PUBLIC "${FMT_LIBRARY_INCLUDE}")
 
 target_link_libraries(gpkih PUBLIC gpkih_entities_lib gpkih_profiles_lib gpkih_parser_lib gpkih_db_lib 
-  gpkih_config_lib gpkih_help_lib gpkih_cli_lib gpkih_formatter_lib gpkih_mem_lib gpkih_actions_lib gprintinglib gutilslib glogginglib gmemorylib
+  gpkih_config_lib gpkih_help_lib gpkih_cli_lib gpkih_formatter_lib gpkih_mem_lib gpkih_actions_lib gprintinglib gutilslib glogginglib gmemorylib gssl crypto
 )
 
 if(FMT_LIBRARY)
   # Compile with FMT found in the system
-  message(STATUS "GPKIH will be compiled with found fmtlib")
   target_link_libraries(gpkih PRIVATE 
-      ${GPKIH_LIBRARIES}
-      FMT_LIBRARY
+    ${GPKIH_LIBRARIES}
+    FMT_LIBRARY
   )
 else()
   # Use compiled FMT from github clone
-  message(STATUS "GPKIH will be compiled with cloned fmtlib")
   target_link_libraries(gpkih PRIVATE 
-      ${GPKIH_LIBRARIES}
-      fmt::fmt
+    ${GPKIH_LIBRARIES}
+    fmt::fmt
   )
 endif()
 

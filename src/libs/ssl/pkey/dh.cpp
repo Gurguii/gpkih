@@ -4,20 +4,22 @@
 #include <openssl/params.h>
 #include <openssl/encoder.h>
 
-#include <vector>
 #include <algorithm>
+#include <array>
 
 DHparam::DHparam(EVP_PKEY *pkey):_pkey(pkey){}
 
 DHparam::~DHparam()
 {
-	printf("DHparam destructor...\n");
-	fflush(stdout);
 	EVP_PKEY_free(_pkey);
 }
 
-int DHparam::dump(std::string_view outPath, std::string_view outFormat)
+int DHparam::dump(FILE *outfile, std::string_view outFormat)
 {
+	if(outfile == nullptr){
+		return -1;
+	}
+
 	if(outFormat != "PEM" && outFormat != "DER" && outFormat != "TEXT"){
 		_lastError = "Invalid output format not among: PEM,DER,TEXT";
 		return -1;
@@ -31,13 +33,6 @@ int DHparam::dump(std::string_view outPath, std::string_view outFormat)
     }
 
     /* BEG - dump dhparams to file */
-    FILE *outfile = fopen(outPath.data(), "wb");
-
-    if(outfile == nullptr){
-    	_lastError = "Couldn't open file to write dhparams";
-    	return 1;
-    }
-
     if(OSSL_ENCODER_to_fp(ctx, outfile) == 0){
         _lastError = "Failed writing to file";
         return 1;
@@ -55,47 +50,37 @@ const char *DHparam::lastError(){
 	return _lastError;
 }
 
-static std::vector<std::string_view>_valid_dh_implementations{"modp_2048", "modp_3072", "modp_4096", "modp_6144", "modp_8192", 
-"ffdhe3072", "ffdhe4096", "ffdhe6144", "ffdhe8192"
-};
-
-static std::vector<std::string_view>_valid_msg_digest{"blake2b512","blake2s256", "md4","md5","mdc2","rmd160","sha1","sha224","sha256","sha3-224",
-"sha3-256","sha3-384","sha3-512","sha384","sha512","sha512-224","sha512-256","shake128","shake256","sm3"
-};
-
-[[nodiscard("Returned structure, if not null, must be deleted manually with delete()")]]
-DHparam* gssl::dhparam::generate(std::string_view dh_imp, const char *digest)
+[[nodiscard("Returned structure, if not null, must be freed manually with delete()")]]
+DHparam* gssl::dhparam::generate(unsigned int pbits, std::string_view digest)
 {
-	if(std::find(_valid_dh_implementations.begin(), _valid_dh_implementations.end(), dh_imp) == _valid_dh_implementations.end()){
-		return nullptr;
-	};
 
-	EVP_PKEY_CTX *pctx = EVP_PKEY_CTX_new_id(EVP_PKEY_DH, nullptr);
-	OSSL_PARAM *params = (OSSL_PARAM*)malloc(sizeof(OSSL_PARAM)*3);
-	EVP_PKEY *pkey = nullptr;
-
-	if(pctx == nullptr || params == nullptr){
-		return nullptr;
-	}	
-
-	params[0] = OSSL_PARAM_construct_utf8_string("group", (char*)dh_imp.data(), 0);
-	//params[1] = OSSL_PARAM_construct_int("priv_len", &priv_len);
+	//int gindex = 2;
+	unsigned int qbits = pbits/4;
+	OSSL_PARAM *params = (OSSL_PARAM*)malloc(sizeof(OSSL_PARAM)*5);
+	EVP_PKEY *pkey = NULL;
+	EVP_PKEY_CTX *pctx = NULL;
+	pctx = EVP_PKEY_CTX_new_from_name(NULL, "DH", NULL);
 	
-	if(digest == nullptr){
-		params[1] = OSSL_PARAM_construct_end();	
+	EVP_PKEY_paramgen_init(pctx);
+	
+	params[0] = OSSL_PARAM_construct_uint("pbits", &pbits);
+	params[1] = OSSL_PARAM_construct_uint("qbits", &qbits);
+	params[2] = OSSL_PARAM_construct_utf8_string("type", (char*)"generator", 0);
+	
+	if(digest.empty()){
+		params[3] = OSSL_PARAM_construct_end();	
 	}else{
-		if(std::find(_valid_msg_digest.begin(),_valid_msg_digest.end(), digest) == _valid_msg_digest.end()){
-			EVP_PKEY_CTX_free(pctx);
-			OSSL_PARAM_free(params);
-			return nullptr;
-		};
-		params[1] = OSSL_PARAM_construct_utf8_string("digest", const_cast<char*>(digest), 0);	
-		params[2] = OSSL_PARAM_construct_end();
+		params[3] = OSSL_PARAM_construct_utf8_string("digest", const_cast<char*>(digest.data()), 0);
+		params[4] = OSSL_PARAM_construct_end();
 	}
-
-	EVP_PKEY_keygen_init(pctx);
+	
 	EVP_PKEY_CTX_set_params(pctx, params);
+	
 	EVP_PKEY_generate(pctx, &pkey);
+	
+	//BIO *obio = BIO_new_fd(0, 0);
+	//EVP_PKEY_print_params(outb, pkey, 0, NULL);
+	//EVP_PKEY_print_private(outb, key, 0, NULL);
 
 	// At this point params were succesfully generated, context and params can be freed
 	EVP_PKEY_CTX_free(pctx);

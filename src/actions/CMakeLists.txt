@@ -19,6 +19,7 @@ file(GLOB_RECURSE rename_sources LIST_DIRECTORIES true "rename/*.cpp")
 file(GLOB_RECURSE reset_sources LIST_DIRECTORIES true "reset/*.cpp")
 file(GLOB_RECURSE revoke_sources LIST_DIRECTORIES true "revoke/*.cpp")
 file(GLOB_RECURSE set_sources LIST_DIRECTORIES true "set/*.cpp")
+file(GLOB_RECURSE dh_sources LIST_DIRECTORIES true "dhparam/*.cpp")
 
 set(sources
 	"actions.cpp"
@@ -32,6 +33,7 @@ set(sources
     ${reset_sources} 
     ${revoke_sources} 
     ${set_sources}
+    ${dh_sources}
 )
 
 # Create a library for the actions

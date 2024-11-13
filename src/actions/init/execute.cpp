@@ -15,6 +15,8 @@
 
 #include "../../gpkih.hpp"
 
+#include "../../libs/ssl/pkey/dh.hpp"
+
 constexpr const char *opensslConfFilename = "gopenssl.conf";
 
 static int createDH(std::string_view outpath, size_t size = 4096) {
@@ -324,13 +326,32 @@ static int initializeProfile(std::string_view &profileName, std::string_view &pr
       std::string path = fmt::format("{}{}pki{}tls{}dhparam4096", profile.source, SLASH, SLASH, SLASH);
       
       if (ans == "y" || ans == "yes") {
-        if(createDH(path, 4096) == GPKIH_OK){
+        DHparam *params = gssl::dhparam::generate();
+        if(params == nullptr){
+          PERROR("Something failed creating DH params\n");
+          return GPKIH_FAIL;
+        }
+        FILE* file = fopen(path.data(), "wb");
+
+        if(file == nullptr){
+          PERROR("Couldn't open output file\n");
+          return GPKIH_FAIL;  
+        }
+
+        if(params->dump(file) == GPKIH_OK){
           PSUCCESS("Diffie-Hellman param created - {}\n", path);
         };
+
+        fclose(file);
+
+        //if(createDH(path, 4096) == GPKIH_OK){
+        //  PSUCCESS("Diffie-Hellman param created - {}\n", path);
+        //};
       }
 
       ans = PROMPT("Create CA?","[y/n]",true);
 
+      // TODO - fix this shit
       if(ans == "y" || ans == "yes"){
         auto sub = pconf.default_subject();
         subject::promptForSubject(profile.name, ca.subject, sub, eman);

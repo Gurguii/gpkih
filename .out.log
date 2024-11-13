@@ -10,30 +10,31 @@
 -- Found libpq library: /usr/lib/libpq.so
 -- MYSQL support ENABLED
 -- Found MYSQL library: /usr/lib/libmariadb.so
--- GPKIH will be compiled with cloned fmtlib
 -- Configuring done (0.0s)
 -- Generating done (0.1s)
 -- Build files have been written to: /home/gurgui/github/gpkih/build
+[  4%] Built target gpkih_help_lib
+[  5%] Built target gpkih_formatter_lib
 [  6%] Built target gpkih_mem_lib
-[  6%] Built target fmt
-[ 11%] Built target gutilslib
-[ 14%] Built target glogginglib
-[ 16%] Built target gpkih_formatter_lib
-[ 19%] Built target gmemorylib
-[ 23%] Built target gpkih_profiles_lib
-[ 28%] Built target gpkih_entities_lib
-[ 30%] Built target gpkih_help_lib
-[ 33%] Built target gpkih_cli_lib
-[ 38%] Built target gpkih_db_lib
-[ 41%] Built target gprintinglib
-[ 44%] Built target gpkih_csv
-[ 47%] Built target gpkih_sqlite
-[ 52%] Built target gpkih_config_lib
-[ 56%] Built target gpkih_mysql
-[ 58%] Built target gpkih_parser_lib
-[ 62%] Built target gpkih_postgres
-[ 66%] Built target gpkih_actions_export
+[ 11%] Built target gprintinglib
+[ 13%] Built target gutilslib
+[ 15%] Built target glogginglib
+[ 18%] Built target fmt
+[ 23%] Built target gpkih_entities_lib
+[ 25%] Built target gmemorylib
+[ 35%] Built target gssl
+[ 37%] Built target gpkih_cli_lib
+[ 41%] Built target gpkih_profiles_lib
+[ 45%] Built target gpkih_db_lib
+[ 50%] Built target gpkih_config_lib
+[ 58%] Built target gpkih_postgres
+[ 58%] Built target gpkih_mysql
+[ 58%] Built target gpkih_csv
+[ 62%] Built target gpkih_sqlite
+[ 64%] Built target gpkih_parser_lib
+[ 67%] Built target gpkih_actions_export
+[ 68%] Building CXX object src/actions/CMakeFiles/gpkih_actions_lib.dir/init/execute.cpp.o
+[ 70%] Linking CXX static library libgpkih_actions_lib.a
 [ 97%] Built target gpkih_actions_lib
-[ 98%] Building CXX object CMakeFiles/gpkih.dir/src/gpkih.cpp.o
-[100%] Linking CXX executable gpkih
+[ 98%] Linking CXX executable gpkih
 [100%] Built target gpkih
