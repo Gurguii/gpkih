@@ -71,7 +71,7 @@ public:
 		char sectionOpenDelimiter = '[', 
 		char sectionCloseDelimiter = ']', 
 		char commentChar = '#',
-		char keyValDelimiter = '='
+		char keyValDelimiter = ' '
 	):mappedConfiguration(configTemplate),sectionOpenDelimiter(sectionOpenDelimiter),sectionCloseDelimiter(sectionCloseDelimiter),commentChar(commentChar),keyValDelimiter(keyValDelimiter){}
 
 	int load(std::string_view filePath){
@@ -170,34 +170,103 @@ public:
 
 int main()
 {
-	std::unordered_map<std::string, std::unordered_map<std::string,std::string>> _template{
+	std::unordered_map<std::string, std::unordered_map<std::string,std::string>> _gpkih_template{
   		{
-  			"behaviour",{
+  			"behaviour",
+  			{
   			  {"headers",""},
   			  {"print_generated_certificate",""},
   			  {"prompt",""},
   			  {"autoanswer",""}
-  		}},{
-  			"logs",{
+  			}
+  		},{
+  			"logs",
+  			{
   			  {"includedFormatFields",""},
   			  {"includedLevels",""},
   			  {"maxSize",""}
-  		}},
-  			{"cli",{
+  			}
+  		},{
+  			"cli",
+  			{
   			  {"customPS",""}
-  		}},
-  			{"quiero",{
+  			}
+  		},{
+  			"quiero",
+  			{
   			  {"morir",""}
   			},
   		}
 	};
 
-	Config config(_template);
-	config.load("test.conf");
-	config.print();
+	std::unordered_map<std::string, std::unordered_map<std::string,std::string>> _ovpn_template{
+  		{
+  			"common",
+  			{
+  			  {"proto",""},
+  			  {"dev",""},
+  			  {"cipher",""},
+  			  {"tls-auth",""}
+  			}
+  		},{
+  			"server",
+  			{
+  			  {"server",""},
+  			  {"port",""},
+  			  {"status",""},
+  			  {"explicit-exit-notify",""},
+  			  {"keepalive",""},
+  			  {"crl-verify",""},
+  			  {"dh",""},
+  			  {"ifconfig-pool-persist",""},
+  			  {"push",""},
+  			  {"verb",""}
+  			}
+  		},{
+  			"client",
+  			{
+  			  {"remote",""},
+  			  {"remote-cert-tls",""},
+  			  {"installdir",""},
+  			  {"verb",""}
+  			}
+  		}
+	};
 
-	auto a = config.getKey("behaviour", "prompt");
-	printf("behaviour.prompt = %s\n", a->c_str());
+	std::unordered_map<std::string, std::unordered_map<std::string,std::string>> _pki_template{
+  		{
+  			"key",
+  			{
+  			  {"algorithm",""},
+  			  {"size",""},
+  			}
+  		},{
+  			"crt",
+  			{
+  			  {"days",""},
+  			}
+  		},{
+  			"subject",
+  			{
+  			  {"country",""},
+  			  {"state",""},
+  			  {"location",""},
+  			  {"organisation", ""},
+  			  {"common_name", ""},
+  			  {"email", ""}
+  			}
+  		},{
+  			"output",
+  			{
+  			  {"create_inline",""},
+  			  {"create_pfx", ""}
+  			},
+  		}
+	};
+
+	Config config(_pki_template);
+	config.load("pki.conf");
+	config.print();
 
 	return 0;
 }

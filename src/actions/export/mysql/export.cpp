@@ -47,6 +47,8 @@ VALUES ({},{},'{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}','{}'))
 using namespace gpkih;
 
 int mysql::exportDB(std::string_view outDir, std::vector<std::string> &args){
+    DEBUG(1, "mysql::exportDB()");
+
     std::string_view user, pass, host;
     std::string_view db = "gpkih";
     uint32_t port = 3306;
@@ -110,7 +112,7 @@ int mysql::exportDB(std::string_view outDir, std::vector<std::string> &args){
         }
         /* END - Insert gpkih data into database */
     }catch(const std::exception &ex){
-        PERROR(ex.what());
+        PERROR("{}\n", ex.what());
         return GPKIH_FAIL;
     }
     

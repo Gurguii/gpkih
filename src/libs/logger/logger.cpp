@@ -64,9 +64,8 @@ Logger::~Logger() {
 	logstream.close();
 } // Logger::~Logger
 
-
 Logger::Logger(std::string &&filename, size_t maxSizeBytes, logMsgField iFields, logLevel iLevels)
-:maxSize(maxSizeBytes),includedFields(iFields),includedLevels(iLevels),logpath(std::string{Logger::basedir}+SLASH+filename+=".log"),mdataPath(std::string{Logger::basedir}+SLASH+filename+".data"){
+:maxSize(maxSizeBytes),includedFields(iFields),includedLevels(iLevels),logpath(std::string{Logger::basedir}+SLASH+filename+=".log"),mdataPath(std::string{Logger::basedir}+SLASH+"."+filename+".data"){
 	// create/open log file
 	if(basedir.empty()){
 		throw LogException("Logger basedir hasn't been set");

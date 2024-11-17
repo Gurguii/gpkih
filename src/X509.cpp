@@ -1,5 +1,6 @@
 #include <libpq-fe.h>
 #include <openssl/asn1.h>
+#include <openssl/evp.h>
 #include <openssl/pem.h>
 #include <openssl/x509.h>
 #include "libs/ssl/pkey/rsa.hpp"
@@ -14,8 +15,10 @@ private:
 	
 	std::unordered_map<std::string, const EVP_MD*> _hashMapping
 	{
+		{"md5",EVP_md5()},
 		{"sha1",EVP_sha1()},
-		{"md5",EVP_md5()}
+		{"sha256",EVP_sha256()},
+		{"{sha512", EVP_sha512()}
 	};
 
 	std::string lastError{};

@@ -17,11 +17,11 @@ int generate(std::vector<std::string> &args){
 	/* BEG - parse args */
 	for(int i = 0; i < args.size(); ++i){
 		std::string_view arg = args[i];
-		if(arg == "-hash" || arg == "--hash"){
+		if(arg == "-h" || arg == "--hash"){
 			hash = args[++i].data();
 		}else if(arg == "-s" || arg == "--size"){
 			pbits = std::stoul(args[++i]);
-		}else if(arg == "-o" || arg == "--output"){
+		}else if(arg == "-o" || arg == "--out"){
 			out = fopen(args[++i].data(), "wb");
 			if(out == nullptr){
 				PERROR("Couldn't open output file {}\n", args[i]);
@@ -34,18 +34,21 @@ int generate(std::vector<std::string> &args){
 	/* END - parse args */
 
 	/* BEG - generate params */
-	DHparam* dhparams = gssl::dhparam::generate(pbits, hash);
+	fprintf(stderr, "-- Generating DH params...\n");
+	gssl::dhparam::DHparam* dhparams = gssl::dhparam::generate(pbits, hash);
 
 	if(dhparams == nullptr){
 		PERROR("Couldn't generate dhparams\n");
 		fclose(out);
 		return GPKIH_FAIL;
-	} 
+	}
+
+	fprintf(stderr, "-- Diffie-Hellman parameters of %u bits and %s hash generated\n", pbits, hash); 
 	/* END - generate params */
 
 	/* BEG - write params to file */
 	if(dhparams->dump(out, outformat) != GPKIH_OK){
-		PERROR(dhparams->lastError());
+		PERROR(dhparams->lastError().c_str());
 	};
 	/* END - write params to file */
 	

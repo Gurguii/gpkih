@@ -26,8 +26,8 @@ class Logger
 		std::string mdataPath;
 		logMetadata metadata;
 
-		logMsgField includedFields = logMsgField::none;
-		logLevel includedLevels = logLevel::none;
+		logMsgField includedFields;
+		logLevel includedLevels;
 
 		std::string lastError;
 
@@ -39,7 +39,7 @@ class Logger
 		
 		/// @brief get Logger class' basedir 
 		static const std::string& getBaseDir();
-		Logger(std::string &&filename, size_t maxSizeBytes, logMsgField includedFields, logLevel includedLevels);
+		Logger(std::string &&filename, size_t maxSizeBytes, logMsgField includedFields = logMsgField::all, logLevel includedLevels = logLevel::all);
 
 		/// @brief add a new log
 		/// @param level logLevel enum indicating log level, LL_INFO, LL_WARN, LL_ERROR

@@ -19,16 +19,6 @@
 
 constexpr const char *opensslConfFilename = "gopenssl.conf";
 
-static int createDH(std::string_view outpath, size_t size = 4096) {
-  std::string command = fmt::format("openssl dhparam -quiet -out {} {}", outpath, size);
-
-  if (system(command.c_str())) {
-    return GPKIH_FAIL;
-  }
-
-  return GPKIH_OK;
-}
-
 static inline std::vector<std::string> RELATIVE_DIRECTORY_PATHS(){
   return 
   {
@@ -180,7 +170,7 @@ int __create_pki_filestruct(Profile &profile){
 // [Linux | Windows] - adapt gopenssl.cnf 
 if (__sed(gopenssl_sed_src, gopenssl_sed_dst, {{"GPKIH_PATH_ROOTDIR", fmt::format("{}/pki",profile.source)}})) {
   PERROR("__sed failed()\n");
-  return GPKIH_FAIL;
+  return GPKIH_FAIL; 
 }
 
 // [Windows] - change '/' slashes back to '\'
@@ -298,10 +288,14 @@ static int initializeProfile(std::string_view &profileName, std::string_view &pr
 
     if (autoans) {
       // QUESTION 1 - create dhparam?
-      std::string path = fmt::format("{}{}pki{}tls{}dhparam4096", profile.source, SLASH, SLASH, SLASH); 
+      std::string path = fmt::format("{}{}pki{}tls{}dhparam2048", profile.source, SLASH, SLASH, SLASH); 
 
-      if(createDH(path, 4096) == GPKIH_OK){
+      PINFO("Generating DH parameters...\n");
+      gssl::dhparam::DHparam *params = gssl::dhparam::generate();
+      
+      if( params != nullptr){
         PSUCCESS("Diffie-Hellman param created - {}\n", path);
+        delete(params);
       }
       
       // QUESTION 2 - create ca?
@@ -311,7 +305,6 @@ static int initializeProfile(std::string_view &profileName, std::string_view &pr
       entity::setCAPaths(profile,ca);
       entity::loadSerial(profile,ca);
       entity::setExpirationDate(ca,std::strtoull(days.data(), nullptr, 10));
-      
 
       //if(build_ca(profile, pconf, ca, eman, days, keyAlgo, keySize) == GPKIH_OK){
       //  caBuilt = true;
@@ -322,11 +315,11 @@ static int initializeProfile(std::string_view &profileName, std::string_view &pr
                                                   EMPHASIS::underline,
                                               "(highly recommended)"),
              "[y/n]", true);
-
-      std::string path = fmt::format("{}{}pki{}tls{}dhparam4096", profile.source, SLASH, SLASH, SLASH);
-      
       if (ans == "y" || ans == "yes") {
-        DHparam *params = gssl::dhparam::generate();
+        std::string path = fmt::format("{}{}pki{}tls{}dhparam2048", profile.source, SLASH, SLASH, SLASH);
+        PINFO("Generating DH parameters...\n");
+        fflush(stdout);
+        gssl::dhparam::DHparam *params = gssl::dhparam::generate();
         if(params == nullptr){
           PERROR("Something failed creating DH params\n");
           return GPKIH_FAIL;
@@ -343,7 +336,7 @@ static int initializeProfile(std::string_view &profileName, std::string_view &pr
         };
 
         fclose(file);
-
+        delete(params);
         //if(createDH(path, 4096) == GPKIH_OK){
         //  PSUCCESS("Diffie-Hellman param created - {}\n", path);
         //};

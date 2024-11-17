@@ -200,5 +200,8 @@ int AAdd::exec(std::vector<std::string> &args) const {
   PSUCCESS("Entity '{}' created\n", entity.subject.cn);
   ADD_LOG(LL_INFO,fmt::format("profile:{} action:build serial:{} cn:{} type:{}",profile->name, entity.meta.serial, entity.subject.cn, entity::conversion::toString(entity.meta.type)));
   
+  gurgui::logging::Logger profileLogger(std::string(profile->name), gurgui::utils::units::toBytes(4,'m'));
+  profileLogger.addLog(LL_INFO, fmt::format("Created {} entity '{}'\n", entity::conversion::toString(entity.meta.type),entity.subject.cn));
+  
   return GPKIH_OK;
 };

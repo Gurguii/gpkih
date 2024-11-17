@@ -40,6 +40,7 @@ public:
 	~X509Cert();
 	std::string &getError();
 	X509* const getCertificate();
+	
 	/* 
 		RETURN CODES
 	    1 - success

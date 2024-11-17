@@ -1,15 +1,15 @@
 #pragma once
 #include <openssl/evp.h>
 #include <string_view>
-
+#include <memory>
 struct ISmartPKEY{
 private:
-	EVP_PKEY *_key = nullptr;
+    std::unique_ptr<EVP_PKEY,decltype(&EVP_PKEY_free)> _key;
 public:
     explicit ISmartPKEY(EVP_PKEY *key);
     ~ISmartPKEY(); // checks if _key is nullptr, if its not, it does EVP_PKEY_free(_key);
 	
-    const EVP_PKEY *const key();
+    EVP_PKEY *key();
     
     FILE *pem_dump_public(FILE *file);
 	// return -1 on failure 0 on success
