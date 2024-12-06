@@ -8,13 +8,16 @@ using namespace gssl;
 
 [[nodiscard("Returned PTR must be manually freed")]]
 ED25519keypair* ed25519::generateKeypair(){
-	EVP_PKEY_CTX *ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, nullptr);
+	auto ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_ED25519, nullptr);
+
 	if(ctx == nullptr){
 		return nullptr;
 	}
+
 	if(EVP_PKEY_keygen_init(ctx) <= 0){
 		return nullptr;
 	};
+	
 	EVP_PKEY *key = nullptr;
 	if(EVP_PKEY_keygen(ctx, &key) <= 0){
 		return nullptr;

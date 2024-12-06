@@ -6,7 +6,7 @@
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
 #include <openssl/encoder.h>
-#include "ssl/x509/x509.hpp"
+#include "../x509/x509.hpp"
 
 int main()
 {
@@ -61,7 +61,7 @@ int main()
     const char *san_value = "DNS:gurgui.com,DNS:www.gurgui.com";
     X509_EXTENSION *bc_ext 	 = X509V3_EXT_conf(nullptr, ctx, "basicConstraints", "CA:FALSE");
     X509_EXTENSION *ku_ext 	 = X509V3_EXT_conf(nullptr, ctx, "keyUsage", "digitalSignature,keyEncipherment,keyAgreement");
-    X509_EXTENSION *key_ext = X509V3_EXT_conf(nullptr, ctx, "extendedKeyUsage", "clientAuth");
+    X509_EXTENSION *key_ext  = X509V3_EXT_conf(nullptr, ctx, "extendedKeyUsage", "clientAuth");
     X509_EXTENSION *subj_ext = X509V3_EXT_conf(nullptr, ctx, "subjectKeyIdentifier", hex_ski);
 
     //X509_EXTENSION *san_ext  = X509V3_EXT_conf(nullptr, ctx, "subjectAltName", (char *)san_value);

@@ -1,3 +1,4 @@
+#pragma once
 #include <openssl/pem.h>
 #include "ifaces.hpp"
 #include "ciphers.hpp"

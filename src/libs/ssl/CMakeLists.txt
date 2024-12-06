@@ -9,6 +9,7 @@ file(GLOB_RECURSE pkey_sources LIST_DIRECTORIES true "pkey/*.cpp")
 file(GLOB_RECURSE x509_sources LIST_DIRECTORIES true "x509/*.cpp")
 
 set(sources
+	"gssl.cpp"
 	${pkey_sources} 
 	${x509_sources}
 )

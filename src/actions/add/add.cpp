@@ -139,6 +139,23 @@ static int __create_inline_config(Profile &profile,ProfileConfig &config,
     // add inline ca certificate
     file << "<ca>" << EOL << caCertBuffer << "</ca>" << EOL;
 
+    auto dhPath = fs::path(profile.source) / "pki/tls/dhparam";
+
+    if(entity->meta.type == ET_SV && fs::exists(dhPath)){
+      size_t dhSize = fs::file_size(dhPath);
+      auto dh = (char*)ALLOCATE(dhSize);
+      
+      if(dh == nullptr){
+        PERROR("Couldn't allocate data - {}\n", gpkihBuffer->getLastError());
+        return GPKIH_FATAL;
+      }
+
+      std::ifstream(dhPath).read(dh, dhSize);
+
+      file << "<dh>" << EOL << dh << "</dh>" << EOL;
+      FREE_MEMORY_BLOCK(dh, dhSize);
+    }
+
     ecrt.close();
     ekey.close();
 

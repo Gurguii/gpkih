@@ -1,7 +1,8 @@
-#ifndef gssl
-#define gssl
+#ifndef GSSL_MECAGOENMIPUTAMADREAVERSIMEMUEROPRONTO
+#define GSSL_MECAGOENMIPUTAMADREAVERSIMEMUEROPRONTO
 #pragma once
 
 static inline char GSSL_ERR_BUFF[1024]{0};
+extern void GSSL_ERR_UPDATE_PRINT();
 
 #endif

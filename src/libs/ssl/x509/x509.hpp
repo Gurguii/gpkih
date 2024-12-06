@@ -1,8 +1,10 @@
-#include "../pkey/rsa.hpp"
-#include "../pkey/ed25519.hpp"
+#ifndef gssl_x509
+#define gssl_x509
+
+#pragma once
+#include "../x509/req/req.hpp"
 
 #include <openssl/evp.h>
-#include "openssl/err.h"
 
 #include <string_view>
 #include <unordered_map>
@@ -36,6 +38,8 @@ private:
 
 public:
 	X509Cert();
+
+	/* Self-signed */
 	X509Cert(unsigned char *cn, size_t serial, ISmartPKEY *key, size_t days);
 	~X509Cert();
 	std::string &getError();
@@ -52,7 +56,7 @@ public:
 
 	/* dumping */
 	int dump(std::string_view filePath);
-	int dump(FILE *file);
+	int dump(FILE *file = stdout);
 	int dump2(std::string_view filePath, std::string_view format = "pem");
 
 	/* setting subject info */
@@ -68,3 +72,5 @@ public:
 	int add_ext();
 	int del_ext();
 };
+
+#endif

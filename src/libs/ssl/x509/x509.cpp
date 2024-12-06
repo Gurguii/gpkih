@@ -1,5 +1,7 @@
 #include "x509.hpp"
 #include <openssl/x509.h>
+#include <openssl/err.h>
+#include <openssl/pem.h>
 
 #undef UPDATE_ERROR
 #define UPDATE_ERROR lastError.assign("");ERR_error_string(ERR_get_error(), &lastError[0])
@@ -83,7 +85,7 @@ int X509Cert::dump(std::string_view filePath){
 	
 	if(file == nullptr){
 		lastError = "Couldn't open file";
-		return -1;
+		return 0;
 	}
 
 	return PEM_write_X509(file, _cert);
@@ -92,7 +94,7 @@ int X509Cert::dump(std::string_view filePath){
 int X509Cert::dump(FILE *file){
 	if(file == nullptr){
 		lastError = "called X509Cert::dump() with a null pointer";
-		return -1;
+		return 0;
 	}
 	return PEM_write_X509(file, _cert);
 }
@@ -104,7 +106,7 @@ int X509Cert::dump2(std::string_view filePath, std::string_view format)
 	if( file == nullptr){
 		lastError = "Couldn't open file - ";
 		lastError += filePath;
-		return -1;
+		return 0;
 	}
 
 	if(format == "pem"){
@@ -121,12 +123,12 @@ int X509Cert::dump2(std::string_view filePath, std::string_view format)
 	}else{	
 		lastError = "UNKNOWN x509 format type ";
 		lastError += format;
-		return -1;
+		return 0;
 	}
 
 	fclose(file);
 	
-	return 0;
+	return 1;
 }
 
 size_t X509Cert::get_serial(){

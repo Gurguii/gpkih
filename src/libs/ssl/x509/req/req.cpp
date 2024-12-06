@@ -58,7 +58,7 @@ X509Req::X509Req(ISmartPKEY *pkey, std::string_view entityType, std::string_view
 	std::string_view state
 ):_pkey(pkey),_req(X509_REQ_new(), X509_REQ_free)
 {
-	if(!X509_REQ_set_pubkey(_req.get(), const_cast<EVP_PKEY*>(pkey->key()))){
+	if(!X509_REQ_set_pubkey(_req.get(), pkey->key())){
 		ERR_error_string(ERR_get_error(), GSSL_ERR_BUFF);
 		throw(GSSL_ERR_BUFF);
 	}
@@ -69,7 +69,7 @@ X509Req::X509Req(ISmartPKEY *pkey, std::string_view entityType, std::string_view
 	X509V3_set_ctx(ctx, nullptr, nullptr, _req.get(), nullptr, 0);
 	STACK_OF(X509_EXTENSION) *exts = sk_X509_EXTENSION_new_null();
 
-	/* BEG - add appropiate X509 extensions */
+	/* BEG - add X509 extensions */
 	if(entityType == "client"){
 		X509_EXTENSION *bc_ext 	 = X509V3_EXT_conf(nullptr, ctx, "basicConstraints", "CA:FALSE");
     	X509_EXTENSION *ku_ext 	 = X509V3_EXT_conf(nullptr, ctx, "keyUsage", "digitalSignature,keyEncipherment,keyAgreement");
@@ -94,10 +94,8 @@ X509Req::X509Req(ISmartPKEY *pkey, std::string_view entityType, std::string_view
     		if(ext){
     			sk_X509_EXTENSION_push(exts, ext);	
     		}else{
-	
-    			fprintf(stderr, "Failed adding extension to stack\n");
-        		ERR_error_string(ERR_get_error(), GSSL_ERR_BUFF);
-				fprintf(stderr, "%s\n", GSSL_ERR_BUFF);
+				ERR_error_string(ERR_get_error(), GSSL_ERR_BUFF);
+    			fprintf(stderr, "Failed adding extension to stack - %s\n", GSSL_ERR_BUFF);
     		}
     	}
 	}else if(entityType == "ca"){
@@ -117,62 +115,48 @@ X509Req::X509Req(ISmartPKEY *pkey, std::string_view entityType, std::string_view
 	}
 
 	if (!X509_REQ_add_extensions(_req.get(), exts)) {
-        fprintf(stderr, "Failed adding extensions' stack to certificate request\n");
-        ERR_error_string(ERR_get_error(), GSSL_ERR_BUFF);
-		fprintf(stderr, "%s\n", GSSL_ERR_BUFF);
+		GSSL_ERR_UPDATE_PRINT();
     }
 
     sk_X509_EXTENSION_pop_free(exts, X509_EXTENSION_free);
-	/* END - add appropiate X509 extensions */
+	/* END - add X509 extensions */
 
     /* BEG - set subject */
 	auto name = X509_NAME_new();
 	if(!X509_NAME_add_entry_by_txt(name, "CN", MBSTRING_ASC, (unsigned char*)cn.data(), -1, -1, 0)){
-		fprintf(stderr, "Error setting common name\n");
-		ERR_error_string(ERR_get_error(), GSSL_ERR_BUFF);
-				fprintf(stderr, "%s\n", GSSL_ERR_BUFF);
+		GSSL_ERR_UPDATE_PRINT();
 	}
 
 	if(!country.empty()){
 		if(country.size() == 2){
 			if(!X509_NAME_add_entry_by_txt(name, "C", MBSTRING_ASC, (unsigned char*)country.data(), -1, -1, 0)){
-				fprintf(stderr, "Error setting country\n");
-				ERR_error_string(ERR_get_error(), GSSL_ERR_BUFF);
-				fprintf(stderr, "%s\n", GSSL_ERR_BUFF);
+				GSSL_ERR_UPDATE_PRINT();
 			}
 		}
 	}
 
 	if(!location.empty()){
 		if(!X509_NAME_add_entry_by_txt(name, "L", MBSTRING_ASC, (unsigned char*)location.data(), -1, -1, 0)){
-			fprintf(stderr, "Error setting country\n");
-			ERR_error_string(ERR_get_error(), GSSL_ERR_BUFF);
-			fprintf(stderr, "%s\n", GSSL_ERR_BUFF);
+			GSSL_ERR_UPDATE_PRINT();
 		}
 	}
 
 	if(!organisation.empty()){
 		if(!X509_NAME_add_entry_by_txt(name, "O", MBSTRING_ASC, (unsigned char*)organisation.data(), -1, -1, 0)){
-			fprintf(stderr, "Error setting country\n");
-			ERR_error_string(ERR_get_error(), GSSL_ERR_BUFF);
-			fprintf(stderr, "%s\n", GSSL_ERR_BUFF);
+			GSSL_ERR_UPDATE_PRINT();
 		}
 	}
 
 	if(!state.empty()){
 		if(!X509_NAME_add_entry_by_txt(name, "ST", MBSTRING_ASC, (unsigned char*)state.data(), -1, -1, 0)){
-			fprintf(stderr, "Error setting country\n");
-			ERR_error_string(ERR_get_error(), GSSL_ERR_BUFF);
-			fprintf(stderr, "%s\n", GSSL_ERR_BUFF);
+			GSSL_ERR_UPDATE_PRINT();
 		}
 	}
 	/* END - set subject */
 
 	/* BEG - sign request */
-	if(!X509_REQ_sign(_req.get(), _pkey->key(), EVP_sha512())){
-		fprintf(stderr, "Error signing request\n");
-		ERR_error_string(ERR_get_error(), GSSL_ERR_BUFF);
-			fprintf(stderr, "%s\n", GSSL_ERR_BUFF);
+	if(!X509_REQ_sign(_req.get(), _pkey->key(), EVP_sha256())){
+		GSSL_ERR_UPDATE_PRINT();
 	}
 	/* END - sign request */
 }

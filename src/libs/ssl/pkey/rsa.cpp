@@ -1,7 +1,10 @@
 #include "rsa.hpp"
+#include "../gssl.hpp"
 #include <openssl/crypto.h>
 #include <openssl/evp.h>
 #include <openssl/params.h>
+
+
 
 /* struct RSAkeypair */
 RSAkeypair::RSAkeypair(EVP_PKEY *key, int bits):ISmartPKEY(key),_keysize(bits){};
@@ -12,17 +15,17 @@ RSAkeypair* gssl::rsa::generateKeypair(int bits){
 	auto ctx = EVP_PKEY_CTX_new_id(EVP_PKEY_RSA, nullptr);
 	
 	if(ctx == nullptr){
-		fprintf(stderr, "Couldn't initialize key context for RSA\n");
+		GSSL_ERR_UPDATE_PRINT();
 		return nullptr;
 	}
 
 	if(EVP_PKEY_keygen_init(ctx) <= 0){
-		fprintf(stderr, "EVP_PKEY_keygen_init()\n");
+		GSSL_ERR_UPDATE_PRINT();
 		return nullptr;
 	}
 
 	if(EVP_PKEY_CTX_set_rsa_keygen_bits(ctx, bits) <= 0){
-		fprintf(stderr, "EVP_PKEY_CTX_set_rsa_keygen_bits()\n");
+		GSSL_ERR_UPDATE_PRINT();
 		return nullptr;
 	}
 

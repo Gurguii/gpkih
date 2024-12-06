@@ -288,7 +288,7 @@ static int initializeProfile(std::string_view &profileName, std::string_view &pr
 
     if (autoans) {
       // QUESTION 1 - create dhparam?
-      std::string path = fmt::format("{}{}pki{}tls{}dhparam2048", profile.source, SLASH, SLASH, SLASH); 
+      std::string path = fmt::format("{}{}pki{}tls{}dhparam", profile.source, SLASH, SLASH, SLASH); 
 
       PINFO("Generating DH parameters...\n");
       gssl::dhparam::DHparam *params = gssl::dhparam::generate();
@@ -316,7 +316,7 @@ static int initializeProfile(std::string_view &profileName, std::string_view &pr
                                               "(highly recommended)"),
              "[y/n]", true);
       if (ans == "y" || ans == "yes") {
-        std::string path = fmt::format("{}{}pki{}tls{}dhparam2048", profile.source, SLASH, SLASH, SLASH);
+        std::string path = fmt::format("{}{}pki{}tls{}dhparam", profile.source, SLASH, SLASH, SLASH);
         PINFO("Generating DH parameters...\n");
         fflush(stdout);
         gssl::dhparam::DHparam *params = gssl::dhparam::generate();

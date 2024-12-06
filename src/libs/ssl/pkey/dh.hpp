@@ -1,3 +1,7 @@
+#ifndef gssl_dhparam
+#define gssl_dhparam
+
+#pragma once
 #include <openssl/evp.h>
 
 #include <memory>
@@ -27,3 +31,5 @@ public:
 
 DHparam* generate(unsigned int pbits = 2048, std::string_view hash = "sha256");
 } // namespace gssl::dhparam
+
+#endif

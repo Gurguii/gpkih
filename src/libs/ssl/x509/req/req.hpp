@@ -1,3 +1,6 @@
+#ifndef gssl_req
+#define gssl_req
+#pragma once
 #include <openssl/crypto.h>
 #include <openssl/x509.h>
 #include <openssl/x509v3.h>
@@ -36,6 +39,7 @@ public:
 
 	explicit X509Req(ISmartPKEY *pkey);
 
-	FILE *dump(FILE *outFile);
+	FILE *dump(FILE *outFile = stdout);
 	int dump(std::string_view outFile);
 };
+#endif
